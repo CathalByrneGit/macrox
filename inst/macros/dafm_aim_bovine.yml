@@ -1,0 +1,24 @@
+macro:
+  name: dafm_aim_bovine
+  created: '2026-05-01'
+  source: AIM_Stats_Report.pdf
+  n_steps: 3
+
+steps:
+  - step: select_table
+    label: monthly
+    page: 8
+    method: bbox
+    area: [80, 30, 500, 750]
+    header_rows: 1
+
+  - step: rename_columns
+    table: monthly
+    mapping:
+      Month: month
+      Total: total
+
+  - step: cast_types
+    table: monthly
+    types:
+      total: integer

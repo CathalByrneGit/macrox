@@ -1,0 +1,10 @@
+*.Rproj
+.Rproj.user/
+*.o
+*.so
+*.dll
+inst/doc/
+vignettes/*_cache/
+vignettes/*_files/
+.positai
+.claude

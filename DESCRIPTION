@@ -1,0 +1,45 @@
+Package: pdfmacro
+Title: Record and Replay PDF Table Extraction Workflows
+Version: 0.1.0
+Authors@R: person("First", "Last", email = "you@example.com", role = c("aut", "cre"))
+Description: Record interactive PDF table extraction steps as replayable macros.
+    Supports table selection by page index, bounding box, or fuzzy label matching.
+    Handles multi-row headers, column renaming, type casting, and row filtering.
+    Macros are saved as YAML and can be replayed against any structurally similar PDF.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports:
+    pdftools,
+    stringdist,
+    yaml,
+    cli,
+    rlang
+Suggests:
+    magick,
+    shiny,
+    bslib,
+    DT,
+    rstudioapi,
+    reticulate,
+    jsonlite,
+    xml2,
+    tabulapdf,
+    ellmer,
+    validate,
+    shinyFiles,
+    shinyAce,
+    shinyjs,
+    writexl,
+    zip,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+Config/reticulate:
+  list(
+    packages = list(
+      list(package = "paddleocr"),
+      list(package = "onnxruntime")
+    )
+  )

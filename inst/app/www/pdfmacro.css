@@ -1,0 +1,118 @@
+/* ── pdfmacro app theme ──────────────────────────────────────────────────── */
+
+:root {
+  --amber:       #c47c00;
+  --amber-light: #f5e6c8;
+  --ink:         #1a1208;
+  --ink-mid:     #5a4a30;
+  --ink-light:   #9a8a70;
+  --surface:     #faf6f0;
+  --raised:      #f0e8d8;
+  --border:      #ddd0b8;
+  --mono:        'Courier New', monospace;
+}
+
+[data-theme="dark"] {
+  --amber:       #f0a830;
+  --amber-light: #3a2800;
+  --ink:         #f0e8d8;
+  --ink-mid:     #c0a880;
+  --ink-light:   #806848;
+  --surface:     #1a1208;
+  --raised:      #251c10;
+  --border:      #3a2e1a;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+
+.section-label {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin: 14px 0 4px;
+  font-weight: 600;
+}
+
+.sidebar-foot {
+  position: absolute;
+  bottom: 12px;
+  left: 14px;
+  right: 14px;
+  font-size: 9px;
+  color: var(--ink-light);
+  letter-spacing: 0.04em;
+}
+
+.sidebar-foot button {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 9px;
+  padding: 1px 6px;
+  cursor: pointer;
+  color: var(--ink-mid);
+}
+
+/* ── PDF viewer pane ─────────────────────────────────────────────────────── */
+
+.pdf-viewer-wrap {
+  background: #2a2a2a;
+  border-radius: 4px;
+  overflow: hidden;
+  min-height: 200px;
+}
+
+.pdf-viewer-wrap img {
+  display: block;
+  width: 100%;
+}
+
+/* ── Step badges ─────────────────────────────────────────────────────────── */
+
+.step-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-family: var(--mono);
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin: 2px 2px 2px 0;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  color: var(--ink-mid);
+}
+
+.step-badge.flagged {
+  background: #fff3cd;
+  border-color: #ffc107;
+  color: #856404;
+}
+
+/* ── Export card ─────────────────────────────────────────────────────────── */
+
+.export-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ── Table preview ───────────────────────────────────────────────────────── */
+
+.table-label {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--ink-mid);
+  letter-spacing: 0.04em;
+}
+
+/* ── Theme toggle ────────────────────────────────────────────────────────── */
+
+#pm-theme-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 9px;
+  padding: 1px 6px;
+  cursor: pointer;
+  color: var(--ink-mid);
+}
