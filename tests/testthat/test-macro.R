@@ -160,6 +160,32 @@ test_that(".dispatch_step() handles validate_table when validate available", {
   )
 })
 
+test_that(".dispatch_step() handles select_item with gliner backend", {
+  sess    <- .make_dispatch_sess()
+  mock_py <- list(gliner_extract_item = function(...) "REF-001")
+
+  testthat::local_mocked_bindings(
+    pdf_text       = function(...) list("Reference: REF-001"),
+    .package       = "pdftools"
+  )
+  testthat::local_mocked_bindings(
+    .ensure_gliner = function(...) mock_py
+  )
+
+  pdfmacro:::.dispatch_step(sess, list(
+    step         = "select_item",
+    label        = "ref",
+    prompt       = "Reference number",
+    cast         = NULL,
+    page         = NULL,
+    backend      = "gliner",
+    gliner_model = "fastino/gliner2-base-v1"
+  ))
+
+  expect_true("ref" %in% names(sess$items))
+  expect_equal(as.character(sess$items$ref$value), "REF-001")
+})
+
 test_that(".dispatch_step() handles select_item via mocked LLM", {
   sess <- .make_dispatch_sess()
   testthat::local_mocked_bindings(
@@ -180,6 +206,39 @@ test_that(".dispatch_step() handles select_item via mocked LLM", {
 })
 
 # ── pdf_replay() end-to-end with mixed step types ────────────────────────────
+
+test_that(".dispatch_step() handles fill_down", {
+  df   <- data.frame(grp = c("A", "", ""), stringsAsFactors = FALSE)
+  sess <- .make_dispatch_sess(df)
+  pdfmacro:::.dispatch_step(sess,
+    list(step = "fill_down", table = "tbl", cols = list("grp")))
+  expect_equal(sess$tables$tbl$grp, c("A", "A", "A"))
+})
+
+test_that(".dispatch_step() handles clean_numbers", {
+  df   <- data.frame(v = c("£1,000", "(500)"), stringsAsFactors = FALSE)
+  sess <- .make_dispatch_sess(df)
+  pdfmacro:::.dispatch_step(sess,
+    list(step = "clean_numbers", table = "tbl", cols = list("v"),
+         currency = list("£"), na_strings = list("-"),
+         negative_parens = TRUE, convert = TRUE))
+  expect_type(sess$tables$tbl$v, "double")
+  expect_equal(sess$tables$tbl$v, c(1000, -500))
+})
+
+test_that("pdf_replay_batch() returns NULL for files that fail to replay", {
+  steps  <- list()
+  result <- suppressWarnings(pdf_replay_batch("nonexistent.pdf", macro = steps))
+  expect_null(result[[1]])
+  expect_named(result, "nonexistent.pdf")
+})
+
+test_that("pdf_replay_batch() .parallel = TRUE with empty file list succeeds", {
+  skip_if_not_installed("purrr")
+  steps  <- list()
+  result <- pdf_replay_batch(character(0), macro = steps, .parallel = TRUE)
+  expect_equal(length(result), 0L)
+})
 
 test_that("pdf_replay() replays add_column and stack_tables steps", {
   df1 <- data.frame(month = month.abb[1:3], n = 1:3L, stringsAsFactors = FALSE)

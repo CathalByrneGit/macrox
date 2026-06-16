@@ -236,3 +236,120 @@ select_table <- function(sess, label,
   }
   x
 }
+
+
+# --------------------------------------------------------------------------- #
+#  stack_pages()                                                               #
+# --------------------------------------------------------------------------- #
+
+#' Extract and stack the same table across multiple PDF pages
+#'
+#' Extracts a table from each page in `pages` and row-binds them into a single
+#' data frame. Handles repeated header rows automatically: when
+#' `header_match = TRUE` (default), each page is extracted with the same
+#' `header_rows` setting so the repeated header is consumed as column names and
+#' dropped from the data automatically. Use `header_match = FALSE` when pages
+#' 2+ start directly with data (no repeated header).
+#'
+#' @param sess A `pdfmacro_session` object.
+#' @param label Character label for the combined table.
+#' @param pages Integer vector of page numbers to extract and stack (minimum 2).
+#' @param area Named `c(top, left, bottom, right)` in PDF points, or `NULL`
+#'   for the full page. Applied identically to every page.
+#' @param method Extraction engine: `"bbox"` (default), `"lattice"`, or
+#'   `"stream"`.
+#' @param header_rows Number of header rows (default 1). Applied to every page
+#'   when `header_match = TRUE`, only to the first page when `FALSE`.
+#' @param header_match Logical (default `TRUE`). When `TRUE` each page is
+#'   extracted with `header_rows` so repeated headers are consumed into column
+#'   names and dropped. Set `FALSE` when pages 2+ begin directly with data.
+#' @param row_tol `bbox` method only — passed to [select_table()].
+#' @param col_gap `bbox` method only — passed to [select_table()].
+#' @return `sess` invisibly (step is recorded).
+#' @export
+stack_pages <- function(sess, label, pages,
+                        area         = NULL,
+                        method       = c("bbox", "lattice", "stream"),
+                        header_rows  = 1L,
+                        header_match = TRUE,
+                        row_tol      = NULL,
+                        col_gap      = NULL) {
+  method <- match.arg(method)
+  pages  <- as.integer(pages)
+  if (length(pages) < 2L) {
+    cli::cli_abort("{.arg pages} must contain at least 2 page numbers.")
+  }
+
+  cli::cli_inform(c("i" = "Stacking {length(pages)} page{?s} ({min(pages)}–{max(pages)}) [{method}]..."))
+
+  # Temporary session: .replaying = TRUE suppresses record_step inside select_table
+  tmp            <- new.env(parent = emptyenv())
+  tmp$path       <- sess$path
+  tmp$tables     <- list()
+  tmp$steps      <- list()
+  tmp$.replaying <- TRUE
+  class(tmp)     <- "pdfmacro_session"
+
+  # First page — defines column names and shape
+  select_table(tmp, label = ".sp_p1", page = pages[[1L]], area = area,
+               method = method, header_rows = header_rows,
+               row_tol = row_tol, col_gap = col_gap)
+  df1    <- tmp$tables[[".sp_p1"]]
+  frames <- list(df1)
+  n_skip <- 0L
+
+  for (pg in pages[-1L]) {
+    # header_match = TRUE  → extract with same header_rows (repeated header
+    #   becomes column names, aligning naturally with df1).
+    # header_match = FALSE → extract with header_rows = 0 then assign df1 names.
+    hr <- if (isTRUE(header_match)) header_rows else 0L
+
+    dfx <- tryCatch({
+      select_table(tmp, label = ".sp_px", page = pg, area = area,
+                   method = method, header_rows = hr,
+                   row_tol = row_tol, col_gap = col_gap)
+      tmp$tables[[".sp_px"]]
+    }, error = function(e) {
+      cli::cli_warn("Page {pg} skipped: {conditionMessage(e)}")
+      n_skip <<- n_skip + 1L
+      NULL
+    })
+    if (is.null(dfx)) next
+
+    # When header didn't repeat, assign page-1 column names by position
+    if (!isTRUE(header_match) && ncol(dfx) == ncol(df1)) {
+      names(dfx) <- names(df1)
+    }
+
+    # Align to page-1 columns
+    shared <- intersect(names(df1), names(dfx))
+    if (length(shared) < ncol(df1)) {
+      cli::cli_warn("Page {pg}: binding on {length(shared)}/{ncol(df1)} shared column{?s}.")
+    }
+    frames[[1L]] <- frames[[1L]][, shared, drop = FALSE]
+    frames       <- c(frames, list(dfx[, shared, drop = FALSE]))
+  }
+
+  df           <- do.call(rbind, frames)
+  rownames(df) <- NULL
+
+  n_ok <- length(pages) - n_skip
+  cli::cli_inform(c(
+    "v" = "Table {.val {label}} stacked from {n_ok}/{length(pages)} page{?s}: {nrow(df)} × {ncol(df)}"
+  ))
+
+  set_table(sess, label, df)
+  record_step(sess, list(
+    step         = "stack_pages",
+    label        = label,
+    pages        = pages,
+    area         = area,
+    method       = method,
+    header_rows  = as.integer(header_rows),
+    header_match = isTRUE(header_match),
+    row_tol      = row_tol,
+    col_gap      = col_gap
+  ))
+
+  invisible(sess)
+}

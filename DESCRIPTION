@@ -24,7 +24,6 @@ Suggests:
     rstudioapi,
     reticulate,
     jsonlite,
-    xml2,
     tabulapdf,
     ellmer,
     validate,
@@ -33,13 +32,8 @@ Suggests:
     shinyjs,
     writexl,
     zip,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    purrr (>= 1.1.0),
+    mirai (>= 2.0.0)
 Config/testthat/edition: 3
 VignetteBuilder: knitr
-Config/reticulate:
-  list(
-    packages = list(
-      list(package = "paddleocr"),
-      list(package = "onnxruntime")
-    )
-  )

@@ -323,3 +323,194 @@ merge_tables <- function(sess, label, left, right, by,
   ))
   invisible(sess)
 }
+
+
+# --------------------------------------------------------------------------- #
+#  fill_down()                                                                 #
+# --------------------------------------------------------------------------- #
+
+#' Forward-fill blank or NA cells in specified columns
+#'
+#' Fills each blank or `NA` cell downward from the last non-blank value.
+#' Useful when merged header cells in government PDFs leave empty values in
+#' rows below the merged cell boundary.
+#'
+#' @param sess A `pdfmacro_session` object.
+#' @param table Character label of the target table.
+#' @param cols Character vector of column names to fill. `NULL` (default) fills
+#'   all columns.
+#' @return `sess` invisibly (step is recorded).
+#' @export
+fill_down <- function(sess, table, cols = NULL) {
+  df          <- get_table(sess, table)
+  target_cols <- if (is.null(cols)) names(df) else intersect(cols, names(df))
+
+  if (!is.null(cols)) {
+    missing_cols <- setdiff(cols, names(df))
+    if (length(missing_cols) > 0) {
+      cli::cli_warn(c(
+        "!" = "Some columns not found in {.val {table}} and were skipped.",
+        "i" = "Missing: {.val {missing_cols}}"
+      ))
+    }
+  }
+
+  for (col in target_cols) df[[col]] <- .ffill(df[[col]])
+
+  set_table(sess, table, df)
+  record_step(sess, list(step = "fill_down", table = table, cols = target_cols))
+  cli::cli_inform(c("v" = "Forward-filled {length(target_cols)} column{?s} in {.val {table}}"))
+  invisible(sess)
+}
+
+.ffill <- function(x) {
+  last_good <- if (is.character(x)) NA_character_ else NA
+  for (i in seq_along(x)) {
+    is_blank <- is.na(x[i]) || (is.character(x[i]) && trimws(x[i]) == "")
+    if (is_blank) x[i] <- last_good else last_good <- x[i]
+  }
+  x
+}
+
+
+# --------------------------------------------------------------------------- #
+#  clean_numbers()                                                             #
+# --------------------------------------------------------------------------- #
+
+#' Clean and parse numeric strings in table columns
+#'
+#' Strips thousands separators, currency symbols, and parenthetical negatives;
+#' maps sentinel strings to `NA`; optionally coerces columns to numeric.
+#'
+#' @param sess A `pdfmacro_session` object.
+#' @param table Character label of the target table.
+#' @param cols Character vector of column names to process. `NULL` (default)
+#'   targets all non-numeric columns.
+#' @param currency Character vector of currency symbols to strip.
+#' @param na_strings Strings that should become `NA` (case-insensitive after
+#'   whitespace trimming).
+#' @param negative_parens If `TRUE` (default), converts `(123)` to `-123`.
+#' @param convert If `TRUE` (default), coerces a column to `numeric` when all
+#'   non-NA values parse successfully.
+#' @return `sess` invisibly (step is recorded).
+#' @export
+clean_numbers <- function(sess, table, cols = NULL,
+                           currency        = c("£", "$", "€", "¥"),
+                           na_strings      = c("-", "—", "n/a", "na", ""),
+                           negative_parens = TRUE,
+                           convert         = TRUE) {
+  df <- get_table(sess, table)
+
+  if (is.null(cols)) {
+    cols <- names(df)[!vapply(df, is.numeric, logical(1))]
+  } else {
+    missing_cols <- setdiff(cols, names(df))
+    if (length(missing_cols) > 0) {
+      cli::cli_warn(c(
+        "!" = "Some columns not found in {.val {table}} and were skipped.",
+        "i" = "Missing: {.val {missing_cols}}"
+      ))
+      cols <- intersect(cols, names(df))
+    }
+  }
+
+  n_converted <- 0L
+  for (col in cols) {
+    cleaned <- .clean_num_col(df[[col]], currency, na_strings, negative_parens)
+    if (isTRUE(convert)) {
+      num        <- suppressWarnings(as.numeric(cleaned))
+      all_parsed <- !anyNA(num[!is.na(cleaned)])
+      if (all_parsed) {
+        df[[col]] <- num
+        n_converted <- n_converted + 1L
+      } else {
+        df[[col]] <- cleaned
+      }
+    } else {
+      df[[col]] <- cleaned
+    }
+  }
+
+  set_table(sess, table, df)
+  record_step(sess, list(
+    step            = "clean_numbers",
+    table           = table,
+    cols            = cols,
+    currency        = currency,
+    na_strings      = na_strings,
+    negative_parens = negative_parens,
+    convert         = convert
+  ))
+
+  conv_note <- if (isTRUE(convert) && n_converted > 0) {
+    paste0(", ", n_converted, " coerced to numeric")
+  } else ""
+  cli::cli_inform(c("v" = "Cleaned {length(cols)} column{?s} in {.val {table}}{conv_note}"))
+  invisible(sess)
+}
+
+.clean_num_col <- function(x, currency, na_strings, negative_parens) {
+  x <- as.character(x)
+  x[trimws(tolower(x)) %in% tolower(na_strings)] <- NA
+  for (sym in currency) x <- gsub(sym, "", x, fixed = TRUE)
+  x <- gsub(",", "", x, fixed = TRUE)
+  if (isTRUE(negative_parens)) x <- sub("^\\s*\\((.+)\\)\\s*$", "-\\1", x)
+  trimws(x)
+}
+
+
+# --------------------------------------------------------------------------- #
+#  suggest_schema()                                                            #
+# --------------------------------------------------------------------------- #
+
+#' Suggest column types for an extracted table
+#'
+#' Inspects values in each column and returns a named character vector of type
+#' specs compatible with [cast_types()]. Useful as a starting point before
+#' calling `cast_types()` or providing a schema to `select_table_llm()`.
+#'
+#' @param sess A `pdfmacro_session` object.
+#' @param label Character label of the table to inspect.
+#' @return Named character vector of type specs (invisibly).
+#' @export
+suggest_schema <- function(sess, label) {
+  df     <- get_table(sess, label)
+  schema <- vapply(df, .guess_col_type, character(1))
+  w      <- max(nchar(names(schema)), 0L)
+
+  cli::cli_h3("Suggested schema for {.val {label}}")
+  for (col in names(schema)) {
+    cli::cli_bullets(c("*" = paste0(
+      formatC(col, width = w, flag = "-"), "  ->  ", schema[[col]]
+    )))
+  }
+  cli::cli_inform(c(
+    "i" = "Pass to {.fn cast_types}: {.code cast_types(sess, \"{label}\", c(...))}"
+  ))
+  invisible(schema)
+}
+
+.guess_col_type <- function(x) {
+  x_str <- as.character(x)
+  x_str <- x_str[!is.na(x_str) & trimws(x_str) != ""]
+  if (length(x_str) == 0L) return("character")
+
+  x_clean <- gsub(",", "", x_str, fixed = TRUE)
+
+  x_int <- suppressWarnings(as.integer(x_clean))
+  if (!anyNA(x_int) && all(as.character(x_int) == x_clean)) return("integer")
+
+  x_num <- suppressWarnings(as.numeric(x_clean))
+  if (!anyNA(x_num)) return("numeric")
+
+  date_fmts <- c(
+    "%d/%m/%Y", "%m/%d/%Y", "%Y-%m-%d",
+    "%d-%m-%Y", "%d %B %Y", "%B %Y", "%b %Y"
+  )
+  for (fmt in date_fmts) {
+    d <- suppressWarnings(as.Date(x_str, format = fmt))
+    if (!anyNA(d)) return(paste0("date:", fmt))
+  }
+
+  "character"
+}

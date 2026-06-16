@@ -114,40 +114,69 @@ pdf_replay <- function(file, macro, macro_path = ".") {
 #' @param macro Macro name, path, or step list (see [pdf_replay()]).
 #' @param macro_path Directory for macro lookup (default `.`).
 #' @param .progress Show file-level progress messages (default TRUE).
+#' @param .parallel If `TRUE`, run files in parallel using purrr + mirai.
+#'   Requires `purrr >= 1.1.0` and `mirai`. Set up workers first with
+#'   `mirai::daemons(n)`. Defaults to `FALSE` (sequential).
 #' @return Named list (file basenames) of table lists. Files that fail are NULL.
 #' @export
-pdf_replay_batch <- function(files, macro, macro_path = ".", .progress = TRUE) {
+pdf_replay_batch <- function(files, macro, macro_path = ".", .progress = TRUE,
+                              .parallel = FALSE) {
   if (is.character(macro)) {
     steps <- load_macro(macro, path = macro_path)
   } else {
     steps <- macro
   }
 
-  results  <- vector("list", length(files))
-  names(results) <- basename(files)
-  n_ok  <- 0L
+  names_out  <- basename(files)
+  replay_one <- function(f) {
+    tryCatch(
+      pdf_replay(f, steps),
+      error = function(e) {
+        cli::cli_warn("Failed: {.file {basename(f)}} — {conditionMessage(e)}")
+        NULL
+      }
+    )
+  }
+
+  if (isTRUE(.parallel)) {
+    has_purrr <- requireNamespace("purrr", quietly = TRUE) &&
+      utils::packageVersion("purrr") >= package_version("1.1.0")
+    has_mirai <- requireNamespace("mirai", quietly = TRUE)
+
+    if (has_purrr && has_mirai) {
+      results <- purrr::map(files, replay_one, .parallel = purrr::in_parallel())
+    } else {
+      if (!has_purrr) {
+        cli::cli_warn("purrr >= 1.1.0 not found; running sequentially. {.code install.packages('purrr')}")
+      }
+      if (!has_mirai) {
+        cli::cli_warn("mirai not found; running sequentially. {.code install.packages('mirai')}")
+      }
+      results <- lapply(files, replay_one)
+    }
+
+    names(results) <- names_out
+    n_ok   <- sum(!vapply(results, is.null, logical(1)))
+    n_fail <- length(results) - n_ok
+    cli::cli_inform(c("v" = "Batch complete: {n_ok} succeeded, {n_fail} failed."))
+    return(invisible(results))
+  }
+
+  results <- vector("list", length(files))
+  names(results) <- names_out
+  n_ok   <- 0L
   n_fail <- 0L
 
   for (i in seq_along(files)) {
     f <- files[[i]]
     if (.progress) cli::cli_inform("Processing [{i}/{length(files)}]: {.file {basename(f)}}")
-    result <- tryCatch(
-      {
-        n_ok <<- n_ok + 1L
-        pdf_replay(f, steps)
-      },
-      error = function(e) {
-        n_ok  <<- n_ok - 1L
-        n_fail <<- n_fail + 1L
-        cli::cli_warn("Failed: {.file {basename(f)}} — {conditionMessage(e)}")
-        NULL
-      }
-    )
-    results[[i]] <- result
+    result <- replay_one(f)
+    if (is.null(result)) n_fail <- n_fail + 1L else n_ok <- n_ok + 1L
+    results[i] <- list(result)
   }
 
   cli::cli_inform(c("v" = "Batch complete: {n_ok} succeeded, {n_fail} failed."))
-  results
+  invisible(results)
 }
 
 
@@ -191,6 +220,18 @@ pdf_replay_batch <- function(files, macro, macro_path = ".", .progress = TRUE) {
       exclude_where = step$exclude_where
     ),
 
+    stack_pages = stack_pages(
+      sess,
+      label        = step$label,
+      pages        = as.integer(unlist(step$pages)),
+      area         = step$area,
+      method       = step$method       %||% "bbox",
+      header_rows  = step$header_rows  %||% 1L,
+      header_match = isTRUE(step$header_match %||% TRUE),
+      row_tol      = step$row_tol,
+      col_gap      = step$col_gap
+    ),
+
     select_table_llm = select_table_llm(
       sess,
       label       = step$label,
@@ -202,7 +243,32 @@ pdf_replay_batch <- function(files, macro, macro_path = ".", .progress = TRUE) {
       schema      = if (!is.null(step$schema)) unlist(step$schema) else NULL,
       prompt      = step$prompt,
       dpi         = step$dpi         %||% 150L,
-      header_rows = step$header_rows %||% 1L
+      header_rows = step$header_rows %||% 1L,
+      mode        = step$mode        %||% "structured",
+      table_index = step$table_index %||% 1L
+    ),
+
+    select_table_docling = select_table_docling(
+      sess,
+      label       = step$label,
+      page        = step$page,
+      table_index = step$table_index %||% 1L
+    ),
+
+    fill_down = fill_down(
+      sess,
+      table = step$table,
+      cols  = if (!is.null(step$cols)) unlist(step$cols) else NULL
+    ),
+
+    clean_numbers = clean_numbers(
+      sess,
+      table           = step$table,
+      cols            = if (!is.null(step$cols)) unlist(step$cols) else NULL,
+      currency        = unlist(step$currency)   %||% c("£", "$", "€", "¥"),
+      na_strings      = unlist(step$na_strings) %||% c("-", "—", "n/a", "na", ""),
+      negative_parens = isTRUE(step$negative_parens %||% TRUE),
+      convert         = isTRUE(step$convert         %||% TRUE)
     ),
 
     add_column = add_column(
@@ -239,27 +305,17 @@ pdf_replay_batch <- function(files, macro, macro_path = ".", .progress = TRUE) {
 
     select_item = select_item(
       sess,
-      label    = step$label,
-      prompt   = step$prompt,
-      cast     = step$cast,
-      page     = step$page,
-      area     = step$area,
-      provider = step$provider %||% "anthropic",
-      model    = step$model,
-      base_url = step$base_url,
-      dpi      = step$dpi %||% 120L
-    ),
-
-    select_table_paddle = select_table_paddle(
-      sess,
-      label       = step$label,
-      page        = step$page,
-      area        = step$area,
-      dpi         = step$dpi         %||% 150L,
-      header_rows = step$header_rows %||% 1L,
-      table_index = step$table_index %||% 1L,
-      device      = step$device      %||% "cpu",
-      backend     = step$backend     %||% "auto"
+      label        = step$label,
+      prompt       = step$prompt,
+      cast         = step$cast,
+      page         = step$page,
+      area         = step$area,
+      backend      = step$backend      %||% "llm",
+      provider     = step$provider     %||% "anthropic",
+      model        = step$model,
+      base_url     = step$base_url,
+      dpi          = step$dpi          %||% 120L,
+      gliner_model = step$gliner_model %||% "fastino/gliner2-base-v1"
     ),
 
     cli::cli_abort("Unknown step type: {.val {step$step}}")

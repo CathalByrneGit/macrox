@@ -256,9 +256,21 @@ show_steps <- function(sess) {
       }
       paste0(loc, " [", s$method %||% "lattice", "]")
     },
+    stack_pages    = {
+      pgs <- s$pages %||% integer(0)
+      paste0("pages ", min(pgs), "-", max(pgs), " [", s$method %||% "bbox", "]")
+    },
+    select_table_docling = paste0("page ", s$page, ", table ", s$table_index %||% 1),
     rename_columns = paste0(length(s$mapping), " renames"),
     cast_types     = paste0(length(s$types), " casts"),
     filter_rows    = paste0("exclude: ", s$exclude_where),
+    fill_down      = paste0("cols: ", paste(s$cols %||% "all", collapse = ", ")),
+    clean_numbers  = paste0("cols: ", paste(s$cols %||% "all", collapse = ", ")),
+    select_item    = paste0(
+      "[", s$backend %||% "llm", "] ",
+      if (identical(s$backend, "gliner")) s$gliner_model %||% "gliner2-base"
+      else                                s$provider     %||% "anthropic"
+    ),
     paste0("(", s$step, ")")
   )
 }

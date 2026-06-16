@@ -239,3 +239,150 @@ test_that("merge_tables() records step with by and all arguments", {
   expect_equal(unlist(s$by), "x")
   expect_false(isTRUE(s$all))
 })
+
+# ── fill_down() ───────────────────────────────────────────────────────────── #
+
+test_that("fill_down() propagates values into blank cells below", {
+  df   <- data.frame(
+    group = c("A", "", "", "B", ""),
+    value = 1:5,
+    stringsAsFactors = FALSE
+  )
+  sess <- make_sess(df = df)
+  fill_down(sess, "tbl", cols = "group")
+  expect_equal(sess$tables$tbl$group, c("A", "A", "A", "B", "B"))
+})
+
+test_that("fill_down() handles NA cells the same as blank strings", {
+  df   <- data.frame(
+    region = c("North", NA, NA, "South", NA),
+    stringsAsFactors = FALSE
+  )
+  sess <- make_sess(df = df)
+  fill_down(sess, "tbl", cols = "region")
+  expect_equal(sess$tables$tbl$region, c("North", "North", "North", "South", "South"))
+})
+
+test_that("fill_down() with cols = NULL fills all columns", {
+  df   <- data.frame(a = c("x", "", ""), b = c("1", "", ""), stringsAsFactors = FALSE)
+  sess <- make_sess(df = df)
+  fill_down(sess, "tbl")
+  expect_equal(sess$tables$tbl$a, c("x", "x", "x"))
+  expect_equal(sess$tables$tbl$b, c("1", "1", "1"))
+})
+
+test_that("fill_down() leading NA stays NA (nothing to propagate from)", {
+  df   <- data.frame(x = c(NA_character_, "val"), stringsAsFactors = FALSE)
+  sess <- make_sess(df = df)
+  fill_down(sess, "tbl", cols = "x")
+  expect_true(is.na(sess$tables$tbl$x[[1]]))
+  expect_equal(sess$tables$tbl$x[[2]], "val")
+})
+
+test_that("fill_down() warns on missing column names", {
+  sess <- make_sess()
+  expect_warning(fill_down(sess, "tbl", cols = c("month", "NOPE")), "not found")
+})
+
+test_that("fill_down() records the step", {
+  sess <- make_sess()
+  fill_down(sess, "tbl", cols = "month")
+  expect_equal(sess$steps[[1]]$step, "fill_down")
+  expect_equal(unlist(sess$steps[[1]]$cols), "month")
+})
+
+# ── clean_numbers() ───────────────────────────────────────────────────────── #
+
+test_that("clean_numbers() strips commas and converts to numeric", {
+  df   <- data.frame(val = c("1,234", "5,678"), stringsAsFactors = FALSE)
+  sess <- make_sess(df = df)
+  clean_numbers(sess, "tbl", cols = "val")
+  expect_type(sess$tables$tbl$val, "double")
+  expect_equal(sess$tables$tbl$val, c(1234, 5678))
+})
+
+test_that("clean_numbers() strips currency symbols", {
+  df   <- data.frame(price = c("£100", "$200", "€300"), stringsAsFactors = FALSE)
+  sess <- make_sess(df = df)
+  clean_numbers(sess, "tbl", cols = "price")
+  expect_equal(sess$tables$tbl$price, c(100, 200, 300))
+})
+
+test_that("clean_numbers() converts parenthetical negatives", {
+  df   <- data.frame(v = c("(50)", "100"), stringsAsFactors = FALSE)
+  sess <- make_sess(df = df)
+  clean_numbers(sess, "tbl", cols = "v")
+  expect_equal(sess$tables$tbl$v, c(-50, 100))
+})
+
+test_that("clean_numbers() maps sentinel strings to NA", {
+  df   <- data.frame(v = c("-", "n/a", "100", "—"), stringsAsFactors = FALSE)
+  sess <- make_sess(df = df)
+  clean_numbers(sess, "tbl", cols = "v")
+  expect_equal(sum(is.na(sess$tables$tbl$v)), 3L)
+  expect_equal(sess$tables$tbl$v[3], 100)
+})
+
+test_that("clean_numbers() leaves string when not fully numeric", {
+  df   <- data.frame(v = c("12", "N/A*", "5"), stringsAsFactors = FALSE)
+  sess <- make_sess(df = df)
+  clean_numbers(sess, "tbl", cols = "v", convert = TRUE)
+  expect_type(sess$tables$tbl$v, "character")
+})
+
+test_that("clean_numbers() skips already-numeric columns when cols = NULL", {
+  df   <- data.frame(num = 1:3, txt = c("£1", "£2", "£3"), stringsAsFactors = FALSE)
+  sess <- make_sess(df = df)
+  clean_numbers(sess, "tbl")
+  expect_type(sess$tables$tbl$num, "integer")
+  expect_type(sess$tables$tbl$txt, "double")
+})
+
+test_that("clean_numbers() records the step", {
+  df   <- data.frame(x = c("1,000"), stringsAsFactors = FALSE)
+  sess <- make_sess(df = df)
+  clean_numbers(sess, "tbl", cols = "x")
+  expect_equal(sess$steps[[1]]$step, "clean_numbers")
+  expect_equal(unlist(sess$steps[[1]]$cols), "x")
+})
+
+# ── suggest_schema() ──────────────────────────────────────────────────────── #
+
+test_that(".guess_col_type() detects integer", {
+  expect_equal(pdfmacro:::.guess_col_type(c("1", "2", "3")), "integer")
+})
+
+test_that(".guess_col_type() detects numeric (decimal)", {
+  expect_equal(pdfmacro:::.guess_col_type(c("1.5", "2.7")), "numeric")
+})
+
+test_that(".guess_col_type() detects integer after stripping thousands commas", {
+  expect_equal(pdfmacro:::.guess_col_type(c("1,234", "5,678")), "integer")
+})
+
+test_that(".guess_col_type() detects date %d/%m/%Y", {
+  expect_equal(pdfmacro:::.guess_col_type(c("01/01/2024", "31/12/2024")),
+               "date:%d/%m/%Y")
+})
+
+test_that(".guess_col_type() returns character for mixed text", {
+  expect_equal(pdfmacro:::.guess_col_type(c("Jan", "Feb", "Mar")), "character")
+})
+
+test_that(".guess_col_type() returns character for empty input", {
+  expect_equal(pdfmacro:::.guess_col_type(character(0)), "character")
+})
+
+test_that("suggest_schema() returns named character vector", {
+  df   <- data.frame(
+    month = month.abb[1:3],
+    count = c("10", "20", "30"),
+    stringsAsFactors = FALSE
+  )
+  sess   <- make_sess(df = df)
+  schema <- suggest_schema(sess, "tbl")
+  expect_type(schema, "character")
+  expect_named(schema)
+  expect_equal(schema[["month"]], "character")
+  expect_equal(schema[["count"]], "integer")
+})

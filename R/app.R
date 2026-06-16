@@ -681,7 +681,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
             )
           ),
           shiny::selectInput("ext_method", "Method",
-                             choices = c("bbox", "lattice", "stream", "llm", "paddle"),
+                             choices = c("bbox", "lattice", "stream", "llm"),
                              selected = "bbox"),
           shiny::conditionalPanel(
             "input.ext_method == 'llm'",
@@ -711,27 +711,6 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
               shiny::tags$code("ANTHROPIC_API_KEY"),
               " / ", shiny::tags$code("OPENAI_API_KEY"),
               " / ", shiny::tags$code("GEMINI_API_KEY"), " in .Renviron"
-            )
-          ),
-          shiny::conditionalPanel(
-            "input.ext_method === 'paddle'",
-            shiny::hr(),
-            shiny::div(
-              class = "d-flex gap-2",
-              shiny::numericInput("paddle_dpi", "DPI", value = 150L,
-                                  min = 72L, max = 300L, step = 25L, width = "30%"),
-              shiny::numericInput("paddle_header_rows", "Header rows",
-                                  value = 1L, min = 1L, width = "25%"),
-              shiny::numericInput("paddle_table_index", "Table #",
-                                  value = 1L, min = 1L, width = "20%"),
-              shiny::selectInput("paddle_backend", "Backend",
-                                 choices = c("auto", "onnxruntime", "paddle"),
-                                 selected = "auto", width = "25%")
-            ),
-            shiny::tags$small(class = "text-muted",
-              shiny::icon("database"), " Requires PaddleOCR. Run ",
-              shiny::tags$code("pdfmacro::setup_paddle()"),
-              " once to install. Works fully offline."
             )
           ),
           shiny::actionButton("do_extract", "Extract",
@@ -961,28 +940,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
         area <- NULL; label_match <- lm
       }
 
-      if (method == "paddle") {
-          if (!requireNamespace("reticulate", quietly = TRUE))
-            stop("Install reticulate and run pdfmacro::setup_paddle() first.")
-          dpi_val <- as.integer(input$paddle_dpi         %||% 150L)
-          hdr_val <- as.integer(input$paddle_header_rows %||% 1L)
-          tbl_idx <- as.integer(input$paddle_table_index %||% 1L)
-          tmp <- new.env(parent = emptyenv())
-          tmp$path <- rv$pdf_path; tmp$tables <- list(); tmp$steps <- list()
-          tmp$.replaying <- TRUE; class(tmp) <- "pdfmacro_session"
-          backend_val <- input$paddle_backend %||% "auto"
-          select_table_paddle(tmp, label = label, page = page, area = area,
-            dpi = dpi_val, header_rows = hdr_val, table_index = tbl_idx,
-            backend = backend_val)
-          df <- tmp$tables[[label]]
-          if (is.null(df) || nrow(df) == 0) stop("PP-StructureV3 returned no data.")
-          rv$tables[[label]] <- df
-          new_step <- list(
-            step = "select_table_paddle", label = label, page = page, area = area,
-            dpi = dpi_val, header_rows = hdr_val, table_index = tbl_idx,
-            backend = backend_val, method = "paddle")
-          rv$steps <- .replace_or_append_extraction(rv$steps, label, new_step)
-      } else if (method == "llm") {
+      if (method == "llm") {
         if (!requireNamespace("ellmer", quietly = TRUE))
           stop("Install the 'ellmer' package for LLM extraction.")
         schema_val <- .parse_schema_text(input$llm_schema %||% "")
@@ -1687,7 +1645,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
     removed      <- rv$steps[[idx]]
     remaining    <- rv$steps[-idx]   # steps after removal
 
-    is_extraction <- isTRUE(removed$step %in% c("select_table", "select_table_llm"))
+    is_extraction <- isTRUE(removed$step %in% c("select_table", "select_table_llm", "select_table_docling", "stack_pages"))
     lbl           <- removed$label
 
     # Only wipe the table if no other extraction step for this label remains

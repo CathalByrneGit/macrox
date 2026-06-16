@@ -116,3 +116,26 @@ test_that("show_validations() prints summary for each table", {
   expect_true(any(grepl("tbl", out)))
   expect_true(any(grepl("passed|failed", tolower(out))))
 })
+
+# --------------------------------------------------------------------------- #
+#  expect_table_snapshot()                                                     #
+# --------------------------------------------------------------------------- #
+
+test_that("expect_table_snapshot() errors when testthat absent", {
+  sess <- make_valid_sess()
+  testthat::local_mocked_bindings(
+    requireNamespace = function(pkg, ...) if (pkg == "testthat") FALSE else TRUE,
+    .package = "base"
+  )
+  expect_error(expect_table_snapshot(sess, "tbl"), "testthat")
+})
+
+test_that("expect_table_snapshot() accepts a plain data frame", {
+  df <- data.frame(a = 1:3, stringsAsFactors = FALSE)
+  expect_no_error(expect_table_snapshot(df))
+})
+
+test_that("expect_table_snapshot() retrieves table from session", {
+  sess <- make_valid_sess()
+  expect_no_error(expect_table_snapshot(sess, "tbl"))
+})

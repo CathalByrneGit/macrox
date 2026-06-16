@@ -249,7 +249,7 @@ print.pdfmacro_validation <- function(x, ...) {
 #' @param area Named `c(top, left, bottom, right)` in PDF points, or `NULL`
 #'   for the full page.
 #' @param method Extraction method: `"bbox"` (default), `"lattice"`,
-#'   `"stream"`, `"paddle"`, or `"llm"`.
+#'   `"stream"`, or `"llm"`.
 #' @param header_rows Number of header rows (default 1).
 #' @param label Internal table label used during extraction (default
 #'   `"target"`).
@@ -275,8 +275,7 @@ print.pdfmacro_validation <- function(x, ...) {
 test_extraction <- function(file,
                              page,
                              area        = NULL,
-                             method      = c("bbox", "lattice", "stream",
-                                             "paddle", "llm"),
+                             method      = c("bbox", "lattice", "stream", "llm"),
                              header_rows = 1L,
                              label       = "target",
                              provider    = "anthropic",
@@ -300,9 +299,6 @@ test_extraction <- function(file,
       lattice = ,
       stream = select_table(tmp, label = label, page = page, area = area,
                              method = method, header_rows = header_rows, ...),
-      paddle = select_table_paddle(tmp, label = label, page = page,
-                                    area = area, header_rows = header_rows,
-                                    ...),
       llm    = select_table_llm(tmp, label = label, page = page, area = area,
                                  header_rows = header_rows, provider = provider,
                                  schema = schema, ...)

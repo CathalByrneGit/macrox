@@ -88,6 +88,106 @@ test_that("select_item() stores raw value alongside cast value", {
   expect_equal(sess$items$amount$raw, "99.9")
 })
 
+# ── GLiNER backend ────────────────────────────────────────────────────────── #
+
+test_that("select_item() gliner backend stores value and backend tag", {
+  sess    <- make_item_sess()
+  mock_py <- list(gliner_extract_item = function(text, label, description) "INV-9821")
+
+  testthat::local_mocked_bindings(
+    pdf_text      = function(...) list("Invoice Number: INV-9821"),
+    .package      = "pdftools"
+  )
+  testthat::local_mocked_bindings(
+    .ensure_gliner = function(...) mock_py
+  )
+
+  select_item(sess, "invoice_number",
+              prompt  = "Invoice ID or reference number",
+              backend = "gliner")
+
+  expect_equal(as.character(sess$items$invoice_number$value), "INV-9821")
+  expect_equal(sess$items$invoice_number$backend, "gliner")
+})
+
+test_that("select_item() gliner records step with backend and gliner_model", {
+  sess    <- make_item_sess()
+  mock_py <- list(gliner_extract_item = function(...) "ABC")
+
+  testthat::local_mocked_bindings(
+    pdf_text       = function(...) list("ref: ABC"),
+    .package       = "pdftools"
+  )
+  testthat::local_mocked_bindings(
+    .ensure_gliner = function(...) mock_py
+  )
+
+  select_item(sess, "ref",
+              prompt       = "Reference code",
+              backend      = "gliner",
+              gliner_model = "fastino/gliner2-large-v1")
+
+  s <- sess$steps[[1]]
+  expect_equal(s$backend,      "gliner")
+  expect_equal(s$gliner_model, "fastino/gliner2-large-v1")
+  expect_null(s$provider)
+  expect_null(s$dpi)
+})
+
+test_that("select_item() gliner uses only the specified page's text", {
+  sess    <- make_item_sess()
+  pages   <- list("page one text", "page two text", "page three text")
+  seen_text <- NULL
+  mock_py <- list(
+    gliner_extract_item = function(text, label, description) {
+      seen_text <<- text
+      "page two text"
+    }
+  )
+  testthat::local_mocked_bindings(
+    pdf_text       = function(...) pages,
+    .package       = "pdftools"
+  )
+  testthat::local_mocked_bindings(
+    .ensure_gliner = function(...) mock_py
+  )
+
+  select_item(sess, "excerpt", prompt = "text", backend = "gliner", page = 2L)
+  expect_equal(seen_text, "page two text")
+})
+
+test_that("select_item() gliner returns empty string when model finds nothing", {
+  sess    <- make_item_sess()
+  mock_py <- list(gliner_extract_item = function(...) NULL)
+
+  testthat::local_mocked_bindings(
+    pdf_text       = function(...) list("no match here"),
+    .package       = "pdftools"
+  )
+  testthat::local_mocked_bindings(
+    .ensure_gliner = function(...) mock_py
+  )
+
+  select_item(sess, "missing", prompt = "nonexistent field", backend = "gliner")
+  expect_equal(as.character(sess$items$missing$value), "")
+})
+
+test_that("select_item() llm records backend = 'llm' in step", {
+  sess <- make_item_sess()
+  testthat::local_mocked_bindings(
+    pdf_text = function(...) list("Total: 100"),
+    .package = "pdftools"
+  )
+  mock_chat <- list(chat_structured = function(...) list(value = "100"))
+  testthat::local_mocked_bindings(
+    .make_llm_chat = function(...) mock_chat,
+    .check_ellmer  = function(...) invisible(NULL)
+  )
+
+  select_item(sess, "total", prompt = "Grand total.", backend = "llm")
+  expect_equal(sess$steps[[1]]$backend, "llm")
+})
+
 # --------------------------------------------------------------------------- #
 #  update_item()                                                               #
 # --------------------------------------------------------------------------- #

@@ -131,3 +131,34 @@ show_validations <- function(sess) {
   }
   invisible(sess)
 }
+
+
+# --------------------------------------------------------------------------- #
+#  expect_table_snapshot()                                                     #
+# --------------------------------------------------------------------------- #
+
+#' Snapshot-test an extracted table
+#'
+#' Wraps [testthat::expect_snapshot()] to lock in the printed representation of
+#' a table stored in a session. On first run the snapshot is written to
+#' `tests/testthat/_snaps/`; subsequent runs compare against that baseline.
+#'
+#' Must be called inside a `testthat` test (i.e., within `test_that()`).
+#'
+#' @param sess A `pdfmacro_session` object, or a plain data frame.
+#' @param label Character label of the table to snapshot. Ignored when `sess`
+#'   is already a data frame.
+#' @param variant Optional variant string passed to
+#'   [testthat::expect_snapshot()], allowing multiple snapshots per test.
+#' @return The result of `expect_snapshot()`, invisibly.
+#' @export
+expect_table_snapshot <- function(sess, label = NULL, variant = NULL) {
+  if (!requireNamespace("testthat", quietly = TRUE)) {
+    cli::cli_abort(c(
+      "Package {.pkg testthat} is required.",
+      "i" = "Install with: {.code install.packages('testthat')}"
+    ))
+  }
+  df <- if (is.data.frame(sess)) sess else get_table(sess, label)
+  testthat::expect_snapshot(df, variant = variant)
+}

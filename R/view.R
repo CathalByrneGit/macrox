@@ -1,26 +1,25 @@
 #' View a recorded step's location in the PDF
 #'
-#' Renders the PDF page for a `select_table`, `select_table_paddle`, or
-#' `select_table_llm` step and opens it in the RStudio Viewer or system
-#' browser. If the step used a bounding box, the selected area is highlighted
-#' in blue. Requires `magick` for annotations (Suggests).
+#' Renders the PDF page for a `select_table` or `select_table_llm` step and
+#' opens it in the RStudio Viewer or system browser. If the step used a
+#' bounding box, the selected area is highlighted in blue. Requires `magick`
+#' for annotations (Suggests).
 #'
 #' @param sess A `pdfmacro_session` object.
 #' @param step Integer step index. Defaults to the most recent step with a
-#'   page location (`select_table`, `select_table_paddle`, or
-#'   `select_table_llm`).
+#'   page location (`select_table` or `select_table_llm`).
 #' @param dpi Render resolution (default 150).
 #' @return The bounding box area (named numeric vector or NULL), invisibly.
 #' @export
 view_in_pdf <- function(sess, step = NULL, dpi = 150) {
   steps <- sess$steps
-  page_steps <- c("select_table", "select_table_paddle", "select_table_llm")
+  page_steps <- c("select_table", "select_table_llm")
 
   if (is.null(step)) {
     # Find last step with a page location
     idx <- rev(which(vapply(steps, function(s) s$step %in% page_steps, logical(1))))
     if (length(idx) == 0) {
-      cli::cli_abort("No {.val select_table}, {.val select_table_paddle}, or {.val select_table_llm} steps recorded yet.")
+      cli::cli_abort("No {.val select_table} or {.val select_table_llm} steps recorded yet.")
     }
     step <- idx[[1]]
   }
@@ -32,7 +31,7 @@ view_in_pdf <- function(sess, step = NULL, dpi = 150) {
   s <- steps[[step]]
   if (!s$step %in% page_steps) {
     cli::cli_abort(
-      "Step [{step}] is {.val {s$step}}, not {.val select_table}, {.val select_table_paddle}, or {.val select_table_llm}. Only these steps have a page location."
+      "Step [{step}] is {.val {s$step}}, not {.val select_table} or {.val select_table_llm}. Only these steps have a page location."
     )
   }
 

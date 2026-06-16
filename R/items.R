@@ -8,60 +8,123 @@
 
 #' Extract a single metadata field from a PDF
 #'
-#' Sends either the full document text (when `page = NULL`) or a rendered page
-#' image (when `page` is specified) to an LLM and extracts a single structured
-#' value. Results are stored in `sess$items[[label]]` and recorded as a step.
+#' Extracts a single structured value from a PDF using either an LLM or a
+#' local GLiNER2 model.  Results are stored in `sess$items[[label]]` and
+#' recorded as a step.
 #'
 #' @param sess A `pdfmacro_session` object.
-#' @param label Character label for the extracted item (e.g. `"invoice_number"`).
-#' @param prompt Instruction for the LLM (e.g. `"Extract the invoice ID."`).
+#' @param label Character label for the item (e.g. `"invoice_number"`).
+#' @param prompt Description of the field to extract.  For the LLM backend
+#'   this is the full instruction; for GLiNER it is the field description
+#'   passed alongside `label` as the entity type.
 #' @param cast Optional type to cast the returned string to: `"character"`
 #'   (default), `"numeric"`, `"integer"`, or `"date:<fmt>"` e.g.
 #'   `"date:%d/%m/%Y"`.
-#' @param page Page number to render as an image and send to the LLM.
-#'   `NULL` (default) sends all page text instead — faster and cheaper for
-#'   digital PDFs.
-#' @param area Named `c(top, left, bottom, right)` in PDF points. Only used
-#'   when `page` is specified.
-#' @param chat An existing `ellmer` Chat object, e.g.
-#'   `ellmer::chat_anthropic()` or `ellmer::chat_openai_compatible(base_url =
-#'   "http://localhost:11434/v1", model = "llama2")`. The chat is cloned
-#'   before use. When supplied, `provider`, `model`, and `base_url` are
-#'   ignored for the call but recorded (derived from the chat object) so the
-#'   step can be replayed. See [select_table_llm()].
-#' @param provider LLM provider (default `"anthropic"`). See [select_table_llm()].
-#'   Ignored when `chat` is supplied.
-#' @param model Model name. `NULL` uses the provider default. Ignored when
-#'   `chat` is supplied.
+#' @param page Page number.  For `backend = "llm"`, `NULL` sends all page text
+#'   and a non-NULL value renders an image.  For `backend = "gliner"`, `NULL`
+#'   uses all pages' text and a non-NULL value uses only that page's text
+#'   (no image rendering).
+#' @param area Named `c(top, left, bottom, right)` in PDF points.  Only used
+#'   when `backend = "llm"` and `page` is non-NULL.
+#' @param backend Extraction backend: `"llm"` (default, requires ellmer) or
+#'   `"gliner"` (local GLiNER2 model, requires reticulate + gliner2 Python
+#'   package installed via [setup_gliner()]).
+#' @param chat An existing `ellmer` Chat object.  Only used when
+#'   `backend = "llm"`.  See [select_table_llm()].
+#' @param provider LLM provider (default `"anthropic"`).  Only used when
+#'   `backend = "llm"` and `chat` is `NULL`.
+#' @param model Model name.  Only used when `backend = "llm"`.
 #' @param base_url Base URL for `"openai_compatible"` providers.
-#' @param dpi Render resolution when `page` is specified (default 120).
+#' @param dpi Render resolution when `backend = "llm"` and `page` is set
+#'   (default 120).
+#' @param gliner_model GLiNER2 model name (HuggingFace repo).  Only used when
+#'   `backend = "gliner"`.  Default `"fastino/gliner2-base-v1"` (205M
+#'   params); use `"fastino/gliner2-large-v1"` for higher accuracy.
 #' @return `sess` invisibly (step is recorded).
 #'
 #' @examples
 #' \dontrun{
+#' # LLM backend (default)
 #' sess |> select_item("invoice_number",
 #'   prompt = "Extract the invoice ID or reference number.")
 #'
-#' sess |> select_item("invoice_date",
-#'   prompt = "The billing issue date.",
-#'   cast   = "date:%d/%m/%Y")
+#' # GLiNER backend — local, no API key needed
+#' setup_gliner()
+#' sess |> select_item("invoice_number",
+#'   prompt  = "Invoice ID or reference number",
+#'   backend = "gliner")
 #'
-#' # Send a specific page image instead of document text
+#' # GLiNER on a specific page
 #' sess |> select_item("total_amount",
-#'   prompt = "The grand total payable.",
-#'   page   = 1L,
-#'   cast   = "numeric")
+#'   prompt  = "Grand total amount payable",
+#'   page    = 1L,
+#'   cast    = "numeric",
+#'   backend = "gliner")
 #' }
 #' @export
 select_item <- function(sess, label, prompt,
-                         cast     = NULL,
-                         page     = NULL,
-                         area     = NULL,
-                         chat     = NULL,
-                         provider = "anthropic",
-                         model    = NULL,
-                         base_url = NULL,
-                         dpi      = 120L) {
+                         cast         = NULL,
+                         page         = NULL,
+                         area         = NULL,
+                         backend      = c("llm", "gliner"),
+                         chat         = NULL,
+                         provider     = "anthropic",
+                         model        = NULL,
+                         base_url     = NULL,
+                         dpi          = 120L,
+                         gliner_model = "fastino/gliner2-base-v1") {
+  backend <- match.arg(backend)
+
+  # ── GLiNER path ─────────────────────────────────────────────────────────────
+  if (backend == "gliner") {
+    py        <- .ensure_gliner(gliner_model)
+    all_pages <- pdftools::pdf_text(sess$path)
+    text      <- if (!is.null(page)) {
+      all_pages[[as.integer(page)]]
+    } else {
+      paste(all_pages, collapse = "\n\n---\n\n")
+    }
+
+    cli::cli_inform(c("i" = "Extracting {.val {label}} via GLiNER2..."))
+    raw_value <- tryCatch(
+      {
+        val <- py$gliner_extract_item(text, label, prompt)
+        if (is.null(val)) "" else as.character(val)
+      },
+      error = function(e) cli::cli_abort(
+        "GLiNER2 extraction failed for {.val {label}}: {conditionMessage(e)}"
+      )
+    )
+
+    cast_value <- .cast_item(raw_value, cast, label)
+
+    if (is.null(sess$items)) sess$items <- list()
+    sess$items[[label]] <- list(
+      value        = cast_value,
+      raw          = raw_value,
+      cast         = cast %||% "character",
+      prompt       = prompt,
+      backend      = "gliner",
+      gliner_model = gliner_model
+    )
+
+    record_step(sess, list(
+      step         = "select_item",
+      label        = label,
+      prompt       = prompt,
+      cast         = cast,
+      page         = page,
+      backend      = "gliner",
+      gliner_model = gliner_model
+    ))
+
+    cli::cli_inform(c(
+      "v" = "Item {.val {label}}: {.strong {as.character(cast_value)}} [GLiNER2]"
+    ))
+    return(invisible(sess))
+  }
+
+  # ── LLM path ────────────────────────────────────────────────────────────────
   .check_ellmer()
   resolved <- .resolve_llm_chat(chat, provider, model, base_url)
   chat_obj <- resolved$chat
@@ -69,7 +132,6 @@ select_item <- function(sess, label, prompt,
   model    <- resolved$model
   base_url <- resolved$base_url
 
-  # ── Build type spec — single value field ──────────────────────────────────
   item_type <- ellmer::type_object(
     value = ellmer::type_string(
       paste0("The extracted value for: ", prompt)
@@ -77,7 +139,6 @@ select_item <- function(sess, label, prompt,
   )
 
   if (!is.null(page)) {
-    # Image-based: render the specified page (optionally cropped)
     cli::cli_inform(c("i" = "Rendering page {page} for item {.val {label}}..."))
     img_path <- .render_page_for_llm(sess$path, page, area, dpi)
     on.exit(unlink(img_path), add = TRUE)
@@ -92,12 +153,11 @@ select_item <- function(sess, label, prompt,
       )
     )
   } else {
-    # Text-based: concatenate all page text and send as a prompt
     cli::cli_inform(c("i" = "Extracting item {.val {label}} from document text..."))
-    all_text <- paste(pdftools::pdf_text(sess$path), collapse = "\n\n---\n\n")
+    all_text    <- paste(pdftools::pdf_text(sess$path), collapse = "\n\n---\n\n")
     full_prompt <- paste0(
       "The following is the extracted text of a PDF document:\n\n",
-      substr(all_text, 1L, 12000L),   # cap to avoid token limits
+      substr(all_text, 1L, 12000L),
       "\n\n---\n\n",
       prompt
     )
@@ -109,28 +169,16 @@ select_item <- function(sess, label, prompt,
     )
   }
 
-  # ── Extract and cast value ─────────────────────────────────────────────────
-  raw_value <- result$value %||% ""
+  raw_value  <- result$value %||% ""
+  cast_value <- .cast_item(raw_value, cast, label)
 
-  cast_value <- if (!is.null(cast) && nchar(trimws(cast)) > 0L) {
-    tryCatch(
-      .cast_col(raw_value, cast),
-      error = function(e) {
-        cli::cli_warn("Cast to {.val {cast}} failed for {.val {label}} — keeping as character.")
-        raw_value
-      }
-    )
-  } else {
-    raw_value
-  }
-
-  # ── Store in session ───────────────────────────────────────────────────────
   if (is.null(sess$items)) sess$items <- list()
   sess$items[[label]] <- list(
     value    = cast_value,
     raw      = raw_value,
     cast     = cast %||% "character",
     prompt   = prompt,
+    backend  = "llm",
     provider = provider,
     model    = model
   )
@@ -142,6 +190,7 @@ select_item <- function(sess, label, prompt,
     cast     = cast,
     page     = page,
     area     = area,
+    backend  = "llm",
     provider = provider,
     model    = model,
     base_url = base_url,
@@ -152,6 +201,23 @@ select_item <- function(sess, label, prompt,
     "v" = "Item {.val {label}}: {.strong {as.character(cast_value)}} [{provider}]"
   ))
   invisible(sess)
+}
+
+
+.cast_item <- function(raw_value, cast, label) {
+  if (!is.null(cast) && nchar(trimws(cast)) > 0L) {
+    tryCatch(
+      .cast_col(raw_value, cast),
+      error = function(e) {
+        cli::cli_warn(
+          "Cast to {.val {cast}} failed for {.val {label}} — keeping as character."
+        )
+        raw_value
+      }
+    )
+  } else {
+    raw_value
+  }
 }
 
 
@@ -186,16 +252,18 @@ update_item <- function(sess, label, prompt = NULL, cast = NULL,
     old_rep       <- sess$.replaying
     sess$.replaying <- TRUE
     select_item(sess,
-      label    = label,
-      prompt   = step$prompt,
-      cast     = step$cast,
-      page     = step$page,
-      area     = step$area,
-      chat     = chat,
-      provider = step$provider %||% "anthropic",
-      model    = step$model,
-      base_url = step$base_url,
-      dpi      = step$dpi %||% 120L
+      label        = label,
+      prompt       = step$prompt,
+      cast         = step$cast,
+      page         = step$page,
+      area         = step$area,
+      backend      = step$backend      %||% "llm",
+      chat         = chat,
+      provider     = step$provider     %||% "anthropic",
+      model        = step$model,
+      base_url     = step$base_url,
+      dpi          = step$dpi          %||% 120L,
+      gliner_model = step$gliner_model %||% "fastino/gliner2-base-v1"
     )
     sess$.replaying <- old_rep
     sess$steps[[idx]] <- step   # restore the updated step

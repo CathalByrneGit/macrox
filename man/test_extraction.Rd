@@ -8,7 +8,7 @@ test_extraction(
   file,
   page,
   area = NULL,
-  method = c("bbox", "lattice", "stream", "paddle", "llm"),
+  method = c("bbox", "lattice", "stream", "llm"),
   header_rows = 1L,
   label = "target",
   provider = "anthropic",
@@ -26,7 +26,7 @@ test_extraction(
 for the full page.}
 
 \item{method}{Extraction method: \code{"bbox"} (default), \code{"lattice"},
-\code{"stream"}, \code{"paddle"}, or \code{"llm"}.}
+\code{"stream"}, or \code{"llm"}.}
 
 \item{header_rows}{Number of header rows (default 1).}
 

@@ -45,7 +45,17 @@
 #'   e.g. `"Ignore the footnote row at the bottom."`.
 #' @param dpi Render resolution for the page image (default 150).
 #' @param header_rows Number of header rows.  When > 1 the prompt asks the
-#'   LLM to flatten them with `_` separators.
+#'   LLM to flatten them with `_` separators. Ignored in `"page"` mode.
+#' @param mode Extraction mode:
+#'   * `"structured"` (default) — renders the area (or full page if no `area`)
+#'     and asks the LLM to return a typed JSON object.  Best when you know the
+#'     table's location and can supply a schema.
+#'   * `"page"` — renders the full page, asks the LLM to convert it to
+#'     markdown, and parses the resulting markdown tables.  No schema or area
+#'     is required; good for quick extraction when the layout is unknown.
+#'     `area` is ignored. Use `table_index` to pick among multiple tables.
+#' @param table_index When `mode = "page"` and multiple tables are detected on
+#'   the page, which one to return (default 1).
 #' @return `sess` invisibly (step is recorded).
 #' @export
 select_table_llm <- function(sess, label,
@@ -58,7 +68,10 @@ select_table_llm <- function(sess, label,
                               schema      = NULL,
                               prompt      = NULL,
                               dpi         = 150L,
-                              header_rows = 1L) {
+                              header_rows = 1L,
+                              mode        = c("structured", "page"),
+                              table_index = 1L) {
+  mode <- match.arg(mode)
   .check_ellmer()
   resolved <- .resolve_llm_chat(chat, provider, model, base_url)
   chat_obj <- resolved$chat
@@ -66,44 +79,83 @@ select_table_llm <- function(sess, label,
   model    <- resolved$model
   base_url <- resolved$base_url
 
-  # ── Render page → temp PNG (cropped if area supplied) ─────────────────────
   cli::cli_inform(c("i" = "Rendering page {page} [{provider} / {model}]..."))
-  img_path <- .render_page_for_llm(sess$path, page, area, dpi)
-  on.exit(unlink(img_path), add = TRUE)
 
-  # ── Build prompt ───────────────────────────────────────────────────────────
-  base_prompt <- paste0(
-    "Extract the table from this image as structured data. ",
-    "Include every data row exactly as shown. Do not add or omit rows. ",
-    if (header_rows > 1L)
-      paste0("The table has ", header_rows,
-             " header rows — combine them into a single column name joined by an underscore. ")
-    else "",
-    if (!is.null(schema))
-      paste0("Columns: ", paste(names(schema), collapse = ", "), ". ")
-    else
-      "Identify the column names from the table header. ",
-    if (!is.null(prompt)) prompt else ""
-  )
+  if (mode == "page") {
+    # ── Page mode: full page → markdown → parse ──────────────────────────────
+    img_path <- .render_page_for_llm(sess$path, page, area = NULL, dpi)
+    on.exit(unlink(img_path), add = TRUE)
 
-  # ── Build ellmer type spec ─────────────────────────────────────────────────
-  llm_type <- .build_llm_type(schema)
-
-  # ── Call LLM ──────────────────────────────────────────────────────────────
-  cli::cli_inform(c("i" = "Calling LLM..."))
-  result <- tryCatch(
-    chat_obj$chat_structured(
-      ellmer::content_image_file(img_path),
-      base_prompt,
-      type = llm_type
-    ),
-    error = function(e) cli::cli_abort(
-      "LLM extraction failed: {conditionMessage(e)}"
+    page_prompt <- paste0(
+      "Convert this PDF page to markdown. ",
+      "Format every table as a standard markdown table using | delimiters. ",
+      if (!is.null(schema))
+        paste0("The table of interest has columns: ",
+               paste(names(schema), collapse = ", "), ". ")
+      else "",
+      "Return only the markdown — no preamble, no commentary.",
+      if (!is.null(prompt)) paste0(" ", prompt) else ""
     )
-  )
 
-  # ── Convert result → data frame ────────────────────────────────────────────
-  df <- .llm_result_to_df(result, schema)
+    cli::cli_inform(c("i" = "Calling LLM (page mode)..."))
+    md <- tryCatch(
+      chat_obj$chat(ellmer::content_image_file(img_path), page_prompt),
+      error = function(e) cli::cli_abort(
+        "LLM page extraction failed: {conditionMessage(e)}"
+      )
+    )
+
+    tables <- .parse_markdown_tables(md)
+    if (length(tables) == 0L) {
+      cli::cli_abort(c(
+        "No markdown tables found in LLM response.",
+        "i" = "Try {.code mode = 'structured'} with an explicit schema, or add a {.arg prompt} describing the table."
+      ))
+    }
+
+    idx <- min(as.integer(table_index), length(tables))
+    if (length(tables) > 1L) {
+      cli::cli_inform(c(
+        "i" = "{length(tables)} tables found on page {page}; using table {idx}. Set {.arg table_index} to pick another."
+      ))
+    }
+    df <- tables[[idx]]
+
+  } else {
+    # ── Structured mode (default): cropped area → JSON ───────────────────────
+    img_path <- .render_page_for_llm(sess$path, page, area, dpi)
+    on.exit(unlink(img_path), add = TRUE)
+
+    base_prompt <- paste0(
+      "Extract the table from this image as structured data. ",
+      "Include every data row exactly as shown. Do not add or omit rows. ",
+      if (header_rows > 1L)
+        paste0("The table has ", header_rows,
+               " header rows — combine them into a single column name joined by an underscore. ")
+      else "",
+      if (!is.null(schema))
+        paste0("Columns: ", paste(names(schema), collapse = ", "), ". ")
+      else
+        "Identify the column names from the table header. ",
+      if (!is.null(prompt)) prompt else ""
+    )
+
+    llm_type <- .build_llm_type(schema)
+
+    cli::cli_inform(c("i" = "Calling LLM (structured mode)..."))
+    result <- tryCatch(
+      chat_obj$chat_structured(
+        ellmer::content_image_file(img_path),
+        base_prompt,
+        type = llm_type
+      ),
+      error = function(e) cli::cli_abort(
+        "LLM extraction failed: {conditionMessage(e)}"
+      )
+    )
+
+    df <- .llm_result_to_df(result, schema)
+  }
 
   if (nrow(df) == 0L) {
     cli::cli_abort("LLM returned an empty table. Try a tighter area or a more explicit prompt.")
@@ -115,18 +167,20 @@ select_table_llm <- function(sess, label,
     step        = "select_table_llm",
     label       = label,
     page        = page,
-    area        = area,
+    area        = if (mode == "structured") area else NULL,
     provider    = provider,
     model       = model,
     base_url    = base_url,
     schema      = if (!is.null(schema)) as.list(schema) else NULL,
     prompt      = prompt,
     dpi         = as.integer(dpi),
-    header_rows = as.integer(header_rows)
+    header_rows = as.integer(header_rows),
+    mode        = mode,
+    table_index = as.integer(table_index)
   ))
 
   cli::cli_inform(c(
-    "v" = "Table {.val {label}} extracted via LLM [{provider}]: {nrow(df)} x {ncol(df)}"
+    "v" = "Table {.val {label}} extracted via LLM [{provider}, {mode}]: {nrow(df)} × {ncol(df)}"
   ))
   invisible(sess)
 }
@@ -333,7 +387,7 @@ update_llm_schema <- function(sess, label, schema,
 
   if (!requireNamespace("magick", quietly = TRUE)) {
     cli::cli_abort(c(
-      "Package {.pkg magick} is required to render PDF pages for PaddleOCR/LLM extraction.",
+      "Package {.pkg magick} is required to render PDF pages for LLM extraction.",
       "i" = "Install with: {.code install.packages('magick')}"
     ))
   }
@@ -421,6 +475,66 @@ update_llm_schema <- function(sess, label, schema,
   rownames(df) <- NULL
   df
 }
+
+# --------------------------------------------------------------------------- #
+#  Markdown table parser (used by page mode)                                  #
+# --------------------------------------------------------------------------- #
+
+# Parse all markdown tables from a text string.
+# Returns a list of data frames, one per table found.
+.parse_markdown_tables <- function(md) {
+  lines <- strsplit(md, "\n", fixed = TRUE)[[1L]]
+  n     <- length(lines)
+  tables <- list()
+  i <- 1L
+
+  while (i <= n) {
+    # A markdown table header starts with a pipe character
+    if (grepl("^\\s*\\|", lines[[i]])) {
+      # The second line must be a separator: |---|---|  or  |:--|:--:|--:|
+      if (i + 1L <= n && grepl("^\\s*\\|[\\s|:_-]+\\|\\s*$", lines[[i + 1L]])) {
+        # Collect all consecutive pipe-prefixed lines
+        j <- i
+        while (j <= n && grepl("^\\s*\\|", lines[[j]])) j <- j + 1L
+
+        tbl_lines <- lines[i:(j - 1L)]
+
+        # Need at least: header + separator + 1 data row
+        if (length(tbl_lines) >= 3L) {
+          header    <- .parse_md_row(tbl_lines[[1L]])
+          data_rows <- lapply(tbl_lines[seq(3L, length(tbl_lines))], .parse_md_row)
+
+          if (length(header) > 0L && length(data_rows) > 0L) {
+            mat <- do.call(rbind, lapply(data_rows, function(row) {
+              v           <- as.character(row)
+              length(v)   <- length(header)
+              v[is.na(v)] <- ""
+              v
+            }))
+            if (!is.matrix(mat)) mat <- matrix(mat, nrow = 1L)
+            df           <- as.data.frame(mat, stringsAsFactors = FALSE)
+            names(df)    <- make.names(header, unique = TRUE)
+            rownames(df) <- NULL
+            tables        <- c(tables, list(df))
+          }
+        }
+        i <- j
+        next
+      }
+    }
+    i <- i + 1L
+  }
+
+  tables
+}
+
+# Split one markdown table row on | and trim whitespace.
+.parse_md_row <- function(line) {
+  parts <- strsplit(line, "\\|")[[1L]]
+  parts <- trimws(parts)
+  parts[nchar(parts) > 0L]
+}
+
 
 # Parse schema from a text area: "Month: character\nMale: integer\n..."
 # Also accepts bare column names (type defaults to character)

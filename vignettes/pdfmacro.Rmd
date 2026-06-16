@@ -29,8 +29,6 @@ install.packages(c(
   "magick",      # page annotation and image cropping
   "ellmer",      # LLM extraction
   "validate",    # data quality rules
-  "reticulate",  # PaddleOCR backend
-  "xml2",        # PaddleOCR HTML parsing
   "shinyAce",    # YAML editor in app
   "shinyFiles",  # filesystem browser in app
   "shinyjs",     # JS helpers in app
@@ -172,31 +170,6 @@ ANTHROPIC_API_KEY=sk-ant-...
 OPENAI_API_KEY=sk-...
 GEMINI_API_KEY=AI...
 OPENROUTER_API_KEY=sk-or-...
-```
-
-### paddle — PP-StructureV3 (PaddleOCR, offline)
-
-Renders the page image and runs it through Baidu's PP-StructureV3 table recognition pipeline.  Works completely offline — no API keys, no network calls after initial model download.  Best for scanned PDFs and complex layouts where `bbox` struggles.
-
-```{r paddle-setup, eval = FALSE}
-# One-time setup (restart R after)
-setup_paddle()                        # CPU — installs onnxruntime backend (~20 MB)
-setup_paddle(cuda_version = "12.6")   # GPU — CUDA 12.6
-
-# Restricted network? Download wheels on an internet machine first:
-download_paddle_wheels("~/paddleocr_wheels", python_version = "3.9")
-# copy folder to server, then:
-setup_paddle(wheels_dir = "/path/to/paddleocr_wheels")
-```
-
-```{r paddle}
-area <- sess |> locate_area(page = 40)
-
-sess |> select_table_paddle("stillborn", page = 40, area = area)
-
-# Choose backend explicitly when both are installed
-sess |> select_table_paddle("tbl", page = 5, backend = "onnxruntime")
-sess |> select_table_paddle("tbl", page = 5, backend = "paddle", device = "gpu")
 ```
 
 ---
@@ -461,15 +434,6 @@ steps:
       Total: integer
     prompt: "Flatten the two-row header."
 
-  - step: select_table_paddle
-    label: scanned_table
-    page: 22
-    area: [100, 20, 680, 780]
-    dpi: 200
-    header_rows: 1
-    backend: onnxruntime
-    device: cpu
-
   - step: select_item
     label: report_date
     prompt: "The publication date of this report."
@@ -535,8 +499,7 @@ observe({
 | Charts and tables on the same page | `bbox` + `area =` |
 | Numbers running together | `bbox` + `col_gap =` |
 | Multi-level / spanning headers | `llm` with `schema =` |
-| Scanned PDF, no selectable text | `paddle` or `llm` |
-| Offline / air-gapped / no API key | `bbox` or `paddle` |
+| Scanned PDF, no selectable text | `llm` |
 | Complex irregular layout | `llm` |
 
 ---
@@ -551,10 +514,8 @@ observe({
 | `yaml` | Macro read/write | Yes |
 | `cli` | Console output | Yes |
 | `rlang` | `%\|\|%` operator | Yes |
-| `magick` | Page annotation; image cropping for LLM/paddle | Suggests |
+| `magick` | Page annotation; image cropping for LLM | Suggests |
 | `ellmer` | LLM extraction | Suggests |
-| `reticulate` | PaddleOCR via Python | Suggests |
-| `xml2` | Parse PP-StructureV3 HTML output | Suggests |
 | `validate` | Data quality rules | Suggests |
 | `jsonlite` | JSON export | Suggests |
 | `shiny` + `bslib` + `DT` | Standalone app and module | Suggests |
