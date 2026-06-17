@@ -11,11 +11,18 @@ Works with any domain. Government statistics, financial reports, health data, pl
 ## Installation
 
 ```r
-# Java required for the lattice/stream extraction engines
-remotes::install_github("your/pdfmacro")
+remotes::install_github("cathalbyrnegit/pdfmacro")
 
 # Recommended
 install.packages(c("magick", "ellmer", "validate", "shinyAce", "shinyFiles"))
+```
+
+**Optional Python backends** (Docling for ML-based table detection, GLiNER2 for local NLP field extraction):
+
+```r
+# After installing pdfmacro:
+setup_docling()   # installs docling into a Python virtualenv (~2-3 GB models)
+setup_gliner()    # installs GLiNER2 (~500 MB model)
 ```
 
 ---
@@ -42,12 +49,14 @@ pdf_app("pane")     # RStudio Viewer pane
 
 | Tab | Purpose |
 |---|---|
-| **Extract** | Full PDF viewer with draw-to-select, bbox / lattice / stream / llm method picker, live table preview. `←`/`→` keys navigate pages. |
+| **Extract** | Full PDF viewer with draw-to-select, bbox / lattice / stream / docling / llm method picker, live table preview. `←`/`→` keys navigate pages. |
 | **Tables** | One tab per extracted table. Rename columns, Cast types, Filter rows (GUI), Validate (rule editor), Column stats. |
+| **Items** | Extract single metadata fields (invoice numbers, dates, totals) via LLM or GLiNER2. |
+| **Struct** | Extract structured records (multiple fields, multiple rows) via GLiNER2. |
 | **Steps** | Recorded step badges; remove individual steps, clear all. Edit the YAML macro directly with syntax highlighting. |
 | **Replay** | Choose a saved macro + a new PDF, replay, results load straight into Tables. |
 | **Batch** | Select multiple PDFs, one macro, run all. Download results as Excel or zip of CSVs. |
-| **Export** | CSV, single-table Excel, all-tables workbook, zip of CSVs. Edit and download the YAML macro. |
+| **Export** | CSV, Excel, JSON, zip of CSVs. Edit and download the YAML macro. |
 | **Help** | Workflow checklist and method reference. |
 
 ---
@@ -89,7 +98,7 @@ sess |> detect_tables(min_rows = 0, max_header_chars = Inf)  # see everything
 
 ### 3 — Choose an extraction method
 
-Three engines, mixed freely within a session and macro.
+Five engines, mixed freely within a session and macro.
 
 #### `bbox` — word-position engine (recommended for messy PDFs)
 
@@ -114,6 +123,22 @@ For clean PDFs with visible grid lines (`lattice`) or whitespace-aligned columns
 
 ```r
 sess |> select_table("calf_monthly", page = 8, method = "lattice")
+```
+
+#### `docling` — ML layout engine (IBM Research)
+
+Uses Docling's deep learning layout models to detect and extract tables. Handles scanned PDFs and complex layouts. Runs locally after an initial one-time model download (~2-3 GB). No API key needed.
+
+```r
+# One-time setup
+setup_docling()
+# Restart R, then:
+
+# Scan for tables using Docling's ML detection
+sess |> detect_tables(pages = 1:20, method = "docling")
+
+# Extract a specific table
+sess |> select_table_docling("financials", page = 10, table_index = 1)
 ```
 
 #### `llm` — LLM engine via ellmer
@@ -210,6 +235,66 @@ sess |> select_table_llm("stillborn", page = 40, area = area,
 
 ---
 
+### 5b — Multi-page tables
+
+When the same table spans several consecutive pages:
+
+```r
+sess |> stack_pages("breed_all", pages = 10:14, area = area, method = "bbox")
+```
+
+`stack_pages()` extracts the table from each page and row-binds the results. Repeated headers are consumed automatically (`header_match = TRUE` by default).
+
+---
+
+### 5c — Extract metadata items
+
+`select_item()` extracts single fields — invoice numbers, dates, totals — anything that isn't a table row. Results are stored in `sess$items` and included in `export_json()`.
+
+```r
+# LLM backend (default)
+sess |> select_item("invoice_number",
+  prompt = "Extract the invoice ID or reference number.")
+
+sess |> select_item("total_amount",
+  prompt = "The grand total payable.",
+  cast   = "numeric")
+
+# GLiNER2 backend — local, no API key needed
+sess |> select_item("invoice_number",
+  prompt  = "Invoice ID or reference number",
+  backend = "gliner")
+
+# Batch extraction — multiple fields in one GLiNER pass
+sess |> select_items_batch(c(
+  invoice_no = "Invoice ID or reference number",
+  total      = "Grand total amount payable",
+  due_date   = "Payment due date"
+), cast = c(total = "numeric", due_date = "date:%d/%m/%Y"))
+
+sess |> show_items()
+```
+
+---
+
+### 5d — Structured record extraction (GLiNER2)
+
+`select_struct()` extracts structured records with multiple fields and multiple rows — like a table, but from unstructured text using GLiNER2's NLP.
+
+```r
+sess |> select_struct("line_items",
+  entity = "LineItem",
+  fields = c(description = "Product or service description",
+             quantity    = "Number of units",
+             unit_price  = "Price per unit"),
+  page = 1L)
+
+# Convert raw extraction to a data frame (with optional confidence filtering)
+sess |> struct_to_df("line_items", min_confidence = 0.5)
+```
+
+---
+
 ### 6 — Clean each table
 
 ```r
@@ -223,6 +308,15 @@ sess |> cast_types("calf_monthly", c(
 ))
 
 sess |> filter_rows("calf_monthly", exclude_where = "month == 'Total'")
+
+# Forward-fill blank cells (common in merged-cell government PDFs)
+sess |> fill_down("calf_monthly", cols = "region")
+
+# Strip currency, commas, parenthetical negatives; auto-convert to numeric
+sess |> clean_numbers("calf_monthly", cols = c("male_count", "female_count"))
+
+# Auto-detect column types as a starting point
+sess |> suggest_schema("calf_monthly")
 ```
 
 ---
@@ -301,6 +395,9 @@ sess |> export_csv(dir = "output/")
 
 # Write all tables to a single Excel workbook
 sess |> export_excel("output/report_tables.xlsx")
+
+# JSON — items (metadata) + tables (row arrays) in one payload
+sess |> export_json(path = "output/report.json")
 ```
 
 ---
@@ -357,13 +454,18 @@ macro:
   name: dafm_aim_bovine
   created: '2026-05-07 14:32'
   source: AIM_Stats_Report_2024.pdf
-  n_steps: 9
+  n_steps: 11
 
 steps:
   - step: select_table
     label: calf_monthly
     page: 8
     method: lattice
+
+  - step: select_table_docling
+    label: financials
+    page: 10
+    table_index: 1
 
   - step: select_table_llm
     label: breed_sire
@@ -376,6 +478,21 @@ steps:
       Male: integer
       Total: integer
     prompt: "Flatten two-row header."
+
+  - step: select_item
+    label: report_date
+    prompt: "The publication date of this report."
+    cast: "date:%B %Y"
+    backend: llm
+    provider: anthropic
+
+  - step: select_struct
+    label: line_items
+    entity: LineItem
+    fields:
+      description: "Product or service description"
+      quantity: "Number of units"
+    page: 1
 
   - step: rename_columns
     table: calf_monthly
@@ -394,10 +511,13 @@ steps:
     table: calf_monthly
     exclude_where: "month == 'Total'"
 
-  - step: add_column
+  - step: fill_down
     table: calf_monthly
-    name: year
-    expr: "2024L"
+    cols: [region]
+
+  - step: clean_numbers
+    table: calf_monthly
+    cols: [male_count, total_count]
 
   - step: validate_table
     table: calf_monthly
@@ -406,17 +526,6 @@ steps:
       twelve_rows: "nrow(.) == 12"
       no_na_month: "!anyNA(month)"
       positive:    "all(male_count > 0, na.rm = TRUE)"
-
-  - step: stack_tables
-    label: all_years
-    tables: [calves_2022, calves_2023, calves_2024]
-
-  - step: merge_tables
-    label: combined
-    left: calf_monthly
-    right: calf_by_county
-    by: [month]
-    all: false
 ```
 
 ---
@@ -453,34 +562,65 @@ Returns `list(tables = reactive(...), steps = reactive(...))`.
 |---|---|---|
 | `pdf_app(viewer)` | — | Launch standalone Shiny app |
 | `pdf_session(path)` | — | Open a script session; omit `path` for file chooser |
-| `detect_tables(sess, pages, method, min_rows, max_header_chars)` | No | Scan pages, filter noise |
+| **Detection** | | |
+| `detect_tables(sess, pages, method, ...)` | No | Scan pages for tables (lattice / stream / docling) |
+| `detect_tables_quietly(path, pages, ...)` | — | Silent detection for agents |
 | `locate_area(sess, page)` | No | Interactive click-drag area selector |
-| `select_table(sess, label, page, area, method, header_rows, row_tol, col_gap, ...)` | **Yes** | Extract via bbox / lattice / stream |
-| `select_table_llm(sess, label, page, area, provider, model, base_url, schema, prompt, ...)` | **Yes** | Extract via LLM |
-| `update_llm_schema(sess, label, schema, prompt, re_extract)` | — | Revise LLM schema and re-extract |
+| **Table extraction** | | |
+| `select_table(sess, label, page, area, method, ...)` | **Yes** | Extract via bbox / lattice / stream |
+| `select_table_llm(sess, label, page, ...)` | **Yes** | Extract via LLM |
+| `select_table_docling(sess, label, page, table_index)` | **Yes** | Extract via Docling ML models |
+| `stack_pages(sess, label, pages, ...)` | **Yes** | Extract + stack same table across pages |
+| `update_llm_schema(sess, label, schema, ...)` | — | Revise LLM schema and re-extract |
+| **Metadata extraction** | | |
+| `select_item(sess, label, prompt, ...)` | **Yes** | Extract a single field (LLM or GLiNER2) |
+| `select_items_batch(sess, items, ...)` | **Yes** | Extract multiple fields in one GLiNER pass |
+| `select_struct(sess, label, fields, ...)` | **Yes** | Extract structured records via GLiNER2 |
+| `struct_to_df(sess, label, min_confidence)` | **Yes** | Convert struct records to a data frame |
+| `update_item(sess, label, prompt, ...)` | — | Revise item prompt and re-extract |
+| `show_items(sess)` | No | Print all extracted items |
+| **Cleaning** | | |
 | `rename_columns(sess, table, mapping)` | **Yes** | Rename raw headers |
 | `cast_types(sess, table, types)` | **Yes** | Parse to numeric / integer / date |
 | `filter_rows(sess, table, exclude_where)` | **Yes** | Drop rows by expression |
+| `fill_down(sess, table, cols)` | **Yes** | Forward-fill blank / NA cells |
+| `clean_numbers(sess, table, cols, ...)` | **Yes** | Strip currency, commas, parse negatives |
 | `add_column(sess, table, name, expr)` | **Yes** | Add a derived column |
+| `suggest_schema(sess, label)` | No | Auto-detect column types |
+| **Composition** | | |
 | `stack_tables(sess, label, tables, .fill)` | **Yes** | Row-bind tables into one |
 | `merge_tables(sess, label, left, right, by, ...)` | **Yes** | Join two tables |
+| **Validation** | | |
 | `validate_table(sess, table, rules, strict)` | **Yes** | Run data quality rules |
 | `show_validations(sess)` | No | Print all confrontation results |
+| **Inspection** | | |
 | `view_in_pdf(sess, step, dpi)` | No | View a step's PDF location |
 | `preview(sess, table, n)` | No | Inspect one table |
 | `preview_all(sess, n)` | No | Inspect all tables with totals |
 | `show_steps(sess)` | No | Numbered step list with flags |
 | `remove_step(sess, index)` | — | Drop a step by index |
+| **Macro I/O** | | |
 | `save_macro(sess, name, path)` | — | Write YAML macro |
 | `load_macro(name, path)` | — | Read YAML macro |
 | `pdf_replay(file, macro)` | — | Replay macro, returns named list of data frames |
 | `pdf_replay_batch(files, macro)` | — | Replay across multiple files |
+| **Comparison** | | |
 | `diff_replay(file1, file2, macro)` | — | Compare macro outputs across two files |
+| `detail(diff, table)` | — | Cell-level change details |
+| **Export** | | |
 | `export_csv(sess, dir, tables)` | — | Write tables to CSV files |
 | `export_excel(sess, path, tables)` | — | Write tables to an Excel workbook |
+| `export_json(sess, path, ...)` | — | JSON payload (items + tables) |
+| **Agent tools** | | |
 | `pdf_profile(path, pages, method)` | — | Machine-readable PDF profile for agents |
 | `validate_macro(file, macro)` | — | Pre-flight macro validation |
-| `detect_tables_quietly(path, pages, ...)` | — | Silent detection for agents |
+| `test_extraction(file, page, ...)` | — | Single extraction with eval report |
+| **Python backends** | | |
+| `setup_docling(envname)` | — | Install Docling Python package |
+| `close_docling()` | — | Release Docling document cache |
+| `setup_gliner(model, envname)` | — | Install GLiNER2 Python package |
+| `close_gliner()` | — | Unload GLiNER2 model from memory |
+| **Shiny** | | |
 | `pdfmacro_ui(id, title, height)` | — | Shiny module UI |
 | `pdfmacro_server(id)` | — | Shiny module server |
 
@@ -491,12 +631,16 @@ Returns `list(tables = reactive(...), steps = reactive(...))`.
 | Situation | Recommended |
 |---|---|
 | Clean PDF with visible grid lines | `lattice` |
-| Whitespace-aligned table, no grid | `stream` |
+| Whitespace-aligned columns, no grid | `stream` |
 | Charts and tables on the same page | `bbox` + `area =` |
-| Numbers running together | `bbox` + `area =` |
+| Numbers running together | `bbox` + `col_gap =` |
+| Scanned PDF, no selectable text | `docling` or `llm` |
+| Complex layout, offline | `docling` |
 | Multi-level / spanning headers | `llm` with `schema =` |
 | Highly irregular layout | `llm` |
-| No API key / offline | `bbox` or tabulapdf |
+| No API key / offline | `bbox`, tabulapdf, or `docling` |
+| Single metadata fields (invoice #, date) | `select_item()` with `llm` or `gliner` |
+| Structured records from text | `select_struct()` with GLiNER2 |
 
 ---
 
@@ -505,14 +649,16 @@ Returns `list(tables = reactive(...), steps = reactive(...))`.
 | Package | Role | Required |
 |---|---|---|
 | `pdftools` | Word positions (`bbox`), page text, rendering | Yes |
-| `tabulapdf` | `lattice` / `stream` extraction (needs Java) | Yes |
 | `stringdist` | Fuzzy caption matching | Yes |
 | `yaml` | Macro read/write | Yes |
 | `cli` | Console output | Yes |
 | `rlang` | `%||%` operator | Yes |
+| `tabulapdf` | `lattice` / `stream` extraction (needs Java) | Suggested |
+| `reticulate` | Python bridge for Docling and GLiNER2 backends | Suggested |
 | `magick` | Bounding box highlights; LLM image cropping | Suggested |
 | `ellmer` | LLM extraction | Suggested |
 | `validate` | Data quality rules (`validate_table`) | Suggested |
+| `jsonlite` | JSON export | Suggested |
 | `shiny` + `bslib` + `DT` | Standalone app and Shiny module | Suggested |
 | `shinyFiles` | Native filesystem browser in app | Suggested |
 | `shinyAce` | YAML editor with syntax highlighting | Suggested |
@@ -524,11 +670,13 @@ Returns `list(tables = reactive(...), steps = reactive(...))`.
 
 ## Design decisions
 
-**Three extraction engines** — `bbox`, tabulapdf, and `llm`. Mixed per-table within the same session. `bbox` is the practical default; `llm` handles what bbox cannot.
+**Five extraction engines** — `bbox`, tabulapdf (lattice/stream), Docling, and LLM. Mixed per-table within the same session and macro. `bbox` is the practical default; Docling handles scanned PDFs offline; LLM handles what positional methods cannot.
+
+**Tables + items + structs** — tables (`select_table`), single fields (`select_item`), and structured records (`select_struct`) are all first-class citizens. Items and structs are recorded steps and replay automatically.
 
 **Validation as a step** — `validate_table()` is recorded and replays with the macro. The same rules run every time, surfacing data drift automatically without extra code.
 
-**Derive and combine as steps** — `add_column()`, `stack_tables()`, and `merge_tables()` are recorded steps, so a complete pipeline from raw PDF to analysis-ready data frame is captured in a single macro.
+**Derive and combine as steps** — `add_column()`, `fill_down()`, `clean_numbers()`, `stack_tables()`, and `merge_tables()` are recorded steps, so a complete pipeline from raw PDF to analysis-ready data frame is captured in a single macro.
 
 **Diff without code** — `diff_replay()` gives an immediate structural comparison between two report editions. The first sign of a format change is a `~` in the diff output, not a mysterious downstream error.
 
@@ -539,3 +687,5 @@ Returns `list(tables = reactive(...), steps = reactive(...))`.
 **Domain agnostic** — no report-specific logic in package code.
 
 **Shiny in Suggests** — script API and `validate_table()` work with no Shiny installed.
+
+**Python optional** — Docling and GLiNER2 require `reticulate` and their respective Python packages, but all other functionality works without Python.

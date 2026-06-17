@@ -67,3 +67,99 @@ test_that(".fuzzy_find_page() aborts when no match within max_dist", {
     "Fuzzy search failed"
   )
 })
+
+
+# --------------------------------------------------------------------------- #
+#  stack_pages()                                                               #
+# --------------------------------------------------------------------------- #
+
+test_that("stack_pages() extracts and row-binds across pages", {
+  page_data <- list(
+    data.frame(Name = c("Alice", "Bob"),   Score = c("90", "80"),
+               stringsAsFactors = FALSE),
+    data.frame(Name = c("Carol", "Dave"),  Score = c("70", "60"),
+               stringsAsFactors = FALSE),
+    data.frame(Name = c("Eve"),            Score = c("95"),
+               stringsAsFactors = FALSE)
+  )
+  call_idx <- 0L
+
+  testthat::local_mocked_bindings(
+    select_table = function(sess, label, page, ...) {
+      call_idx <<- call_idx + 1L
+      sess$tables[[label]] <- page_data[[call_idx]]
+      invisible(sess)
+    }
+  )
+
+  sess <- new.env(parent = emptyenv())
+  sess$path   <- "dummy.pdf"
+  sess$tables <- list()
+  sess$steps  <- list()
+  class(sess) <- "pdfmacro_session"
+
+  stack_pages(sess, "all_scores", pages = c(1L, 2L, 3L), method = "bbox")
+
+  expect_true("all_scores" %in% names(sess$tables))
+  df <- sess$tables[["all_scores"]]
+  expect_equal(nrow(df), 5L)
+  expect_equal(names(df), c("Name", "Score"))
+})
+
+test_that("stack_pages() records a single step", {
+  testthat::local_mocked_bindings(
+    select_table = function(sess, label, page, ...) {
+      sess$tables[[label]] <- data.frame(x = 1:2, stringsAsFactors = FALSE)
+      invisible(sess)
+    }
+  )
+
+  sess <- new.env(parent = emptyenv())
+  sess$path   <- "dummy.pdf"
+  sess$tables <- list()
+  sess$steps  <- list()
+  class(sess) <- "pdfmacro_session"
+
+  stack_pages(sess, "combined", pages = c(1L, 2L), method = "bbox")
+
+  expect_length(sess$steps, 1L)
+  s <- sess$steps[[1]]
+  expect_equal(s$step,  "stack_pages")
+  expect_equal(s$label, "combined")
+  expect_equal(s$pages, c(1L, 2L))
+})
+
+test_that("stack_pages() errors with fewer than 2 pages", {
+  sess <- new.env(parent = emptyenv())
+  sess$path   <- "dummy.pdf"
+  sess$tables <- list()
+  sess$steps  <- list()
+  class(sess) <- "pdfmacro_session"
+
+  expect_error(stack_pages(sess, "tbl", pages = 1L), "at least 2")
+})
+
+test_that("stack_pages() continues when a page fails", {
+  call_idx <- 0L
+  testthat::local_mocked_bindings(
+    select_table = function(sess, label, page, ...) {
+      call_idx <<- call_idx + 1L
+      if (call_idx == 2L) stop("extraction failed")
+      sess$tables[[label]] <- data.frame(a = call_idx, stringsAsFactors = FALSE)
+      invisible(sess)
+    }
+  )
+
+  sess <- new.env(parent = emptyenv())
+  sess$path   <- "dummy.pdf"
+  sess$tables <- list()
+  sess$steps  <- list()
+  class(sess) <- "pdfmacro_session"
+
+  expect_warning(
+    stack_pages(sess, "partial", pages = c(1L, 2L, 3L), method = "bbox"),
+    "skipped"
+  )
+  expect_true("partial" %in% names(sess$tables))
+  expect_equal(nrow(sess$tables$partial), 2L)
+})

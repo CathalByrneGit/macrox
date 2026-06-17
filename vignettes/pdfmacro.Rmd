@@ -80,9 +80,10 @@ The app provides a full extraction workflow without writing any R code.  Select 
 
 | Tab | Purpose |
 |---|---|
-| **Extract** | Full PDF viewer, draw-to-select area, method picker, live preview. `←` / `→` navigate pages. |
+| **Extract** | Full PDF viewer, draw-to-select area, method picker (bbox / lattice / stream / docling / llm), live preview. `←` / `→` navigate pages. |
 | **Tables** | One tab per extracted table. Rename, cast types, filter rows (GUI), validate rules, column stats. |
-| **Items** | Extract single metadata fields (invoice numbers, dates, totals) via LLM. |
+| **Items** | Extract single metadata fields (invoice numbers, dates, totals) via LLM or GLiNER2. |
+| **Struct** | Extract structured records (multiple fields, multiple rows) via GLiNER2. |
 | **Steps** | Recorded step badges. Remove steps, edit the YAML macro directly with syntax highlighting. |
 | **Replay** | Run a saved macro against a new PDF. Results load into Tables. |
 | **Batch** | Run one macro across multiple PDFs. Download as Excel or zip of CSVs. |
@@ -92,7 +93,7 @@ The app provides a full extraction workflow without writing any R code.  Select 
 
 ## Extraction methods
 
-pdfmacro ships four extraction engines.  They can be mixed freely within the same session and macro.
+pdfmacro ships five extraction engines.  They can be mixed freely within the same session and macro.
 
 ### bbox — word-position engine (recommended default)
 
@@ -118,6 +119,29 @@ For clean PDFs with visible grid lines (`lattice`) or whitespace-aligned columns
 sess |> select_table("calf_monthly", page = 8, method = "lattice")
 sess |> select_table("calf_stream",  page = 9, method = "stream")
 ```
+
+### docling — ML layout engine (IBM Research)
+
+Uses Docling's deep learning layout models to detect and extract tables.  Converts scanned PDFs and handles complex multi-column layouts where positional methods fail.  Runs fully offline after a one-time model download (~2-3 GB).  No API key required.
+
+```{r docling-setup}
+# One-time setup — installs docling into a Python virtualenv
+setup_docling()
+# Restart R before first use
+```
+
+```{r docling}
+# Scan for tables using Docling's ML detection (single-pass, cached)
+sess |> detect_tables(pages = 1:20, method = "docling")
+
+# Extract a specific table
+sess |> select_table_docling("financials", page = 10, table_index = 1)
+
+# Release the document cache when done
+close_docling()
+```
+
+Docling caches converted pages in memory, so repeated calls for different tables on the same page are fast.  Use `close_docling()` to release the cache.
 
 ### llm — LLM engine via ellmer
 
@@ -174,6 +198,23 @@ OPENROUTER_API_KEY=sk-or-...
 
 ---
 
+## Multi-page tables
+
+When the same table spans several consecutive PDF pages, `stack_pages()` extracts from each page and row-binds the results.  Repeated headers are consumed automatically.
+
+```{r stack-pages}
+sess |> stack_pages("breed_all", pages = 10:14,
+  area   = c(top = 80, left = 30, bottom = 700, right = 550),
+  method = "bbox")
+
+# When pages 2+ don't repeat the header row:
+sess |> stack_pages("breed_all", pages = 10:14,
+  method       = "bbox",
+  header_match = FALSE)
+```
+
+---
+
 ## Extracting metadata items
 
 `select_item()` extracts a single field from the document — invoice numbers, dates, totals, report titles — anything that isn't a table row.  Results sit alongside tables in `sess$items` and are included in `export_json()`.
@@ -200,6 +241,49 @@ sess |> select_item("stamp_ref", page = 1L,
 sess |> show_items()
 ```
 
+### GLiNER2 backend — local, no API key
+
+The GLiNER2 backend extracts fields using a local NLP model.  Runs on CPU, no API key needed.
+
+```{r items-gliner}
+# One-time setup
+setup_gliner()
+
+# Single field
+sess |> select_item("invoice_number",
+  prompt  = "Invoice ID or reference number",
+  backend = "gliner")
+
+# Batch extraction — multiple fields in one model pass (much faster)
+sess |> select_items_batch(c(
+  invoice_no = "Invoice ID or reference number",
+  total      = "Grand total amount payable",
+  due_date   = "Payment due date"
+), cast = c(total = "numeric", due_date = "date:%d/%m/%Y"))
+```
+
+### Structured record extraction
+
+`select_struct()` extracts multiple structured records — like a table, but from unstructured text using GLiNER2.
+
+```{r struct}
+sess |> select_struct("line_items",
+  entity = "LineItem",
+  fields = c(
+    description = "Product or service description",
+    quantity    = "Number of units",
+    unit_price  = "Price per unit"
+  ),
+  list_fields = character(0),
+  page = 1L)
+
+# Convert to a data frame (with optional confidence filtering)
+sess |> struct_to_df("line_items", min_confidence = 0.5)
+
+# The result is now in sess$tables$line_items — clean, rename, export as usual
+sess |> preview("line_items")
+```
+
 ---
 
 ## Cleaning tables
@@ -217,6 +301,37 @@ sess |> cast_types("monthly", c(
 ))
 
 sess |> filter_rows("monthly", exclude_where = "month == 'Total'")
+```
+
+### Forward-fill and number cleaning
+
+Government PDFs often have merged header cells that leave blanks in rows below.  `fill_down()` propagates the last non-blank value downward.
+
+```{r fill-clean}
+# Forward-fill blank cells in specific columns
+sess |> fill_down("monthly", cols = "region")
+
+# Forward-fill all columns
+sess |> fill_down("monthly")
+
+# Strip currency symbols, thousands separators, parenthetical negatives
+sess |> clean_numbers("monthly", cols = c("male_count", "female_count"))
+
+# clean_numbers() with cols = NULL targets all non-numeric columns
+sess |> clean_numbers("monthly")
+```
+
+### Suggesting column types
+
+`suggest_schema()` inspects values and proposes a `cast_types()` call:
+
+```{r suggest}
+sess |> suggest_schema("monthly")
+#> Suggested schema for 'monthly'
+#>   month         ->  character
+#>   male_count    ->  integer
+#>   female_count  ->  integer
+#>   total         ->  integer
 ```
 
 ---
@@ -412,7 +527,7 @@ macro:
   name: my_report
   created: '2026-05-01 14:32'
   source: report_2024.pdf
-  n_steps: 8
+  n_steps: 10
 
 steps:
   - step: select_table
@@ -421,6 +536,11 @@ steps:
     method: bbox
     area: [80, 30, 500, 750]
     header_rows: 1
+
+  - step: select_table_docling
+    label: financials
+    page: 10
+    table_index: 1
 
   - step: select_table_llm
     label: breed_sire
@@ -438,7 +558,16 @@ steps:
     label: report_date
     prompt: "The publication date of this report."
     cast: "date:%B %Y"
+    backend: llm
     provider: anthropic
+
+  - step: select_struct
+    label: line_items
+    entity: LineItem
+    fields:
+      description: "Product or service description"
+      quantity: "Number of units"
+    page: 1
 
   - step: rename_columns
     table: monthly
@@ -451,10 +580,13 @@ steps:
     types:
       total: integer
 
-  - step: add_column
+  - step: fill_down
     table: monthly
-    name: year
-    expr: "2024L"
+    cols: [region]
+
+  - step: clean_numbers
+    table: monthly
+    cols: [total]
 
   - step: validate_table
     table: monthly
@@ -498,9 +630,13 @@ observe({
 | Whitespace-aligned columns, no grid | `stream` |
 | Charts and tables on the same page | `bbox` + `area =` |
 | Numbers running together | `bbox` + `col_gap =` |
+| Scanned PDF, no selectable text | `docling` or `llm` |
+| Complex layout, offline | `docling` |
 | Multi-level / spanning headers | `llm` with `schema =` |
-| Scanned PDF, no selectable text | `llm` |
 | Complex irregular layout | `llm` |
+| No API key / offline | `bbox`, tabulapdf, or `docling` |
+| Single metadata fields | `select_item()` with `llm` or `gliner` |
+| Structured records from text | `select_struct()` with GLiNER2 |
 
 ---
 
@@ -509,11 +645,12 @@ observe({
 | Package | Role | Required |
 |---|---|---|
 | `pdftools` | Word positions (`bbox`), page text, rendering | Yes |
-| `tabulapdf` | `lattice` / `stream` (needs Java) | Suggests |
 | `stringdist` | Fuzzy caption matching | Yes |
 | `yaml` | Macro read/write | Yes |
 | `cli` | Console output | Yes |
 | `rlang` | `%\|\|%` operator | Yes |
+| `tabulapdf` | `lattice` / `stream` (needs Java) | Suggests |
+| `reticulate` | Python bridge for Docling and GLiNER2 | Suggests |
 | `magick` | Page annotation; image cropping for LLM | Suggests |
 | `ellmer` | LLM extraction | Suggests |
 | `validate` | Data quality rules | Suggests |

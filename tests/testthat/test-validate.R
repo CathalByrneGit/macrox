@@ -24,7 +24,7 @@ test_that("validate_table() passes all rules on clean data", {
   expect_no_warning(
     validate_table(sess, "tbl", rules = c(
       twelve_rows = "nrow(.) == 12",
-      no_na       = "!anyNA(month)"
+      no_na       = "!any(is.na(month))"
     ))
   )
   expect_equal(sess$validations[["tbl"]]$failed, character(0))
@@ -112,9 +112,11 @@ test_that("show_validations() prints summary for each table", {
   suppressWarnings(validate_table(sess, "tbl", rules = c(
     r1 = "nrow(.) == 12", r2 = "nrow(.) == 0"
   )))
-  out <- capture.output(show_validations(sess))
-  expect_true(any(grepl("tbl", out)))
-  expect_true(any(grepl("passed|failed", tolower(out))))
+  msgs <- capture.output(show_validations(sess), type = "message")
+  out  <- capture.output(show_validations(sess))
+  all_out <- c(msgs, out)
+  expect_true(any(grepl("tbl", all_out)))
+  expect_true(any(grepl("passed|failed", tolower(all_out))))
 })
 
 # --------------------------------------------------------------------------- #

@@ -92,7 +92,7 @@ test_that("select_item() stores raw value alongside cast value", {
 
 test_that("select_item() gliner backend stores value and backend tag", {
   sess    <- make_item_sess()
-  mock_py <- list(gliner_extract_item = function(text, label, description) "INV-9821")
+  mock_py <- list(gliner_extract_item = function(text, label, description, all_matches = FALSE) "INV-9821")
 
   testthat::local_mocked_bindings(
     pdf_text      = function(...) list("Invoice Number: INV-9821"),
@@ -112,7 +112,7 @@ test_that("select_item() gliner backend stores value and backend tag", {
 
 test_that("select_item() gliner records step with backend and gliner_model", {
   sess    <- make_item_sess()
-  mock_py <- list(gliner_extract_item = function(...) "ABC")
+  mock_py <- list(gliner_extract_item = function(text, label, description, all_matches = FALSE) "ABC")
 
   testthat::local_mocked_bindings(
     pdf_text       = function(...) list("ref: ABC"),
@@ -139,7 +139,7 @@ test_that("select_item() gliner uses only the specified page's text", {
   pages   <- list("page one text", "page two text", "page three text")
   seen_text <- NULL
   mock_py <- list(
-    gliner_extract_item = function(text, label, description) {
+    gliner_extract_item = function(text, label, description, all_matches = FALSE) {
       seen_text <<- text
       "page two text"
     }
@@ -158,7 +158,7 @@ test_that("select_item() gliner uses only the specified page's text", {
 
 test_that("select_item() gliner returns empty string when model finds nothing", {
   sess    <- make_item_sess()
-  mock_py <- list(gliner_extract_item = function(...) NULL)
+  mock_py <- list(gliner_extract_item = function(text, label, description, all_matches = FALSE) NULL)
 
   testthat::local_mocked_bindings(
     pdf_text       = function(...) list("no match here"),
