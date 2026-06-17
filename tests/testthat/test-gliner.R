@@ -14,7 +14,7 @@ test_that("select_items_batch() validates items argument", {
   sess$tables <- list()
   sess$items  <- list()
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   expect_error(
     select_items_batch(sess, items = c("unnamed_value")),
@@ -28,7 +28,7 @@ test_that("select_items_batch() extracts fields and records steps", {
   sess$tables <- list()
   sess$items  <- list()
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   raw_result <- list(
     inv_no = "INV-001",
@@ -70,7 +70,7 @@ test_that("select_struct() stores raw records in sess$structs", {
   sess$tables  <- list()
   sess$structs <- list()
   sess$steps   <- list()
-  class(sess)  <- "pdfmacro_session"
+  class(sess)  <- "macrox_session"
 
   fake_records <- list(
     list(
@@ -134,7 +134,7 @@ test_that("struct_to_df() converts records to a data frame", {
     )
   )
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   struct_to_df(sess, "items")
 
@@ -169,7 +169,7 @@ test_that("struct_to_df() filters by min_confidence", {
     )
   )
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   struct_to_df(sess, "items", min_confidence = 0.5)
 
@@ -184,7 +184,7 @@ test_that("struct_to_df() errors when no struct data exists", {
   sess$tables  <- list()
   sess$structs <- list()
   sess$steps   <- list()
-  class(sess)  <- "pdfmacro_session"
+  class(sess)  <- "macrox_session"
 
   expect_error(struct_to_df(sess, "nonexistent"), "select_struct")
 })
@@ -202,7 +202,7 @@ test_that("struct_to_df() handles empty record list", {
     )
   )
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   struct_to_df(sess, "empty_struct")
 

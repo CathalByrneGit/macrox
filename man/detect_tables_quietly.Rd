@@ -7,7 +7,7 @@
 detect_tables_quietly(
   path,
   pages = NULL,
-  method = "lattice",
+  method = c("lattice", "stream", "docling"),
   min_rows = 1L,
   max_header_chars = 40L
 )
@@ -17,12 +17,13 @@ detect_tables_quietly(
 
 \item{pages}{Integer vector of pages to scan. Defaults to all pages.}
 
-\item{method}{Extraction method.}
+\item{method}{Extraction method: \code{"lattice"} (default), \code{"stream"}, or
+\code{"docling"}.}
 
 \item{min_rows}{Minimum data rows required (default \code{1}).}
 
 \item{max_header_chars}{Maximum first-column name length before skipping
-(default \code{40}).}
+(default \code{40}). Ignored when \code{method = "docling"}.}
 }
 \value{
 Named list: page number (character) → list of data frames.

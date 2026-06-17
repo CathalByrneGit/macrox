@@ -43,18 +43,18 @@ NULL
 
 
 # --------------------------------------------------------------------------- #
-#  pdf_session()                                                                #
+#  mx_session()                                                                #
 # --------------------------------------------------------------------------- #
 
-#' Open a pdfmacro session
+#' Open a macrox session
 #'
 #' Creates a session object that holds the PDF path, extracted tables, and a
 #' running log of every recorded step.
 #'
 #' @param path Path to a PDF file.
-#' @return An invisible `pdfmacro_session` environment.
+#' @return An invisible `macrox_session` environment.
 #' @export
-pdf_session <- function(path = NULL) {
+mx_session <- function(path = NULL) {
   
   if(is.null(path)){
     
@@ -90,7 +90,7 @@ pdf_session <- function(path = NULL) {
   sess$text       <- NULL   # lazy page-text cache
   sess$detect     <- NULL   # detect_tables() output cache
 
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
   cli::cli_inform(c("v" = "Session opened: {.file {basename(path)}}"))
   invisible(sess)
 }
@@ -101,12 +101,12 @@ pdf_session <- function(path = NULL) {
 # --------------------------------------------------------------------------- #
 
 #' @export
-print.pdfmacro_session <- function(x, ...) {
+print.macrox_session <- function(x, ...) {
   n_tables <- length(x$tables)
   n_steps  <- length(x$steps)
   labels   <- if (n_tables > 0) paste(names(x$tables), collapse = "' '") else "(none)"
 
-  cat("pdfmacro session\n")
+  cat("macrox session\n")
   cat("File:  ", basename(x$path), "\n")
   cat("Tables:", n_tables, "extracted")
   if (n_tables > 0) cat("  '", labels, "'", sep = "")
@@ -214,7 +214,7 @@ record_step <- function(sess, step_list) {
 #' Prints a numbered list of all steps in the session, with flagged steps
 #' highlighted.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @return `sess` invisibly.
 #' @export
 show_steps <- function(sess) {
@@ -283,7 +283,7 @@ show_steps <- function(sess) {
 
 #' Remove a recorded step by index
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param index Integer index of the step to remove (see [show_steps()]).
 #' @return `sess` invisibly.
 #' @export

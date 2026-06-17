@@ -13,14 +13,14 @@
 #' @param file2 Path to the new PDF.
 #' @param macro Macro name, path to a `.yml`, or a step list.
 #' @param macro_path Directory for macro lookup (default `.`).
-#' @return A `pdfmacro_diff` object. Print gives a summary; [detail()] drills
+#' @return A `macrox_diff` object. Print gives a summary; [detail()] drills
 #'   into a single table.
 #' @export
 diff_replay <- function(file1, file2, macro, macro_path = ".") {
   cli::cli_inform(c("i" = "Replaying macro on {.file {basename(file1)}}..."))
-  t1 <- pdf_replay(file1, macro, macro_path)
+  t1 <- mx_replay(file1, macro, macro_path)
   cli::cli_inform(c("i" = "Replaying macro on {.file {basename(file2)}}..."))
-  t2 <- pdf_replay(file2, macro, macro_path)
+  t2 <- mx_replay(file2, macro, macro_path)
 
   all_labels <- union(names(t1), names(t2))
 
@@ -145,14 +145,14 @@ diff_replay <- function(file1, file2, macro, macro_path = ".") {
       ref    = t1,
       new    = t2
     ),
-    class = "pdfmacro_diff"
+    class = "macrox_diff"
   )
 }
 
 
 #' @export
-print.pdfmacro_diff <- function(x, ...) {
-  cat("pdfmacro diff\n")
+print.macrox_diff <- function(x, ...) {
+  cat("macrox diff\n")
   cat("  Reference:", x$file1, "\n")
   cat("  New:      ", x$file2, "\n\n")
 
@@ -219,7 +219,7 @@ print.pdfmacro_diff <- function(x, ...) {
 #' columns `row`, `col`, `ref`, `new`, and `delta` (numeric difference, or `NA`
 #' for non-numeric columns).
 #'
-#' @param x A `pdfmacro_diff` object returned by [diff_replay()].
+#' @param x A `macrox_diff` object returned by [diff_replay()].
 #' @param table Character name of the table to inspect.
 #' @param ... Unused.
 #' @return A data frame with one row per changed cell.
@@ -227,7 +227,7 @@ print.pdfmacro_diff <- function(x, ...) {
 detail <- function(x, ...) UseMethod("detail")
 
 #' @export
-detail.pdfmacro_diff <- function(x, table, ...) {
+detail.macrox_diff <- function(x, table, ...) {
   if (!table %in% names(x$tables)) {
     cli::cli_abort("Table {.val {table}} not in diff. Available: {.val {names(x$tables)}}")
   }

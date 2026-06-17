@@ -7,33 +7,33 @@
 # --------------------------------------------------------------------------- #
 
 test_that(".parse_schema_text() returns NULL for empty input", {
-  expect_null(pdfmacro:::.parse_schema_text(""))
-  expect_null(pdfmacro:::.parse_schema_text(NULL))
-  expect_null(pdfmacro:::.parse_schema_text("   \n  \n"))
+  expect_null(macrox:::.parse_schema_text(""))
+  expect_null(macrox:::.parse_schema_text(NULL))
+  expect_null(macrox:::.parse_schema_text("   \n  \n"))
 })
 
 test_that(".parse_schema_text() parses name:type pairs", {
   txt <- "Month: character\nMale: integer\nTotal: numeric"
-  result <- pdfmacro:::.parse_schema_text(txt)
+  result <- macrox:::.parse_schema_text(txt)
   expect_equal(result[["Month"]], "character")
   expect_equal(result[["Male"]],  "integer")
   expect_equal(result[["Total"]], "numeric")
 })
 
 test_that(".parse_schema_text() defaults to character when no type given", {
-  result <- pdfmacro:::.parse_schema_text("County\nValue: integer")
+  result <- macrox:::.parse_schema_text("County\nValue: integer")
   expect_equal(result[["County"]], "character")
   expect_equal(result[["Value"]],  "integer")
 })
 
 test_that(".parse_schema_text() ignores blank lines", {
   txt <- "Month: character\n\n\nMale: integer\n"
-  result <- pdfmacro:::.parse_schema_text(txt)
+  result <- macrox:::.parse_schema_text(txt)
   expect_length(result, 2L)
 })
 
 test_that(".parse_schema_text() trims whitespace from names and types", {
-  result <- pdfmacro:::.parse_schema_text("  Month  :  character  ")
+  result <- macrox:::.parse_schema_text("  Month  :  character  ")
   expect_equal(names(result)[[1]], "Month")
   expect_equal(result[[1]],        "character")
 })
@@ -53,7 +53,7 @@ test_that(".llm_result_to_df() converts schema result (data frame rows) correctl
   result <- list(rows = rows_df)
   schema <- c(Month = "character", Male = "character", Female = "character")
 
-  df <- pdfmacro:::.llm_result_to_df(result, schema)
+  df <- macrox:::.llm_result_to_df(result, schema)
   expect_s3_class(df, "data.frame")
   expect_equal(nrow(df), 2L)
   expect_equal(ncol(df), 3L)
@@ -68,7 +68,7 @@ test_that(".llm_result_to_df() converts auto result (headers + rows) correctly",
       list("Feb", "200", "200")
     )
   )
-  df <- pdfmacro:::.llm_result_to_df(result, schema = NULL)
+  df <- macrox:::.llm_result_to_df(result, schema = NULL)
   expect_s3_class(df, "data.frame")
   expect_equal(nrow(df), 2L)
   expect_equal(ncol(df), 3L)
@@ -77,7 +77,7 @@ test_that(".llm_result_to_df() converts auto result (headers + rows) correctly",
 
 test_that(".llm_result_to_df() returns empty df for empty headers", {
   result <- list(headers = list(), rows = list())
-  df <- pdfmacro:::.llm_result_to_df(result, schema = NULL)
+  df <- macrox:::.llm_result_to_df(result, schema = NULL)
   expect_s3_class(df, "data.frame")
   expect_equal(nrow(df), 0L)
 })
@@ -88,7 +88,7 @@ test_that(".llm_result_to_df() pads/trims rows that don't match header count", {
     headers = list("A", "B", "C"),
     rows    = list(list("x", "y"))   # only 2 values for 3 headers
   )
-  expect_no_error(pdfmacro:::.llm_result_to_df(result, schema = NULL))
+  expect_no_error(macrox:::.llm_result_to_df(result, schema = NULL))
 })
 
 # --------------------------------------------------------------------------- #
@@ -99,7 +99,7 @@ test_that(".build_llm_type() requires ellmer", {
   skip_if(requireNamespace("ellmer", quietly = TRUE),
           "ellmer is installed — skipping absence check")
   expect_error(
-    pdfmacro:::.build_llm_type(c(Month = "character")),
+    macrox:::.build_llm_type(c(Month = "character")),
     "ellmer"
   )
 })
@@ -107,14 +107,14 @@ test_that(".build_llm_type() requires ellmer", {
 test_that(".build_llm_type() with schema builds type with 'rows' field", {
   skip_if_not_installed("ellmer")
   schema <- c(Month = "character", Male = "integer")
-  typ    <- pdfmacro:::.build_llm_type(schema)
+  typ    <- macrox:::.build_llm_type(schema)
   # ellmer type specs vary in class across versions — non-NULL is sufficient
   expect_false(is.null(typ))
 })
 
 test_that(".build_llm_type() with NULL schema builds type with 'headers' and 'rows'", {
   skip_if_not_installed("ellmer")
-  typ <- pdfmacro:::.build_llm_type(NULL)
+  typ <- macrox:::.build_llm_type(NULL)
   expect_true(!is.null(typ))
 })
 
@@ -127,7 +127,7 @@ test_that("update_llm_schema() errors when no LLM step exists for label", {
   sess$path   <- "dummy.pdf"
   sess$tables <- list()
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   expect_error(
     update_llm_schema(sess, "nonexistent", c(A = "character")),
@@ -146,7 +146,7 @@ test_that("update_llm_schema() updates schema field without re_extract", {
     schema = list(X = "character"), prompt = NULL,
     dpi = 150L, header_rows = 1L
   ))
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   new_schema <- c(Month = "character", Total = "integer")
   update_llm_schema(sess, "tbl", new_schema, re_extract = FALSE)
@@ -163,11 +163,11 @@ test_that("update_llm_schema() updates schema field without re_extract", {
 test_that(".make_llm_chat() errors when openai_compatible has no base_url", {
   skip_if_not_installed("ellmer")
   expect_error(
-    pdfmacro:::.make_llm_chat("openai_compatible", model = "llama3", base_url = NULL),
+    macrox:::.make_llm_chat("openai_compatible", model = "llama3", base_url = NULL),
     "base_url"
   )
   expect_error(
-    pdfmacro:::.make_llm_chat("openai_compatible", model = "llama3", base_url = ""),
+    macrox:::.make_llm_chat("openai_compatible", model = "llama3", base_url = ""),
     "base_url"
   )
 })
@@ -177,7 +177,7 @@ test_that("select_table_llm() records base_url in the step", {
   sess$path   <- "dummy.pdf"
   sess$tables <- list()
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   # Manually inject a step as if select_table_llm had run
   record_step(sess, list(
@@ -206,7 +206,7 @@ test_that(".chat_provider_info() derives provider/model/base_url from a Chat", {
   skip_if_not_installed("ellmer")
 
   ch <- ellmer::chat_anthropic(model = "claude-haiku-4-5")
-  info <- pdfmacro:::.chat_provider_info(ch)
+  info <- macrox:::.chat_provider_info(ch)
   expect_equal(info$provider, "anthropic")
   expect_equal(info$model, "claude-haiku-4-5")
 
@@ -214,7 +214,7 @@ test_that(".chat_provider_info() derives provider/model/base_url from a Chat", {
     base_url = "http://localhost:11434/v1",
     model    = "llama2"
   )
-  info2 <- pdfmacro:::.chat_provider_info(ch2)
+  info2 <- macrox:::.chat_provider_info(ch2)
   expect_equal(info2$provider, "openai_compatible")
   expect_equal(info2$model, "llama2")
   expect_equal(info2$base_url, "http://localhost:11434/v1")
@@ -227,7 +227,7 @@ test_that(".resolve_llm_chat() uses a supplied Chat object and clones it", {
     base_url = "http://localhost:11434/v1",
     model    = "llama2"
   )
-  resolved <- pdfmacro:::.resolve_llm_chat(ch, "anthropic", NULL, NULL)
+  resolved <- macrox:::.resolve_llm_chat(ch, "anthropic", NULL, NULL)
 
   expect_equal(resolved$provider, "openai_compatible")
   expect_equal(resolved$model, "llama2")
@@ -239,7 +239,7 @@ test_that(".resolve_llm_chat() uses a supplied Chat object and clones it", {
 test_that(".resolve_llm_chat() builds a chat from provider/model/base_url when chat is NULL", {
   skip_if_not_installed("ellmer")
 
-  resolved <- pdfmacro:::.resolve_llm_chat(NULL, "anthropic", NULL, NULL)
+  resolved <- macrox:::.resolve_llm_chat(NULL, "anthropic", NULL, NULL)
   expect_equal(resolved$provider, "anthropic")
   expect_equal(resolved$model, "claude-opus-4-5-20251001")
   expect_s3_class(resolved$chat, "Chat")
@@ -247,7 +247,7 @@ test_that(".resolve_llm_chat() builds a chat from provider/model/base_url when c
 
 test_that(".resolve_llm_chat() errors when chat is not an ellmer Chat", {
   expect_error(
-    pdfmacro:::.resolve_llm_chat("not-a-chat", "anthropic", NULL, NULL),
+    macrox:::.resolve_llm_chat("not-a-chat", "anthropic", NULL, NULL),
     "Chat object"
   )
 })
@@ -269,7 +269,7 @@ test_that("update_llm_schema() preserves base_url on re-extract", {
     dpi         = 150L,
     header_rows = 1L
   ))
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   update_llm_schema(sess, "tbl",
     schema     = c(Month = "character"),

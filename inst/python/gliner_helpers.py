@@ -1,4 +1,4 @@
-"""GLiNER2 helpers for pdfmacro — local NLP-based field extraction.
+"""GLiNER2 helpers for macrox — local NLP-based field extraction.
 
 Single-page calls use extract_entities / extract_json (one text, one pass).
 Multi-page calls use batch_extract_entities / batch_extract_json (list of
@@ -18,7 +18,7 @@ def gliner_setup(model_name="fastino/gliner2-base-v1"):
     except ImportError:
         raise ImportError(
             "gliner2 is not installed. "
-            "Run pdfmacro::setup_gliner() to install it."
+            "Run macrox::setup_gliner() to install it."
         )
     _gliner_model = GLiNER2.from_pretrained(model_name)
     _gliner_model_name = model_name

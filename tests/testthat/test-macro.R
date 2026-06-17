@@ -13,7 +13,7 @@ make_sess_with_steps <- function() {
     list(step = "filter_rows",    table = "tbl",
          exclude_where = "month == 'Total'")
   )
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
   sess
 }
 
@@ -47,10 +47,10 @@ test_that(".dispatch_step() calls correct function for rename_columns", {
     tbl = data.frame(OldName = 1:3, stringsAsFactors = FALSE)
   )
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   step <- list(step = "rename_columns", table = "tbl", mapping = list(OldName = "new_name"))
-  pdfmacro:::.dispatch_step(sess, step)
+  macrox:::.dispatch_step(sess, step)
   expect_equal(names(sess$tables$tbl), "new_name")
 })
 
@@ -61,10 +61,10 @@ test_that(".dispatch_step() calls correct function for filter_rows", {
     tbl = data.frame(x = c(1, 2, 99), stringsAsFactors = FALSE)
   )
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   step <- list(step = "filter_rows", table = "tbl", exclude_where = "x == 99")
-  pdfmacro:::.dispatch_step(sess, step)
+  macrox:::.dispatch_step(sess, step)
   expect_equal(nrow(sess$tables$tbl), 2L)
   expect_false(99 %in% sess$tables$tbl$x)
 })
@@ -74,10 +74,10 @@ test_that(".dispatch_step() errors on unknown step type", {
   sess$path   <- "dummy.pdf"
   sess$tables <- list()
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   expect_error(
-    pdfmacro:::.dispatch_step(sess, list(step = "nonexistent_step")),
+    macrox:::.dispatch_step(sess, list(step = "nonexistent_step")),
     "Unknown step type"
   )
 })
@@ -105,13 +105,13 @@ test_that("save/load round-trip preserves all step fields", {
     data.frame(a = 1:3, b = c("x","y","z"), stringsAsFactors = FALSE))
   s$items  <- list()
   s$steps  <- list()
-  class(s) <- "pdfmacro_session"
+  class(s) <- "macrox_session"
   s
 }
 
 test_that(".dispatch_step() handles add_column", {
   sess <- .make_dispatch_sess()
-  pdfmacro:::.dispatch_step(sess,
+  macrox:::.dispatch_step(sess,
     list(step = "add_column", table = "tbl", name = "flag", expr = "TRUE"))
   expect_true("flag" %in% names(sess$tables$tbl))
 })
@@ -120,7 +120,7 @@ test_that(".dispatch_step() handles stack_tables", {
   sess <- .make_dispatch_sess()
   sess$tables$tbl2 <- data.frame(a = 4:5, b = c("p","q"),
                                   stringsAsFactors = FALSE)
-  pdfmacro:::.dispatch_step(sess,
+  macrox:::.dispatch_step(sess,
     list(step = "stack_tables", label = "combined",
          tables = list("tbl", "tbl2"), .fill = FALSE))
   expect_equal(nrow(sess$tables$combined), 5L)
@@ -130,7 +130,7 @@ test_that(".dispatch_step() handles merge_tables", {
   sess <- .make_dispatch_sess()
   sess$tables$right <- data.frame(a = 1:3, score = 10:12,
                                    stringsAsFactors = FALSE)
-  pdfmacro:::.dispatch_step(sess,
+  macrox:::.dispatch_step(sess,
     list(step = "merge_tables", label = "merged",
          left = "tbl", right = "right", by = list("a"),
          all = FALSE, all.x = FALSE, all.y = FALSE))
@@ -143,7 +143,7 @@ test_that(".dispatch_step() handles validate_table without validate pkg graceful
           "validate installed — skipping absence test")
   sess <- .make_dispatch_sess()
   expect_error(
-    pdfmacro:::.dispatch_step(sess,
+    macrox:::.dispatch_step(sess,
       list(step = "validate_table", table = "tbl",
            rules = list(r = "nrow(.) > 0"), strict = FALSE)),
     "validate"
@@ -154,7 +154,7 @@ test_that(".dispatch_step() handles validate_table when validate available", {
   skip_if_not_installed("validate")
   sess <- .make_dispatch_sess()
   expect_no_error(
-    pdfmacro:::.dispatch_step(sess,
+    macrox:::.dispatch_step(sess,
       list(step = "validate_table", table = "tbl",
            rules = list(has_rows = "nrow(.) > 0"), strict = FALSE))
   )
@@ -172,7 +172,7 @@ test_that(".dispatch_step() handles select_item with gliner backend", {
     .ensure_gliner = function(...) mock_py
   )
 
-  pdfmacro:::.dispatch_step(sess, list(
+  macrox:::.dispatch_step(sess, list(
     step         = "select_item",
     label        = "ref",
     prompt       = "Reference number",
@@ -197,7 +197,7 @@ test_that(".dispatch_step() handles select_item via mocked LLM", {
     .make_llm_chat = function(...) mock_chat,
     .check_ellmer  = function(...) invisible(NULL)
   )
-  pdfmacro:::.dispatch_step(sess,
+  macrox:::.dispatch_step(sess,
     list(step = "select_item", label = "ref",
          prompt = "Extract reference.", cast = "character",
          page = NULL, area = NULL, provider = "anthropic",
@@ -205,12 +205,12 @@ test_that(".dispatch_step() handles select_item via mocked LLM", {
   expect_true("ref" %in% names(sess$items))
 })
 
-# ── pdf_replay() end-to-end with mixed step types ────────────────────────────
+# ── mx_replay() end-to-end with mixed step types ────────────────────────────
 
 test_that(".dispatch_step() handles fill_down", {
   df   <- data.frame(grp = c("A", "", ""), stringsAsFactors = FALSE)
   sess <- .make_dispatch_sess(df)
-  pdfmacro:::.dispatch_step(sess,
+  macrox:::.dispatch_step(sess,
     list(step = "fill_down", table = "tbl", cols = list("grp")))
   expect_equal(sess$tables$tbl$grp, c("A", "A", "A"))
 })
@@ -218,7 +218,7 @@ test_that(".dispatch_step() handles fill_down", {
 test_that(".dispatch_step() handles clean_numbers", {
   df   <- data.frame(v = c("£1,000", "(500)"), stringsAsFactors = FALSE)
   sess <- .make_dispatch_sess(df)
-  pdfmacro:::.dispatch_step(sess,
+  macrox:::.dispatch_step(sess,
     list(step = "clean_numbers", table = "tbl", cols = list("v"),
          currency = list("£"), na_strings = list("-"),
          negative_parens = TRUE, convert = TRUE))
@@ -226,21 +226,21 @@ test_that(".dispatch_step() handles clean_numbers", {
   expect_equal(sess$tables$tbl$v, c(1000, -500))
 })
 
-test_that("pdf_replay_batch() returns NULL for files that fail to replay", {
+test_that("mx_replay_batch() returns NULL for files that fail to replay", {
   steps  <- list()
-  result <- suppressWarnings(pdf_replay_batch("nonexistent.pdf", macro = steps))
+  result <- suppressWarnings(mx_replay_batch("nonexistent.pdf", macro = steps))
   expect_null(result[[1]])
   expect_named(result, "nonexistent.pdf")
 })
 
-test_that("pdf_replay_batch() .parallel = TRUE with empty file list succeeds", {
+test_that("mx_replay_batch() .parallel = TRUE with empty file list succeeds", {
   skip_if_not_installed("purrr")
   steps  <- list()
-  result <- pdf_replay_batch(character(0), macro = steps, .parallel = TRUE)
+  result <- mx_replay_batch(character(0), macro = steps, .parallel = TRUE)
   expect_equal(length(result), 0L)
 })
 
-test_that("pdf_replay() replays add_column and stack_tables steps", {
+test_that("mx_replay() replays add_column and stack_tables steps", {
   df1 <- data.frame(month = month.abb[1:3], n = 1:3L, stringsAsFactors = FALSE)
   df2 <- data.frame(month = month.abb[4:6], n = 4:6L, stringsAsFactors = FALSE)
 
@@ -251,12 +251,12 @@ test_that("pdf_replay() replays add_column and stack_tables steps", {
       sess$tables[[label]] <- if (call_n == 1L) df1 else df2
       invisible(sess)
     },
-    # Mock pdf_session so no real file is needed
-    pdf_session = function(path) {
+    # Mock mx_session so no real file is needed
+    mx_session = function(path) {
       s <- new.env(parent = emptyenv())
       s$path <- path; s$tables <- list(); s$items <- list()
       s$steps <- list(); s$.replaying <- FALSE
-      class(s) <- "pdfmacro_session"
+      class(s) <- "macrox_session"
       s
     }
   )
@@ -273,7 +273,7 @@ test_that("pdf_replay() replays add_column and stack_tables steps", {
          tables = list("t1", "t2"), .fill = TRUE)
   )
 
-  result <- pdf_replay("dummy.pdf", macro = steps)
+  result <- mx_replay("dummy.pdf", macro = steps)
   expect_true("all" %in% names(result))
   expect_equal(nrow(result$all), 6L)
   expect_true("year" %in% names(result$t1))

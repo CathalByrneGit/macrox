@@ -9,7 +9,7 @@
 #  Setup: run setup_docling() once, restart R, then use select_table_docling().#
 # --------------------------------------------------------------------------- #
 
-.pdfmacro_docling_env <- new.env(parent = emptyenv())
+.macrox_docling_env <- new.env(parent = emptyenv())
 
 
 # --------------------------------------------------------------------------- #
@@ -24,12 +24,12 @@
 #' On the first extraction call Docling downloads its ML models (~2-3 GB) and
 #' caches them locally. Subsequent calls are fully offline.
 #'
-#' @param envname Name of the Python environment (default `"r-pdfmacro"`).
+#' @param envname Name of the Python environment (default `"r-macrox"`).
 #' @param pip_options Extra pip flags, e.g.
 #'   `c("--index-url", "https://pypi.internal.corp/simple")`.
 #' @return Invisible `NULL`.
 #' @export
-setup_docling <- function(envname = "r-pdfmacro", pip_options = character(0)) {
+setup_docling <- function(envname = "r-macrox", pip_options = character(0)) {
   if (!requireNamespace("reticulate", quietly = TRUE)) {
     cli::cli_abort(c(
       "Package {.pkg reticulate} is required.",
@@ -68,7 +68,7 @@ setup_docling <- function(envname = "r-pdfmacro", pip_options = character(0)) {
 #' on the same page do not re-run the conversion pipeline. Call
 #' [close_docling()] to release the cache when done.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param label Character label for the extracted table.
 #' @param page Page number (integer).
 #' @param table_index Which table to use when multiple are detected on the
@@ -132,7 +132,7 @@ select_table_docling <- function(sess, label, page, table_index = 1L) {
 #' @return Invisible `NULL`.
 #' @export
 close_docling <- function() {
-  if (isTRUE(get0("docling_helpers_loaded", envir = .pdfmacro_docling_env))) {
+  if (isTRUE(get0("docling_helpers_loaded", envir = .macrox_docling_env))) {
     tryCatch(
       reticulate::py_run_string("docling_clear_cache()"),
       error = function(e) NULL
@@ -173,22 +173,22 @@ close_docling <- function() {
   df
 }
 
-.load_docling_helpers <- function(envname = "r-pdfmacro") {
-  if (!isTRUE(get0("docling_helpers_loaded", envir = .pdfmacro_docling_env))) {
+.load_docling_helpers <- function(envname = "r-macrox") {
+  if (!isTRUE(get0("docling_helpers_loaded", envir = .macrox_docling_env))) {
     if (!reticulate::py_available(initialize = FALSE)) {
       reticulate::use_virtualenv(envname, required = FALSE)
     } else if (!reticulate::py_module_available("docling")) {
       cli::cli_abort(c(
         "Python is already initialised without the {.val {envname}} virtualenv,",
         "so {.pkg docling} is not importable.",
-        "i" = "Restart R and load pdfmacro before any other reticulate calls."
+        "i" = "Restart R and load macrox before any other reticulate calls."
       ))
     }
-    py_file <- system.file("python/docling_helpers.py", package = "pdfmacro")
+    py_file <- system.file("python/docling_helpers.py", package = "macrox")
     if (!nzchar(py_file)) {
-      cli::cli_abort("Could not find inst/python/docling_helpers.py in the pdfmacro package.")
+      cli::cli_abort("Could not find inst/python/docling_helpers.py in the macrox package.")
     }
     reticulate::source_python(py_file)
-    assign("docling_helpers_loaded", TRUE, envir = .pdfmacro_docling_env)
+    assign("docling_helpers_loaded", TRUE, envir = .macrox_docling_env)
   }
 }

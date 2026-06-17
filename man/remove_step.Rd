@@ -7,7 +7,7 @@
 remove_step(sess, index)
 }
 \arguments{
-\item{sess}{A \code{pdfmacro_session} object.}
+\item{sess}{A \code{macrox_session} object.}
 
 \item{index}{Integer index of the step to remove (see \code{\link[=show_steps]{show_steps()}}).}
 }

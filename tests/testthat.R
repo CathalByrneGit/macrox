@@ -1,3 +1,3 @@
 library(testthat)
-library(pdfmacro)
-test_check("pdfmacro")
+library(macrox)
+test_check("macrox")

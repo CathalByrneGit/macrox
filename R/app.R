@@ -1,8 +1,8 @@
 # --------------------------------------------------------------------------- #
-#  pdf_app() — launch the standalone pdfmacro Shiny application               #
+#  mx_app() — launch the standalone macrox Shiny application               #
 # --------------------------------------------------------------------------- #
 
-#' Launch the pdfmacro standalone app
+#' Launch the macrox standalone app
 #'
 #' Opens a full Shiny application for interactive PDF table extraction,
 #' cleaning, and export. The app is self-contained — no existing session
@@ -14,18 +14,18 @@
 #'   * `"pane"` — RStudio Viewer pane
 #' @return Called for its side-effect. Returns invisibly when the app is closed.
 #' @export
-pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
+mx_app <- function(viewer = c("browser", "dialog", "pane")) {
   viewer <- match.arg(viewer)
 
   if (!requireNamespace("shiny",   quietly = TRUE)) stop("shiny required")
   if (!requireNamespace("bslib",   quietly = TRUE)) stop("bslib required")
   if (!requireNamespace("DT",      quietly = TRUE)) stop("DT required")
 
-  ui     <- .pdf_app_ui()
-  server <- .pdf_app_server
+  ui     <- .mx_app_ui()
+  server <- .mx_app_server
 
   viewer_func <- switch(viewer,
-    dialog  = shiny::dialogViewer("pdfmacro", width = 1400, height = 940),
+    dialog  = shiny::dialogViewer("macrox", width = 1400, height = 940),
     browser = shiny::browserViewer(),
     pane    = shiny::paneViewer()
   )
@@ -43,7 +43,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
 # --------------------------------------------------------------------------- #
 
 .make_theme <- function(dark = FALSE) {
-  css_path <- system.file("app/www/pdfmacro.css", package = "pdfmacro")
+  css_path <- system.file("app/www/macrox.css", package = "macrox")
   rules    <- paste(readLines(css_path), collapse = "\n")
   if (dark) {
     bslib::bs_theme(version = 5, bg = "#1c1208", fg = "#f0e8d8", primary = "#f0a830")
@@ -56,8 +56,8 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
 #  UI                                                                          #
 # --------------------------------------------------------------------------- #
 
-.pdf_app_ui <- function() {
-  css_path <- system.file("app/www/pdfmacro.css", package = "pdfmacro")
+.mx_app_ui <- function() {
+  css_path <- system.file("app/www/macrox.css", package = "macrox")
 
   theme <- bslib::bs_theme(
     version = 5,
@@ -72,7 +72,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
     width = 270,
     title = shiny::div(
       style = "font-size:9px; letter-spacing:0.18em; text-transform:uppercase; color:var(--amber);",
-      shiny::icon("file-pdf"), "\u00a0pdfmacro"
+      shiny::icon("file-pdf"), "\u00a0macrox"
     ),
 
     shiny::div(class = "section-label", "PDF File"),
@@ -118,7 +118,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
 
     shiny::div(
       class = "sidebar-foot",
-      shiny::span("pdfmacro \u00b7 pdf_data() + tabulapdf"),
+      shiny::span("macrox \u00b7 pdf_data() + tabulapdf"),
       shiny::actionButton("theme_toggle", "\u263D dark",
                           style = "background:none;border:1px solid var(--border);font-size:9px;padding:1px 6px;color:var(--ink-mid);")
     )
@@ -426,7 +426,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
       "  pdfjsLib.getDocument(url).promise.then(function(pdf) {",
       "    window._pmDoc = pdf;",
       "    pmRender(sp);",
-      "  }).catch(function(e) { console.warn('pdfmacro:', e); });",
+      "  }).catch(function(e) { console.warn('macrox:', e); });",
       "};",
       "window.pmRender = function(n) {",
       "  if (!window._pmDoc) return;",
@@ -547,7 +547,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
   )
 
   bslib::page_sidebar(
-    title   = "pdfmacro",
+    title   = "macrox",
     sidebar = sidebar,
     main,
     theme   = theme,
@@ -566,7 +566,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
 #  Server                                                                      #
 # --------------------------------------------------------------------------- #
 
-.pdf_app_server <- function(input, output, session) {
+.mx_app_server <- function(input, output, session) {
 
   rv <- shiny::reactiveValues(
     pdf_path      = NULL,
@@ -646,9 +646,9 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
     shiny::updateNumericInput(session, "viewer_page", max = rv$n_pages, value = 1)
 
     # Serve the file's own directory — no file copy needed
-    shiny::addResourcePath(paste0("pdfmacro_", session$token), dirname(fpath))
+    shiny::addResourcePath(paste0("macrox_", session$token), dirname(fpath))
     rv$pdf_serve_url <- paste0(
-      "pdfmacro_", session$token, "/", utils::URLencode(basename(fpath))
+      "macrox_", session$token, "/", utils::URLencode(basename(fpath))
     )
     .close_sf_modal()
   })
@@ -962,9 +962,9 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
     req(rv$pdf_path)
     if (is.null(rv$pdf_serve_url)) {
       serve_dir <- dirname(rv$pdf_path)
-      shiny::addResourcePath(paste0("pdfmacro_", session$token), serve_dir)
+      shiny::addResourcePath(paste0("macrox_", session$token), serve_dir)
       rv$pdf_serve_url <- paste0(
-        "pdfmacro_", session$token, "/",
+        "macrox_", session$token, "/",
         utils::URLencode(basename(rv$pdf_path))
       )
     }
@@ -1108,7 +1108,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
         tmp <- new.env(parent = emptyenv())
         tmp$path <- rv$pdf_path; tmp$tables <- list(); tmp$items <- list()
         tmp$structs <- list(); tmp$steps <- list()
-        class(tmp) <- "pdfmacro_session"
+        class(tmp) <- "macrox_session"
         entity_val <- trimws(input$gs_entity %||% "")
         if (!nzchar(entity_val)) entity_val <- label
         select_struct(tmp, label = label, entity = entity_val,
@@ -1140,11 +1140,11 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
 
       if (method == "docling") {
         if (!requireNamespace("reticulate", quietly = TRUE))
-          stop("Install reticulate and run pdfmacro::setup_docling() first.")
+          stop("Install reticulate and run macrox::setup_docling() first.")
         tbl_idx <- as.integer(input$docling_table_index %||% 1L)
         tmp <- new.env(parent = emptyenv())
         tmp$path <- rv$pdf_path; tmp$tables <- list(); tmp$steps <- list()
-        tmp$.replaying <- TRUE; class(tmp) <- "pdfmacro_session"
+        tmp$.replaying <- TRUE; class(tmp) <- "macrox_session"
         select_table_docling(tmp, label = label, page = page, table_index = tbl_idx)
         df <- tmp$tables[[label]]
         if (is.null(df) || nrow(df) == 0) stop("Docling returned no data.")
@@ -1161,7 +1161,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
         prompt_val <- trimws(input$llm_prompt %||% "")
         tmp <- new.env(parent = emptyenv())
         tmp$path <- rv$pdf_path; tmp$tables <- list(); tmp$steps <- list()
-        tmp$.replaying <- TRUE; class(tmp) <- "pdfmacro_session"
+        tmp$.replaying <- TRUE; class(tmp) <- "macrox_session"
           base_url_val <- trimws(input$llm_base_url %||% "")
         select_table_llm(tmp, label = label, page = page, area = area,
           provider    = input$llm_provider %||% "anthropic",
@@ -1903,7 +1903,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
       tmp <- new.env(parent = emptyenv())
       tmp$path   <- rv$pdf_path
       tmp$tables <- list(); tmp$items <- list(); tmp$steps <- list()
-      tmp$.replaying <- TRUE; class(tmp) <- "pdfmacro_session"
+      tmp$.replaying <- TRUE; class(tmp) <- "macrox_session"
 
       all_matches_val <- isTRUE(input$new_item_all_matches) && backend == "gliner"
       if (backend == "gliner") {
@@ -2024,7 +2024,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
       tmp <- new.env(parent = emptyenv())
       tmp$path <- rv$pdf_path
       tmp$tables <- list(); tmp$items <- list(); tmp$steps <- list()
-      tmp$.replaying <- TRUE; class(tmp) <- "pdfmacro_session"
+      tmp$.replaying <- TRUE; class(tmp) <- "macrox_session"
 
       select_items_batch(tmp, items = items_vec, page = page_val,
                          gliner_model = model_val, all_matches = all_matches_val)
@@ -2056,7 +2056,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
     tmp_sess$items  <- rv$items
     tmp_sess$tables <- rv$tables
     tmp_sess$steps  <- list()
-    class(tmp_sess) <- "pdfmacro_session"
+    class(tmp_sess) <- "macrox_session"
     tryCatch(
       as.character(export_json(tmp_sess, pretty = TRUE)),
       error = function(e) paste("JSON error:", e$message)
@@ -2072,7 +2072,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
       tmp_sess$items  <- rv$items
       tmp_sess$tables <- rv$tables
       tmp_sess$steps  <- rv$steps
-      class(tmp_sess) <- "pdfmacro_session"
+      class(tmp_sess) <- "macrox_session"
       writeLines(as.character(export_json(tmp_sess, pretty = TRUE)), file)
     }
   )
@@ -2205,7 +2205,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
   )
 
   output$dl_all_xlsx <- shiny::downloadHandler(
-    filename = function() "pdfmacro_tables.xlsx",
+    filename = function() "macrox_tables.xlsx",
     content  = function(file) {
       req(length(rv$tables) > 0)
       if (requireNamespace("writexl", quietly = TRUE)) {
@@ -2224,7 +2224,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
   )
 
   output$dl_all_csv_zip <- shiny::downloadHandler(
-    filename = function() "pdfmacro_tables.zip",
+    filename = function() "macrox_tables.zip",
     content  = function(file) {
       req(length(rv$tables) > 0)
       tmp_dir <- tempfile(); dir.create(tmp_dir)
@@ -2376,7 +2376,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
                paste0("File:  ", basename(rv_replay$pdf_path)), "")
     result <- tryCatch({
       steps  <- load_macro(rv_replay$macro_path)
-      tables <- pdf_replay(rv_replay$pdf_path, steps)
+      tables <- mx_replay(rv_replay$pdf_path, steps)
       for (nm in names(tables)) rv$tables[[nm]] <- tables[[nm]]
       c(lines,
         paste0("✔ ", length(tables), " table(s) loaded into Tables tab."),
@@ -2395,7 +2395,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
     shiny::showNotification(paste0("Batch: ", length(rv_batch$pdf_paths), " files..."), type="message")
     tryCatch({
       steps <- load_macro(rv_batch$macro_path)
-      rv_batch$results <- pdf_replay_batch(rv_batch$pdf_paths, steps)
+      rv_batch$results <- mx_replay_batch(rv_batch$pdf_paths, steps)
       shiny::showNotification("Batch complete.", type="message")
     }, error = function(e) shiny::showNotification(e$message, type="error"))
   })
@@ -2437,7 +2437,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
   )
 
 
-}  # end .pdf_app_server
+}  # end .mx_app_server
 
 # --------------------------------------------------------------------------- #
 #  Filter expression builder                                                   #

@@ -16,7 +16,7 @@
 #' On replay, failures produce warnings by default; set `strict = TRUE` to
 #' abort.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param table Character label of the table to validate.
 #' @param rules Named character vector or named list of R expression strings.
 #'   Names become the rule identifiers shown in reports. Alternatively, a
@@ -109,7 +109,7 @@ validate_table <- function(sess, table, rules, strict = FALSE) {
 #'
 #' Prints a summary of every `validate_table()` result stored in the session.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @return `sess` invisibly. # not recorded
 #' @export
 show_validations <- function(sess) {
@@ -145,7 +145,7 @@ show_validations <- function(sess) {
 #'
 #' Must be called inside a `testthat` test (i.e., within `test_that()`).
 #'
-#' @param sess A `pdfmacro_session` object, or a plain data frame.
+#' @param sess A `macrox_session` object, or a plain data frame.
 #' @param label Character label of the table to snapshot. Ignored when `sess`
 #'   is already a data frame.
 #' @param variant Optional variant string passed to

@@ -4,7 +4,7 @@
 
 #' Rename columns in an extracted table
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param table Character label of the target table.
 #' @param mapping Named character vector: `c(OldName = "new_name", ...)`.
 #' @return `sess` invisibly (step is recorded).
@@ -45,7 +45,7 @@ rename_columns <- function(sess, table, mapping) {
 
 #' Cast column types in an extracted table
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param table Character label of the target table.
 #' @param types Named character vector: `c(col = "integer")`. Supported types:
 #'   `"numeric"`, `"integer"`, `"character"`, `"date:<fmt>"` e.g.
@@ -105,7 +105,7 @@ cast_types <- function(sess, table, types) {
 
 #' Remove rows matching an expression
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param table Character label of the target table.
 #' @param exclude_where Character string expression evaluated against the data
 #'   frame columns. Rows where the expression is `TRUE` are removed.
@@ -146,7 +146,7 @@ filter_rows <- function(sess, table, exclude_where) {
 
 #' Preview one extracted table
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param table Character label of the table to preview.
 #' @param n Number of rows to show (default 6).
 #' @return `sess` invisibly. # not recorded
@@ -162,7 +162,7 @@ preview <- function(sess, table, n = 6) {
 
 #' Preview all extracted tables with numeric totals
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param n Number of rows to show per table (default 6).
 #' @return `sess` invisibly. # not recorded
 #' @export
@@ -221,7 +221,7 @@ preview_all <- function(sess, n = 6) {
 
 #' Add a derived column to an extracted table
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param table Character label of the target table.
 #' @param name Name of the new column.
 #' @param expr R expression (as a string) evaluated against the data frame,
@@ -258,7 +258,7 @@ add_column <- function(sess, table, name, expr) {
 #' Useful after batch replay to combine monthly or regional tables that share
 #' the same schema.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param label Label for the combined output table.
 #' @param tables Character vector of existing table labels to stack.
 #' @param .fill Fill missing columns with `NA` when schemas differ
@@ -297,7 +297,7 @@ stack_tables <- function(sess, label, tables, .fill = FALSE) {
 #'
 #' Wraps `base::merge()` and records the step so it replays automatically.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param label Label for the merged output table.
 #' @param left Label of the left table.
 #' @param right Label of the right table.
@@ -335,7 +335,7 @@ merge_tables <- function(sess, label, left, right, by,
 #' Useful when merged header cells in government PDFs leave empty values in
 #' rows below the merged cell boundary.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param table Character label of the target table.
 #' @param cols Character vector of column names to fill. `NULL` (default) fills
 #'   all columns.
@@ -382,7 +382,7 @@ fill_down <- function(sess, table, cols = NULL) {
 #' Strips thousands separators, currency symbols, and parenthetical negatives;
 #' maps sentinel strings to `NA`; optionally coerces columns to numeric.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param table Character label of the target table.
 #' @param cols Character vector of column names to process. `NULL` (default)
 #'   targets all non-numeric columns.
@@ -469,7 +469,7 @@ clean_numbers <- function(sess, table, cols = NULL,
 #' specs compatible with [cast_types()]. Useful as a starting point before
 #' calling `cast_types()` or providing a schema to `select_table_llm()`.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param label Character label of the table to inspect.
 #' @return Named character vector of type specs (invisibly).
 #' @export

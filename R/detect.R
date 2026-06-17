@@ -9,7 +9,7 @@
 #' converted in a single pass and the results are cached so that subsequent
 #' [select_table_docling()] calls on those pages run instantly.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param pages Integer vector of pages to scan. Defaults to all pages.
 #' @param method Extraction method: `"lattice"` (default), `"stream"`, or
 #'   `"docling"`. Docling converts all requested pages in one pass and is

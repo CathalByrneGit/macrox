@@ -1,13 +1,13 @@
-# Agent workflow example — pdfmacro + LLM integration
+# Agent workflow example — macrox + LLM integration
 #
-# This file shows how to use pdfmacro's agent API functions with an LLM to
+# This file shows how to use macrox's agent API functions with an LLM to
 # automatically generate and validate extraction macros.
 
-library(pdfmacro)
+library(macrox)
 
 # ── Step 1: Profile the PDF ──────────────────────────────────────────────────
 
-profile <- pdf_profile("my_report.pdf", pages = 1:20)
+profile <- mx_profile("my_report.pdf", pages = 1:20)
 print(profile)
 
 # ── Step 2: Pass profile to LLM ──────────────────────────────────────────────
@@ -35,7 +35,7 @@ print(profile)
 
 # ── Step 4: Replay ───────────────────────────────────────────────────────────
 
-# tables <- pdf_replay("my_report.pdf", macro_yaml)
+# tables <- mx_replay("my_report.pdf", macro_yaml)
 
 
 # ── System prompt for the LLM ────────────────────────────────────────────────
@@ -43,8 +43,8 @@ print(profile)
 .agent_system_prompt <- function() {
   paste0(
     "You are an expert at reading structured data from PDF reports and writing ",
-    "pdfmacro YAML extraction macros.\n\n",
-    "## pdfmacro macro YAML schema\n\n",
+    "macrox YAML extraction macros.\n\n",
+    "## macrox macro YAML schema\n\n",
     "A macro is a YAML file with two top-level keys: `macro` (metadata) and `steps` (list).\n\n",
     "### Step types\n\n",
     "**select_table** — extract a table from the PDF\n",

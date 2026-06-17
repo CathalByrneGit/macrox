@@ -7,7 +7,7 @@
 preview_all(sess, n = 6)
 }
 \arguments{
-\item{sess}{A \code{pdfmacro_session} object.}
+\item{sess}{A \code{macrox_session} object.}
 
 \item{n}{Number of rows to show per table (default 6).}
 }

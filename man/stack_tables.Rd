@@ -7,7 +7,7 @@
 stack_tables(sess, label, tables, .fill = FALSE)
 }
 \arguments{
-\item{sess}{A \code{pdfmacro_session} object.}
+\item{sess}{A \code{macrox_session} object.}
 
 \item{label}{Label for the combined output table.}
 

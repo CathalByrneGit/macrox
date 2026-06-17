@@ -1,4 +1,4 @@
-# pdfmacro
+# macrox
 
 > Record and replay PDF table extraction workflows — like an Excel macro for PDFs.
 
@@ -11,7 +11,7 @@ Works with any domain. Government statistics, financial reports, health data, pl
 ## Installation
 
 ```r
-remotes::install_github("cathalbyrnegit/pdfmacro")
+remotes::install_github("cathalbyrnegit/macrox")
 
 # Recommended
 install.packages(c("magick", "ellmer", "validate", "shinyAce", "shinyFiles"))
@@ -20,7 +20,7 @@ install.packages(c("magick", "ellmer", "validate", "shinyAce", "shinyFiles"))
 **Optional Python backends** (Docling for ML-based table detection, GLiNER2 for local NLP field extraction):
 
 ```r
-# After installing pdfmacro:
+# After installing macrox:
 setup_docling()   # installs docling into a Python virtualenv (~2-3 GB models)
 setup_gliner()    # installs GLiNER2 (~500 MB model)
 ```
@@ -29,22 +29,22 @@ setup_gliner()    # installs GLiNER2 (~500 MB model)
 
 ## Usage modes
 
-**Standalone app** — launch with `pdf_app()`. Upload a PDF, draw boxes to extract tables, validate, export. No coding required.
+**Standalone app** — launch with `mx_app()`. Upload a PDF, draw boxes to extract tables, validate, export. No coding required.
 
 **Script API** — build the extraction interactively, save as a YAML macro, replay automatically on future files.
 
-**Shiny module** — embed `pdfmacro_ui()` / `pdfmacro_server()` in any existing Shiny app.
+**Shiny module** — embed `macrox_ui()` / `macrox_server()` in any existing Shiny app.
 
 ---
 
 ## Standalone app
 
 ```r
-library(pdfmacro)
+library(macrox)
 
-pdf_app()           # system browser (default)
-pdf_app("dialog")   # floating RStudio dialog
-pdf_app("pane")     # RStudio Viewer pane
+mx_app()           # system browser (default)
+mx_app("dialog")   # floating RStudio dialog
+mx_app("pane")     # RStudio Viewer pane
 ```
 
 | Tab | Purpose |
@@ -66,12 +66,12 @@ pdf_app("pane")     # RStudio Viewer pane
 ### 1 — Open a session
 
 ```r
-library(pdfmacro)
+library(macrox)
 
-sess <- pdf_session("AIM_Stats_Report_2024.pdf")
+sess <- mx_session("AIM_Stats_Report_2024.pdf")
 
 # Or call with no argument for a file chooser dialog
-sess <- pdf_session()
+sess <- mx_session()
 # ✔ Session opened: AIM_Stats_Report_2024.pdf
 ```
 
@@ -414,11 +414,11 @@ sess |> save_macro("dafm_aim_bovine", path = "inst/macros/")
 ### 13 — Replay on a new file
 
 ```r
-tables <- pdf_replay("AIM_Stats_Report_2025.pdf", macro = "dafm_aim_bovine")
+tables <- mx_replay("AIM_Stats_Report_2025.pdf", macro = "dafm_aim_bovine")
 
 # Batch across multiple files
 files   <- list.files("reports/", pattern = "\\.pdf$", full.names = TRUE)
-results <- pdf_replay_batch(files, macro = "dafm_aim_bovine")
+results <- mx_replay_batch(files, macro = "dafm_aim_bovine")
 ```
 
 LLM steps re-call the provider API on replay. For deterministic replay without API calls, complete LLM extraction once, then rely on `rename_columns()` / `cast_types()` for all cleaning — those steps replay with no network calls.
@@ -434,7 +434,7 @@ diff <- diff_replay(
   macro = "dafm_aim_bovine"
 )
 print(diff)
-# pdfmacro diff
+# macrox diff
 #   Reference: AIM_Stats_Report_2024.pdf
 #   New:       AIM_Stats_Report_2025.pdf
 #
@@ -539,11 +539,11 @@ For embedding in an existing app:
 bslib::accordion_panel(
   "PDF Import",
   icon = shiny::icon("file-pdf"),
-  pdfmacro::pdfmacro_ui(ns("pdf_import"))
+  macrox::macrox_ui(ns("pdf_import"))
 )
 
 # Server:
-pdf_result <- pdfmacro::pdfmacro_server("pdf_import")
+pdf_result <- macrox::macrox_server("pdf_import")
 
 observe({
   pdf_tables <- pdf_result$tables()
@@ -560,8 +560,8 @@ Returns `list(tables = reactive(...), steps = reactive(...))`.
 
 | Function | Recorded | Purpose |
 |---|---|---|
-| `pdf_app(viewer)` | — | Launch standalone Shiny app |
-| `pdf_session(path)` | — | Open a script session; omit `path` for file chooser |
+| `mx_app(viewer)` | — | Launch standalone Shiny app |
+| `mx_session(path)` | — | Open a script session; omit `path` for file chooser |
 | **Detection** | | |
 | `detect_tables(sess, pages, method, ...)` | No | Scan pages for tables (lattice / stream / docling) |
 | `detect_tables_quietly(path, pages, ...)` | — | Silent detection for agents |
@@ -602,8 +602,8 @@ Returns `list(tables = reactive(...), steps = reactive(...))`.
 | **Macro I/O** | | |
 | `save_macro(sess, name, path)` | — | Write YAML macro |
 | `load_macro(name, path)` | — | Read YAML macro |
-| `pdf_replay(file, macro)` | — | Replay macro, returns named list of data frames |
-| `pdf_replay_batch(files, macro)` | — | Replay across multiple files |
+| `mx_replay(file, macro)` | — | Replay macro, returns named list of data frames |
+| `mx_replay_batch(files, macro)` | — | Replay across multiple files |
 | **Comparison** | | |
 | `diff_replay(file1, file2, macro)` | — | Compare macro outputs across two files |
 | `detail(diff, table)` | — | Cell-level change details |
@@ -612,7 +612,7 @@ Returns `list(tables = reactive(...), steps = reactive(...))`.
 | `export_excel(sess, path, tables)` | — | Write tables to an Excel workbook |
 | `export_json(sess, path, ...)` | — | JSON payload (items + tables) |
 | **Agent tools** | | |
-| `pdf_profile(path, pages, method)` | — | Machine-readable PDF profile for agents |
+| `mx_profile(path, pages, method)` | — | Machine-readable PDF profile for agents |
 | `validate_macro(file, macro)` | — | Pre-flight macro validation |
 | `test_extraction(file, page, ...)` | — | Single extraction with eval report |
 | **Python backends** | | |
@@ -621,8 +621,8 @@ Returns `list(tables = reactive(...), steps = reactive(...))`.
 | `setup_gliner(model, envname)` | — | Install GLiNER2 Python package |
 | `close_gliner()` | — | Unload GLiNER2 model from memory |
 | **Shiny** | | |
-| `pdfmacro_ui(id, title, height)` | — | Shiny module UI |
-| `pdfmacro_server(id)` | — | Shiny module server |
+| `macrox_ui(id, title, height)` | — | Shiny module UI |
+| `macrox_server(id)` | — | Shiny module server |
 
 ---
 

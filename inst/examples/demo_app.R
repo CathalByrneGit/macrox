@@ -1,19 +1,19 @@
 library(shiny)
 library(bslib)
-library(pdfmacro)
+library(macrox)
 
-# Standalone demo app showing the pdfmacro Shiny module.
+# Standalone demo app showing the macrox Shiny module.
 # Run with: shiny::runApp("inst/examples/demo_app.R")
 
 ui <- page_navbar(
-  title = "pdfmacro demo",
+  title = "macrox demo",
   theme = bs_theme(version = 5),
-  nav_panel("Extract",   pdfmacro_ui("pdf1")),
+  nav_panel("Extract",   macrox_ui("pdf1")),
   nav_panel("Extracted", verbatimTextOutput("summary"))
 )
 
 server <- function(input, output, session) {
-  result <- pdfmacro_server("pdf1")
+  result <- macrox_server("pdf1")
 
   output$summary <- renderText({
     tbls <- result$tables()
@@ -37,13 +37,13 @@ shinyApp(ui, server)
 #   bslib::accordion_panel(
 #     "PDF Import",
 #     icon = shiny::icon("file-pdf"),
-#     pdfmacro::pdfmacro_ui(ns("pdf_import"), title = "PDF \u00b7 Table Extractor")
+#     macrox::macrox_ui(ns("pdf_import"), title = "PDF \u00b7 Table Extractor")
 #   )
 #
 #
 # Server:
 #
-#   pdf_result <- pdfmacro::pdfmacro_server("pdf_import")
+#   pdf_result <- macrox::macrox_server("pdf_import")
 #
 #   observe({
 #     pdf_tables <- pdf_result$tables()

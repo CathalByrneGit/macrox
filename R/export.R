@@ -6,7 +6,7 @@
 #'
 #' Writes one `.csv` per table into `dir`. Existing files are overwritten.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param dir Directory to write into (created if it doesn't exist).
 #' @param tables Character vector of table labels to export. Default: all tables.
 #' @return Named character vector of output file paths, invisibly.
@@ -32,12 +32,12 @@ export_csv <- function(sess, dir = ".", tables = NULL) {
 #' Writes one worksheet per table. Requires the `writexl` or `openxlsx`
 #' package.
 #'
-#' @param sess A `pdfmacro_session` object.
-#' @param path Output `.xlsx` file path (default `"pdfmacro_tables.xlsx"`).
+#' @param sess A `macrox_session` object.
+#' @param path Output `.xlsx` file path (default `"macrox_tables.xlsx"`).
 #' @param tables Character vector of table labels to include. Default: all.
 #' @return `path` invisibly.
 #' @export
-export_excel <- function(sess, path = "pdfmacro_tables.xlsx", tables = NULL) {
+export_excel <- function(sess, path = "macrox_tables.xlsx", tables = NULL) {
   labels <- tables %||% names(sess$tables)
   if (length(labels) == 0L) cli::cli_abort("No tables extracted yet.")
 

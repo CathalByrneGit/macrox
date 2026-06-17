@@ -1,7 +1,7 @@
-# pdfmacro MCP Agent Interface
+# macrox MCP Agent Interface
 
 ## Tools
-- `initialize_session(file_path)` → `pdf_profile(file_path)`
+- `initialize_session(file_path)` → `mx_profile(file_path)`
 - `test_parameters(file, page, area, method, header_rows)` → `test_extraction(...)`
 - `lock_macro(sess, name, path)` → `save_macro(...)`
 

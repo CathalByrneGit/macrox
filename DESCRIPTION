@@ -1,4 +1,4 @@
-Package: pdfmacro
+Package: macrox
 Title: Record and Replay PDF Table Extraction Workflows
 Version: 0.1.0
 Authors@R: person("First", "Last", email = "you@example.com", role = c("aut", "cre"))
@@ -15,7 +15,8 @@ Imports:
     stringdist,
     yaml,
     cli,
-    rlang
+    rlang,
+    validate
 Suggests:
     magick,
     shiny,
@@ -26,7 +27,6 @@ Suggests:
     jsonlite,
     tabulapdf,
     ellmer,
-    validate,
     shinyFiles,
     shinyAce,
     shinyjs,
@@ -35,6 +35,8 @@ Suggests:
     zip,
     testthat (>= 3.0.0),
     purrr (>= 1.1.0),
-    mirai (>= 2.0.0)
+    mirai (>= 2.0.0),
+    knitr,
+    rmarkdown
 Config/testthat/edition: 3
 VignetteBuilder: knitr

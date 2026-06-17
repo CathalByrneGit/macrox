@@ -7,7 +7,7 @@
 locate_area(sess, page = 1)
 }
 \arguments{
-\item{sess}{A \code{pdfmacro_session} object.}
+\item{sess}{A \code{macrox_session} object.}
 
 \item{page}{Page number to display (default 1).}
 }

@@ -5,7 +5,7 @@
 #' bounding box, the selected area is highlighted in blue. Requires `magick`
 #' for annotations (Suggests).
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param step Integer step index. Defaults to the most recent step with a
 #'   page location (`select_table` or `select_table_llm`).
 #' @param dpi Render resolution (default 150).
@@ -69,7 +69,7 @@ view_in_pdf <- function(sess, step = NULL, dpi = 150) {
 #' bounding box coordinates. Returns a named `c(top, left, bottom, right)`
 #' vector suitable for passing directly to [select_table()].
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param page Page number to display (default 1).
 #' @return Named numeric vector `c(top, left, bottom, right)`, invisibly.
 #' @export

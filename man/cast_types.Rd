@@ -7,7 +7,7 @@
 cast_types(sess, table, types)
 }
 \arguments{
-\item{sess}{A \code{pdfmacro_session} object.}
+\item{sess}{A \code{macrox_session} object.}
 
 \item{table}{Character label of the target table.}
 

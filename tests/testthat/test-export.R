@@ -16,7 +16,7 @@ make_export_sess <- function() {
     )
   )
   sess$steps <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
   sess
 }
 
@@ -62,7 +62,7 @@ test_that("export_csv() respects the tables argument", {
 
 test_that("export_csv() creates dir if it doesn't exist", {
   sess <- make_export_sess()
-  tmp  <- file.path(tempdir(), paste0("pdfmacro_test_", sample.int(1e6, 1)))
+  tmp  <- file.path(tempdir(), paste0("macrox_test_", sample.int(1e6, 1)))
   on.exit(unlink(tmp, recursive = TRUE))
 
   expect_false(dir.exists(tmp))

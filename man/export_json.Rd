@@ -7,7 +7,7 @@
 export_json(sess, path = NULL, pretty = TRUE, include_steps = FALSE)
 }
 \arguments{
-\item{sess}{A \code{pdfmacro_session} object.}
+\item{sess}{A \code{macrox_session} object.}
 
 \item{path}{File path to write the JSON. \code{NULL} (default) returns the JSON
 string invisibly without writing.}

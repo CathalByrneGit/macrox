@@ -6,7 +6,7 @@ make_item_sess <- function() {
   sess$tables <- list()
   sess$items  <- list()
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
   sess
 }
 
@@ -206,7 +206,7 @@ test_that("update_item() updates the prompt in the step", {
     cast = "character", page = NULL, area = NULL,
     provider = "anthropic", model = "x", base_url = NULL, dpi = 120L
   ))
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   update_item(sess, "num", prompt = "new prompt", re_extract = FALSE)
   expect_equal(sess$steps[[1]]$prompt, "new prompt")

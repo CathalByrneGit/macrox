@@ -12,10 +12,10 @@ validate_macro(file, macro)
 \item{macro}{Either a step list or a path to a \code{.yml} file.}
 }
 \value{
-A \code{pdfmacro_validation} list with \verb{$valid}, \verb{$steps} (data frame),
+A \code{macrox_validation} list with \verb{$valid}, \verb{$steps} (data frame),
 and \verb{$errors} (character vector).
 }
 \description{
 Runs a pre-flight check on every step. Agents should call this after
-generating a macro and fix any errors before the human runs \code{\link[=pdf_replay]{pdf_replay()}}.
+generating a macro and fix any errors before the human runs \code{\link[=mx_replay]{mx_replay()}}.
 }

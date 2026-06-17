@@ -14,7 +14,7 @@ update_llm_schema(
 )
 }
 \arguments{
-\item{sess}{A \code{pdfmacro_session} object.}
+\item{sess}{A \code{macrox_session} object.}
 
 \item{label}{Label of the table to update.}
 

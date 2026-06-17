@@ -16,7 +16,7 @@ merge_tables(
 )
 }
 \arguments{
-\item{sess}{A \code{pdfmacro_session} object.}
+\item{sess}{A \code{macrox_session} object.}
 
 \item{label}{Label for the merged output table.}
 

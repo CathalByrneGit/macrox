@@ -12,7 +12,7 @@ test_that(".docling_tbl_to_df() converts headers + data to a data frame", {
       list("Bob",   "25", "Cork")
     )
   )
-  df <- pdfmacro:::.docling_tbl_to_df(tbl)
+  df <- macrox:::.docling_tbl_to_df(tbl)
   expect_s3_class(df, "data.frame")
   expect_equal(nrow(df), 2L)
   expect_equal(ncol(df), 3L)
@@ -25,7 +25,7 @@ test_that(".docling_tbl_to_df() makes names valid R identifiers", {
     headers = list("Column 1", "Column 1"),
     data    = list(list("a", "b"))
   )
-  df <- pdfmacro:::.docling_tbl_to_df(tbl)
+  df <- macrox:::.docling_tbl_to_df(tbl)
   expect_equal(names(df), c("Column.1", "Column.1.1"))
 })
 
@@ -34,7 +34,7 @@ test_that(".docling_tbl_to_df() handles single-row data", {
     headers = list("X", "Y"),
     data    = list(list("1", "2"))
   )
-  df <- pdfmacro:::.docling_tbl_to_df(tbl)
+  df <- macrox:::.docling_tbl_to_df(tbl)
   expect_equal(nrow(df), 1L)
   expect_equal(df$X, "1")
 })
@@ -47,7 +47,7 @@ test_that(".docling_tbl_to_df() pads short rows with empty strings", {
       list("3", "4", "5")
     )
   )
-  df <- pdfmacro:::.docling_tbl_to_df(tbl)
+  df <- macrox:::.docling_tbl_to_df(tbl)
   expect_equal(ncol(df), 3L)
   expect_equal(nrow(df), 2L)
   expect_equal(df$C[1], "")

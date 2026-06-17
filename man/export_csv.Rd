@@ -7,7 +7,7 @@
 export_csv(sess, dir = ".", tables = NULL)
 }
 \arguments{
-\item{sess}{A \code{pdfmacro_session} object.}
+\item{sess}{A \code{macrox_session} object.}
 
 \item{dir}{Directory to write into (created if it doesn't exist).}
 

@@ -5,10 +5,10 @@
 #  fields from text without any API call.  It runs on CPU.                    #
 # --------------------------------------------------------------------------- #
 
-.pdfmacro_gliner_env <- new.env(parent = emptyenv())
+.macrox_gliner_env <- new.env(parent = emptyenv())
 
 
-#' Install GLiNER2 in the pdfmacro Python environment
+#' Install GLiNER2 in the macrox Python environment
 #'
 #' Installs the `gliner2` Python package and pre-loads the requested model so
 #' it is ready for [select_item()] calls with `backend = "gliner"`.
@@ -16,12 +16,12 @@
 #' @param model Pre-trained model identifier (HuggingFace repo).  Defaults to
 #'   the 205M base model `"fastino/gliner2-base-v1"`.  The 340M large variant
 #'   is `"fastino/gliner2-large-v1"`.
-#' @param envname Python virtual environment name (default `"r-pdfmacro"`).
+#' @param envname Python virtual environment name (default `"r-macrox"`).
 #' @param pip_options Additional pip install options (character vector).
 #' @return `NULL` invisibly.
 #' @export
 setup_gliner <- function(model       = "fastino/gliner2-base-v1",
-                          envname     = "r-pdfmacro",
+                          envname     = "r-macrox",
                           pip_options = character(0)) {
   if (!requireNamespace("reticulate", quietly = TRUE)) {
     cli::cli_abort(c(
@@ -48,14 +48,14 @@ setup_gliner <- function(model       = "fastino/gliner2-base-v1",
 #' @return `NULL` invisibly.
 #' @export
 close_gliner <- function() {
-  if (!is.null(.pdfmacro_gliner_env$py)) {
+  if (!is.null(.macrox_gliner_env$py)) {
     tryCatch(
-      .pdfmacro_gliner_env$py$gliner_clear(),
+      .macrox_gliner_env$py$gliner_clear(),
       error = function(e) invisible(NULL)
     )
   }
-  .pdfmacro_gliner_env$py    <- NULL
-  .pdfmacro_gliner_env$model <- NULL
+  .macrox_gliner_env$py    <- NULL
+  .macrox_gliner_env$model <- NULL
   cli::cli_inform(c("v" = "GLiNER2 model unloaded."))
   invisible(NULL)
 }
@@ -70,25 +70,25 @@ close_gliner <- function() {
     ))
   }
 
-  if (is.null(.pdfmacro_gliner_env$py)) {
-    py_file <- system.file("python", "gliner_helpers.py", package = "pdfmacro")
+  if (is.null(.macrox_gliner_env$py)) {
+    py_file <- system.file("python", "gliner_helpers.py", package = "macrox")
     if (!nzchar(py_file)) {
-      cli::cli_abort("GLiNER helper not found — try reinstalling pdfmacro.")
+      cli::cli_abort("GLiNER helper not found — try reinstalling macrox.")
     }
     reticulate::source_python(py_file)
-    .pdfmacro_gliner_env$py <- reticulate::import_main()
+    .macrox_gliner_env$py <- reticulate::import_main()
   }
 
   current <- tryCatch(
-    .pdfmacro_gliner_env$py$gliner_loaded_model(),
+    .macrox_gliner_env$py$gliner_loaded_model(),
     error = function(e) NULL
   )
 
   if (!identical(current, model)) {
     cli::cli_inform(c("i" = "Loading GLiNER2 model {.val {model}}..."))
-    .pdfmacro_gliner_env$py$gliner_setup(model)
-    .pdfmacro_gliner_env$model <- model
+    .macrox_gliner_env$py$gliner_setup(model)
+    .macrox_gliner_env$model <- model
   }
 
-  invisible(.pdfmacro_gliner_env$py)
+  invisible(.macrox_gliner_env$py)
 }

@@ -7,7 +7,7 @@
 save_macro(sess, name, path = ".", overwrite = FALSE)
 }
 \arguments{
-\item{sess}{A \code{pdfmacro_session} object.}
+\item{sess}{A \code{macrox_session} object.}
 
 \item{name}{Macro name (used as the filename stem).}
 

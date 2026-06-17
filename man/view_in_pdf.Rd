@@ -7,7 +7,7 @@
 view_in_pdf(sess, step = NULL, dpi = 150)
 }
 \arguments{
-\item{sess}{A \code{pdfmacro_session} object.}
+\item{sess}{A \code{macrox_session} object.}
 
 \item{step}{Integer step index. Defaults to the most recent step with a
 page location (\code{select_table} or \code{select_table_llm}).}
@@ -20,6 +20,6 @@ The bounding box area (named numeric vector or NULL), invisibly.
 \description{
 Renders the PDF page for a \code{select_table} or \code{select_table_llm} step and
 opens it in the RStudio Viewer or system browser. If the step used a
-bounding box, the selected area is highlighted in blue. Requires
-\code{magick} for annotations (Suggests).
+bounding box, the selected area is highlighted in blue. Requires \code{magick}
+for annotations (Suggests).
 }

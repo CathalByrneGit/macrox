@@ -10,7 +10,7 @@ make_valid_sess <- function(df = NULL) {
   sess$tables      <- list(tbl = df)
   sess$validations <- list()
   sess$steps       <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
   sess
 }
 

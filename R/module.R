@@ -9,7 +9,7 @@
 #' @param height Height of the PDF image pane (default `"600px"`).
 #' @return A `bslib` card UI element.
 #' @export
-pdfmacro_ui <- function(id, title = "PDF \u00b7 Table Extractor", height = "600px") {
+macrox_ui <- function(id, title = "PDF \u00b7 Table Extractor", height = "600px") {
   if (!requireNamespace("shiny", quietly = TRUE) ||
       !requireNamespace("bslib", quietly = TRUE) ||
       !requireNamespace("DT",    quietly = TRUE)) {
@@ -191,11 +191,11 @@ pdfmacro_ui <- function(id, title = "PDF \u00b7 Table Extractor", height = "600p
 
 #' Shiny module server for PDF table extraction
 #'
-#' @param id Module namespace ID (must match [pdfmacro_ui()]).
+#' @param id Module namespace ID (must match [macrox_ui()]).
 #' @return A list with two reactives: `tables` (named list of data frames) and
 #'   `steps` (list of step definitions).
 #' @export
-pdfmacro_server <- function(id) {
+macrox_server <- function(id) {
   if (!requireNamespace("shiny", quietly = TRUE)) stop("shiny required")
 
   shiny::moduleServer(id, function(input, output, session) {

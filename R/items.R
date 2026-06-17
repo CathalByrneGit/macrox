@@ -12,7 +12,7 @@
 #' local GLiNER2 model.  Results are stored in `sess$items[[label]]` and
 #' recorded as a step.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param label Character label for the item (e.g. `"invoice_number"`).
 #' @param prompt Description of the field to extract.  For the LLM backend
 #'   this is the full instruction; for GLiNER it is the field description
@@ -238,7 +238,7 @@ select_item <- function(sess, label, prompt,
 #' are present in the text; `select_items_batch` surfaces the first match per
 #' field (the same behaviour as [select_item()]).
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param items Named character vector: names are field labels, values are
 #'   natural-language prompts describing the field.
 #'   E.g. `c(invoice_no = "Invoice ID or reference number",
@@ -350,7 +350,7 @@ select_items_batch <- function(sess, items, page = NULL, cast = NULL,
 #' tabulapdf / LLM table extraction — downstream steps and exports work
 #' unchanged.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param label Table label to store results under.
 #' @param entity Entity type name used in the GLiNER2 schema. Defaults to
 #'   `label`.
@@ -452,7 +452,7 @@ select_struct <- function(sess, label, entity = label,
 #' per-field confidence scores) and converts them to a data frame stored in
 #' `sess$tables[[label]]`. Optionally filters out low-confidence records.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param label Label matching a prior [select_struct()] call.
 #' @param min_confidence Numeric in `[0, 1]`. Records whose mean field
 #'   confidence is below this threshold are dropped. `NULL` (default) keeps all.
@@ -564,7 +564,7 @@ struct_to_df <- function(sess, label, min_confidence = NULL) {
 
 #' Update the prompt for a recorded select_item step and re-extract
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param label Label of the item to update.
 #' @param prompt New prompt string.
 #' @param cast New cast type, or `NULL` to keep existing.
@@ -617,7 +617,7 @@ update_item <- function(sess, label, prompt = NULL, cast = NULL,
 
 #' Show all extracted items
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @return `sess` invisibly. # not recorded
 #' @export
 show_items <- function(sess) {
@@ -652,7 +652,7 @@ show_items <- function(sess) {
 #' self-describing JSON document. Suitable for API ingestion, database loading,
 #' and RAG pipelines.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param path File path to write the JSON. `NULL` (default) returns the JSON
 #'   string invisibly without writing.
 #' @param pretty Logical; pretty-print the JSON (default `TRUE`).

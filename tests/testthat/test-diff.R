@@ -1,6 +1,6 @@
 # tests/testthat/test-diff.R
 
-# All tests mock pdf_replay() to avoid real PDFs.
+# All tests mock mx_replay() to avoid real PDFs.
 
 make_tables <- function(...) {
   args <- list(...)
@@ -17,7 +17,7 @@ make_tables <- function(...) {
 test_that("diff_replay() marks unchanged tables as 'unchanged'", {
   df <- data.frame(a = 1:3, b = c("x","y","z"), stringsAsFactors = FALSE)
   testthat::local_mocked_bindings(
-    pdf_replay = function(file, ...) list(tbl = df)
+    mx_replay = function(file, ...) list(tbl = df)
   )
   result <- diff_replay("f1.pdf", "f2.pdf", macro = list())
   expect_equal(result$tables$tbl$status, "unchanged")
@@ -28,7 +28,7 @@ test_that("diff_replay() detects row count change as 'changed'", {
   df2 <- data.frame(a = 1:5, stringsAsFactors = FALSE)
   call_n <- 0L
   testthat::local_mocked_bindings(
-    pdf_replay = function(file, ...) {
+    mx_replay = function(file, ...) {
       call_n <<- call_n + 1L
       if (call_n == 1L) list(tbl = df1) else list(tbl = df2)
     }
@@ -44,7 +44,7 @@ test_that("diff_replay() detects cell-level changes", {
   df2 <- data.frame(a = 1:3, b = c("x","Y","z"), stringsAsFactors = FALSE)  # Y changed
   call_n <- 0L
   testthat::local_mocked_bindings(
-    pdf_replay = function(file, ...) {
+    mx_replay = function(file, ...) {
       call_n <<- call_n + 1L
       if (call_n == 1L) list(tbl = df1) else list(tbl = df2)
     }
@@ -58,7 +58,7 @@ test_that("diff_replay() marks new table as 'added'", {
   df <- data.frame(a = 1:2, stringsAsFactors = FALSE)
   call_n <- 0L
   testthat::local_mocked_bindings(
-    pdf_replay = function(file, ...) {
+    mx_replay = function(file, ...) {
       call_n <<- call_n + 1L
       if (call_n == 1L) list()           # file1 has no tables
       else              list(new_tbl = df) # file2 has one
@@ -74,7 +74,7 @@ test_that("diff_replay() marks removed table as 'removed'", {
   df <- data.frame(a = 1:2, stringsAsFactors = FALSE)
   call_n <- 0L
   testthat::local_mocked_bindings(
-    pdf_replay = function(file, ...) {
+    mx_replay = function(file, ...) {
       call_n <<- call_n + 1L
       if (call_n == 1L) list(old_tbl = df)
       else              list()
@@ -91,7 +91,7 @@ test_that("diff_replay() detects column additions", {
   df2 <- data.frame(a = 1:2, b = 3:4, stringsAsFactors = FALSE)
   call_n <- 0L
   testthat::local_mocked_bindings(
-    pdf_replay = function(file, ...) {
+    mx_replay = function(file, ...) {
       call_n <<- call_n + 1L
       if (call_n == 1L) list(t = df1) else list(t = df2)
     }
@@ -105,21 +105,21 @@ test_that("diff_replay() detects column additions", {
 #  diff_replay() — return structure                                            #
 # --------------------------------------------------------------------------- #
 
-test_that("diff_replay() returns a pdfmacro_diff object", {
+test_that("diff_replay() returns a macrox_diff object", {
   testthat::local_mocked_bindings(
-    pdf_replay = function(file, ...) list()
+    mx_replay = function(file, ...) list()
   )
   result <- diff_replay("f1.pdf", "f2.pdf", macro = list())
-  expect_s3_class(result, "pdfmacro_diff")
+  expect_s3_class(result, "macrox_diff")
   expect_equal(result$file1, "f1.pdf")
   expect_equal(result$file2, "f2.pdf")
 })
 
 # --------------------------------------------------------------------------- #
-#  print.pdfmacro_diff()                                                      #
+#  print.macrox_diff()                                                      #
 # --------------------------------------------------------------------------- #
 
-test_that("print.pdfmacro_diff() shows file names and table statuses", {
+test_that("print.macrox_diff() shows file names and table statuses", {
   diff_obj <- structure(
     list(
       file1 = "old.pdf",
@@ -135,7 +135,7 @@ test_that("print.pdfmacro_diff() shows file names and table statuses", {
                   dropped_cols = character(0))
       )
     ),
-    class = "pdfmacro_diff"
+    class = "macrox_diff"
   )
   out <- capture.output(print(diff_obj))
   expect_true(any(grepl("old.pdf", out)))

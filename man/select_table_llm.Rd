@@ -16,11 +16,13 @@ select_table_llm(
   schema = NULL,
   prompt = NULL,
   dpi = 150L,
-  header_rows = 1L
+  header_rows = 1L,
+  mode = c("structured", "page"),
+  table_index = 1L
 )
 }
 \arguments{
-\item{sess}{A \code{pdfmacro_session} object.}
+\item{sess}{A \code{macrox_session} object.}
 
 \item{label}{Character label for the extracted table.}
 
@@ -58,7 +60,21 @@ e.g. \code{"Ignore the footnote row at the bottom."}.}
 \item{dpi}{Render resolution for the page image (default 150).}
 
 \item{header_rows}{Number of header rows.  When > 1 the prompt asks the
-LLM to flatten them with \verb{_} separators.}
+LLM to flatten them with \verb{_} separators. Ignored in \code{"page"} mode.}
+
+\item{mode}{Extraction mode:
+\itemize{
+\item \code{"structured"} (default) — renders the area (or full page if no \code{area})
+and asks the LLM to return a typed JSON object.  Best when you know the
+table's location and can supply a schema.
+\item \code{"page"} — renders the full page, asks the LLM to convert it to
+markdown, and parses the resulting markdown tables.  No schema or area
+is required; good for quick extraction when the layout is unknown.
+\code{area} is ignored. Use \code{table_index} to pick among multiple tables.
+}}
+
+\item{table_index}{When \code{mode = "page"} and multiple tables are detected on
+the page, which one to return (default 1).}
 }
 \value{
 \code{sess} invisibly (step is recorded).

@@ -9,9 +9,9 @@
 #' @param method Extraction method: `"lattice"` (default) or `"stream"`.
 #' @param context_lines Number of text lines above/below each table's header
 #'   row to include as context (default 3).
-#' @return A `pdfmacro_profile` list.
+#' @return A `macrox_profile` list.
 #' @export
-pdf_profile <- function(path, pages = NULL, method = "lattice", context_lines = 3) {
+mx_profile <- function(path, pages = NULL, method = "lattice", context_lines = 3) {
   info    <- pdftools::pdf_info(path)
   n_pages <- info$pages
 
@@ -80,14 +80,14 @@ pdf_profile <- function(path, pages = NULL, method = "lattice", context_lines = 
       pages    = page_profiles,
       all_text = all_text
     ),
-    class = "pdfmacro_profile"
+    class = "macrox_profile"
   )
   out
 }
 
 #' @export
-print.pdfmacro_profile <- function(x, ...) {
-  cat("pdfmacro_profile\n")
+print.macrox_profile <- function(x, ...) {
+  cat("macrox_profile\n")
   cat("File:   ", x$file, "\n")
   cat("Pages:  ", x$n_pages, "total,", length(x$pages), "profiled\n")
   n_tbls <- sum(vapply(x$pages, function(p) p$n_tables, integer(1)))
@@ -103,11 +103,11 @@ print.pdfmacro_profile <- function(x, ...) {
 #' Validate a macro against a PDF without extracting data
 #'
 #' Runs a pre-flight check on every step. Agents should call this after
-#' generating a macro and fix any errors before the human runs [pdf_replay()].
+#' generating a macro and fix any errors before the human runs [mx_replay()].
 #'
 #' @param file Path to a PDF file.
 #' @param macro Either a step list or a path to a `.yml` file.
-#' @return A `pdfmacro_validation` list with `$valid`, `$steps` (data frame),
+#' @return A `macrox_validation` list with `$valid`, `$steps` (data frame),
 #'   and `$errors` (character vector).
 #' @export
 validate_macro <- function(file, macro) {
@@ -210,12 +210,12 @@ validate_macro <- function(file, macro) {
 
   structure(
     list(valid = valid, steps = steps_df, errors = errors),
-    class = "pdfmacro_validation"
+    class = "macrox_validation"
   )
 }
 
 #' @export
-print.pdfmacro_validation <- function(x, ...) {
+print.macrox_validation <- function(x, ...) {
   icon <- if (x$valid) "\u2705" else "\u274c"
   cat(icon, if (x$valid) "Macro valid\n" else "Macro has errors\n")
   for (i in seq_len(nrow(x$steps))) {
@@ -291,7 +291,7 @@ test_extraction <- function(file,
   tmp$items  <- list()
   tmp$steps  <- list()
   tmp$.replaying <- TRUE
-  class(tmp) <- "pdfmacro_session"
+  class(tmp) <- "macrox_session"
 
   result <- tryCatch({
     switch(method,

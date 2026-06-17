@@ -4,7 +4,7 @@
 #' fuzzy caption match (`label_match`). These can be mixed across different
 #' tables in the same session.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param label Character label for the extracted table.
 #' @param page Page number (integer). Required unless `label_match` is supplied.
 #' @param table_index Which table on the page (1-based, tabulapdf methods only).
@@ -251,7 +251,7 @@ select_table <- function(sess, label,
 #' dropped from the data automatically. Use `header_match = FALSE` when pages
 #' 2+ start directly with data (no repeated header).
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param label Character label for the combined table.
 #' @param pages Integer vector of page numbers to extract and stack (minimum 2).
 #' @param area Named `c(top, left, bottom, right)` in PDF points, or `NULL`
@@ -288,7 +288,7 @@ stack_pages <- function(sess, label, pages,
   tmp$tables     <- list()
   tmp$steps      <- list()
   tmp$.replaying <- TRUE
-  class(tmp)     <- "pdfmacro_session"
+  class(tmp)     <- "macrox_session"
 
   # First page — defines column names and shape
   select_table(tmp, label = ".sp_p1", page = pages[[1L]], area = area,

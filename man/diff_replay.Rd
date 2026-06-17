@@ -7,19 +7,21 @@
 diff_replay(file1, file2, macro, macro_path = ".")
 }
 \arguments{
-\item{file1}{Path to the first (reference) PDF.}
+\item{file1}{Path to the reference PDF.}
 
-\item{file2}{Path to the second (new) PDF.}
+\item{file2}{Path to the new PDF.}
 
 \item{macro}{Macro name, path to a \code{.yml}, or a step list.}
 
 \item{macro_path}{Directory for macro lookup (default \code{.}).}
 }
 \value{
-A \code{pdfmacro_diff} object (print method included).
+A \code{macrox_diff} object. Print gives a summary; \code{\link[=detail]{detail()}} drills
+into a single table.
 }
 \description{
 Replays the same macro against two files and returns a structured diff
-showing added, removed, and changed tables and rows. Useful for detecting
-format changes between annual editions of the same report.
+showing added, removed, and changed tables. For changed tables the diff
+includes per-column numeric delta statistics. Use \code{\link[=detail]{detail()}} on the result
+to inspect which cells changed.
 }

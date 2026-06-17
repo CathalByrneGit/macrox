@@ -16,7 +16,7 @@
 #' key for the chosen provider set as an environment variable
 #' (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`).
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param label Character label for the extracted table.
 #' @param page Page number (integer).
 #' @param area Named numeric vector `c(top, left, bottom, right)` in PDF
@@ -192,7 +192,7 @@ select_table_llm <- function(sess, label,
 #' schema, and re-runs the extraction against the same page/area.  Useful
 #' when the auto-detected columns need renaming or the types need adjustment.
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param label Label of the table to update.
 #' @param schema New named character vector: `c(Month = "character", Male = "integer")`.
 #' @param prompt Replacement prompt, or `NULL` to keep the existing one.

@@ -1,8 +1,8 @@
 ---
-title: "pdfmacro: PDF Table Extraction Workflows"
+title: "macrox: PDF Table Extraction Workflows"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{pdfmacro: PDF Table Extraction Workflows}
+  %\VignetteIndexEntry{macrox: PDF Table Extraction Workflows}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -15,14 +15,14 @@ knitr::opts_chunk$set(
 )
 ```
 
-pdfmacro records every step of a PDF table extraction workflow as a YAML macro and replays it automatically on new files.  Think of it as Power Query for PDFs — interactive exploration that compiles into a reproducible pipeline.
+macrox records every step of a PDF table extraction workflow as a YAML macro and replays it automatically on new files.  Think of it as Power Query for PDFs — interactive exploration that compiles into a reproducible pipeline.
 
 ---
 
 ## Installation
 
 ```{r install}
-remotes::install_github("cathalbyrnegit/pdfmacro")
+remotes::install_github("cathalbyrnegit/macrox")
 
 # Optional but recommended
 install.packages(c(
@@ -42,10 +42,10 @@ install.packages(c(
 ## Quick start
 
 ```{r quickstart}
-library(pdfmacro)
+library(macrox)
 
 # Open a session
-sess <- pdf_session("report_2024.pdf")
+sess <- mx_session("report_2024.pdf")
 
 # Scan for tables
 sess |> detect_tables(pages = 1:20)
@@ -61,7 +61,7 @@ sess |> filter_rows("monthly", exclude_where = "month == 'Total'")
 sess |> save_macro("my_report")
 
 # Replay next year
-pdf_replay("report_2025.pdf", macro = "my_report")
+mx_replay("report_2025.pdf", macro = "my_report")
 ```
 
 ---
@@ -69,9 +69,9 @@ pdf_replay("report_2025.pdf", macro = "my_report")
 ## Standalone app
 
 ```{r app}
-pdf_app()           # system browser
-pdf_app("dialog")   # RStudio dialog
-pdf_app("pane")     # Viewer pane
+mx_app()           # system browser
+mx_app("dialog")   # RStudio dialog
+mx_app("pane")     # Viewer pane
 ```
 
 The app provides a full extraction workflow without writing any R code.  Select a PDF with the filesystem browser, draw a bounding box on the page image, configure the extraction method, and hit **Extract**.  All steps are recorded and can be exported as a YAML macro or downloaded as CSV / Excel.
@@ -93,7 +93,7 @@ The app provides a full extraction workflow without writing any R code.  Select 
 
 ## Extraction methods
 
-pdfmacro ships five extraction engines.  They can be mixed freely within the same session and macro.
+macrox ships five extraction engines.  They can be mixed freely within the same session and macro.
 
 ### bbox — word-position engine (recommended default)
 
@@ -410,11 +410,11 @@ sess |> preview_all()            # inspect all tables before saving
 sess |> save_macro("my_report", path = "inst/macros/")
 
 # Replay against a new file — returns named list of data frames
-tables <- pdf_replay("report_2025.pdf", macro = "my_report")
+tables <- mx_replay("report_2025.pdf", macro = "my_report")
 
 # Batch replay across multiple files
 files   <- list.files("reports/", pattern = "\\.pdf$", full.names = TRUE)
-results <- pdf_replay_batch(files, macro = "my_report")
+results <- mx_replay_batch(files, macro = "my_report")
 ```
 
 ---
@@ -428,7 +428,7 @@ diff <- diff_replay(
   macro = "my_report"
 )
 print(diff)
-# pdfmacro diff
+# macrox diff
 #   Reference: report_2024.pdf
 #   New:       report_2025.pdf
 #
@@ -600,18 +600,18 @@ steps:
 
 ## Shiny module
 
-Embed pdfmacro in an existing Shiny app:
+Embed macrox in an existing Shiny app:
 
 ```{r module}
 # UI
 bslib::accordion_panel(
   "PDF Import",
   icon = shiny::icon("file-pdf"),
-  pdfmacro::pdfmacro_ui(ns("pdf_import"))
+  macrox::macrox_ui(ns("pdf_import"))
 )
 
 # Server
-pdf_result <- pdfmacro::pdfmacro_server("pdf_import")
+pdf_result <- macrox::macrox_server("pdf_import")
 
 observe({
   tables <- pdf_result$tables()

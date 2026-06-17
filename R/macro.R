@@ -1,6 +1,6 @@
 #' Save the session's recorded steps as a YAML macro
 #'
-#' @param sess A `pdfmacro_session` object.
+#' @param sess A `macrox_session` object.
 #' @param name Macro name (used as the filename stem).
 #' @param path Directory to write the `.yml` file (default `.`).
 #' @param overwrite Logical; overwrite an existing file? (default FALSE)
@@ -81,14 +81,14 @@ load_macro <- function(name, path = ".") {
 #' @param macro_path Directory to look for the macro file (default `.`).
 #' @return Named list of extracted data frames.
 #' @export
-pdf_replay <- function(file, macro, macro_path = ".") {
+mx_replay <- function(file, macro, macro_path = ".") {
   if (is.character(macro)) {
     steps <- load_macro(macro, path = macro_path)
   } else {
     steps <- macro
   }
 
-  sess              <- pdf_session(file)
+  sess              <- mx_session(file)
   sess$.replaying   <- TRUE
 
   for (i in seq_along(steps)) {
@@ -111,7 +111,7 @@ pdf_replay <- function(file, macro, macro_path = ".") {
 #' Replay a macro across multiple PDF files
 #'
 #' @param files Character vector of PDF file paths.
-#' @param macro Macro name, path, or step list (see [pdf_replay()]).
+#' @param macro Macro name, path, or step list (see [mx_replay()]).
 #' @param macro_path Directory for macro lookup (default `.`).
 #' @param .progress Show file-level progress messages (default TRUE).
 #' @param .parallel If `TRUE`, run files in parallel using purrr + mirai.
@@ -119,7 +119,7 @@ pdf_replay <- function(file, macro, macro_path = ".") {
 #'   `mirai::daemons(n)`. Defaults to `FALSE` (sequential).
 #' @return Named list (file basenames) of table lists. Files that fail are NULL.
 #' @export
-pdf_replay_batch <- function(files, macro, macro_path = ".", .progress = TRUE,
+mx_replay_batch <- function(files, macro, macro_path = ".", .progress = TRUE,
                               .parallel = FALSE) {
   if (is.character(macro)) {
     steps <- load_macro(macro, path = macro_path)
@@ -130,7 +130,7 @@ pdf_replay_batch <- function(files, macro, macro_path = ".", .progress = TRUE,
   names_out  <- basename(files)
   replay_one <- function(f) {
     tryCatch(
-      pdf_replay(f, steps),
+      mx_replay(f, steps),
       error = function(e) {
         cli::cli_warn("Failed: {.file {basename(f)}} — {conditionMessage(e)}")
         NULL

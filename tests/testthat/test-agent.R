@@ -10,7 +10,7 @@
   s$items  <- list()
   s$steps  <- list()
   s$.replaying <- TRUE
-  class(s) <- "pdfmacro_session"
+  class(s) <- "macrox_session"
   s
 }
 
@@ -180,7 +180,7 @@ test_that("test_extraction() result serialises to valid JSON", {
 # --------------------------------------------------------------------------- #
 
 test_that(".extraction_guidance() mentions header_rows when spill detected", {
-  msg <- pdfmacro:::.extraction_guidance(
+  msg <- macrox:::.extraction_guidance(
     unnamed_cols = character(0),
     empty_cols   = character(0),
     header_spill = TRUE,
@@ -190,7 +190,7 @@ test_that(".extraction_guidance() mentions header_rows when spill detected", {
 })
 
 test_that(".extraction_guidance() mentions area when unnamed columns present", {
-  msg <- pdfmacro:::.extraction_guidance(
+  msg <- macrox:::.extraction_guidance(
     unnamed_cols   = c("V1", "V2"),
     empty_cols     = character(0),
     header_spill   = FALSE,
@@ -201,7 +201,7 @@ test_that(".extraction_guidance() mentions area when unnamed columns present", {
 })
 
 test_that(".extraction_guidance() combines multiple issues", {
-  msg <- pdfmacro:::.extraction_guidance(
+  msg <- macrox:::.extraction_guidance(
     unnamed_cols   = "V1",
     empty_cols     = "Empty",
     header_spill   = TRUE,

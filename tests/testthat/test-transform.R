@@ -17,18 +17,18 @@ test_that("rename_columns() warns on missing column", {
 })
 
 test_that(".cast_col() strips commas before numeric conversion", {
-  result <- pdfmacro:::.cast_col(c("1,234", "5,678"), "integer")
+  result <- macrox:::.cast_col(c("1,234", "5,678"), "integer")
   expect_equal(result, c(1234L, 5678L))
 })
 
 test_that(".cast_col() handles date format strings", {
-  result <- pdfmacro:::.cast_col("31/12/2024", "date:%d/%m/%Y")
+  result <- macrox:::.cast_col("31/12/2024", "date:%d/%m/%Y")
   expect_s3_class(result, "Date")
   expect_equal(format(result, "%Y-%m-%d"), "2024-12-31")
 })
 
 test_that(".cast_col() handles numeric type", {
-  result <- pdfmacro:::.cast_col(c("1.5", "2.7"), "numeric")
+  result <- macrox:::.cast_col(c("1.5", "2.7"), "numeric")
   expect_equal(result, c(1.5, 2.7))
 })
 
@@ -74,7 +74,7 @@ test_that(".flatten_headers() preserves case", {
     V2 = c("Calves Born", "Female","15", "25"),
     stringsAsFactors = FALSE
   )
-  result <- pdfmacro:::.flatten_headers(df, header_rows = 2)
+  result <- macrox:::.flatten_headers(df, header_rows = 2)
   # Should NOT be lowercased
   expect_true(any(grepl("Calves", names(result))))
 })
@@ -82,50 +82,50 @@ test_that(".flatten_headers() preserves case", {
 # ── .build_filter_expr() — GUI filter expression builder ─────────────────── #
 
 test_that(".build_filter_expr() builds == expression with string value", {
-  expr <- pdfmacro:::.build_filter_expr("month", "==", "Total")
+  expr <- macrox:::.build_filter_expr("month", "==", "Total")
   expect_equal(expr, "`month` == 'Total'")
 })
 
 test_that(".build_filter_expr() builds == expression with numeric value", {
-  expr <- pdfmacro:::.build_filter_expr("total", "==", "0")
+  expr <- macrox:::.build_filter_expr("total", "==", "0")
   expect_equal(expr, "`total` == 0")
 })
 
 test_that(".build_filter_expr() builds != expression", {
-  expr <- pdfmacro:::.build_filter_expr("status", "!=", "Active")
+  expr <- macrox:::.build_filter_expr("status", "!=", "Active")
   expect_equal(expr, "`status` != 'Active'")
 })
 
 test_that(".build_filter_expr() builds grepl expression", {
-  expr <- pdfmacro:::.build_filter_expr("month", "grepl", "Total")
+  expr <- macrox:::.build_filter_expr("month", "grepl", "Total")
   expect_match(expr, "grepl\\('Total'")
   expect_match(expr, "ignore.case = TRUE")
 })
 
 test_that(".build_filter_expr() builds !grepl expression", {
-  expr <- pdfmacro:::.build_filter_expr("month", "!grepl", "Total")
+  expr <- macrox:::.build_filter_expr("month", "!grepl", "Total")
   expect_match(expr, "^!grepl")
 })
 
 test_that(".build_filter_expr() builds is.na expression (no value needed)", {
-  expr <- pdfmacro:::.build_filter_expr("value", "is.na", "")
+  expr <- macrox:::.build_filter_expr("value", "is.na", "")
   expect_equal(expr, "is.na(`value`)")
 })
 
 test_that(".build_filter_expr() builds !is.na expression", {
-  expr <- pdfmacro:::.build_filter_expr("value", "!is.na", "")
+  expr <- macrox:::.build_filter_expr("value", "!is.na", "")
   expect_equal(expr, "!is.na(`value`)")
 })
 
 test_that(".build_filter_expr() handles column names with spaces via backticks", {
-  expr <- pdfmacro:::.build_filter_expr("Breed of Dam", "==", "Friesian")
+  expr <- macrox:::.build_filter_expr("Breed of Dam", "==", "Friesian")
   expect_match(expr, "`Breed of Dam`")
 })
 
 test_that(".build_filter_expr() result evaluates correctly on a data frame", {
   df   <- data.frame(month = c("Jan", "Feb", "Total"), n = 1:3,
                      stringsAsFactors = FALSE)
-  expr <- pdfmacro:::.build_filter_expr("month", "==", "Total")
+  expr <- macrox:::.build_filter_expr("month", "==", "Total")
   mask <- eval(parse(text = expr), envir = df)
   expect_equal(sum(mask), 1L)
   expect_equal(which(mask), 3L)
@@ -170,7 +170,7 @@ test_that("stack_tables() row-binds tables with matching schemas", {
   sess$path   <- "dummy.pdf"
   sess$tables <- list(t1 = df1, t2 = df2)
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   stack_tables(sess, "combined", c("t1", "t2"))
   combined <- sess$tables[["combined"]]
@@ -186,7 +186,7 @@ test_that("stack_tables() with .fill pads missing columns", {
   sess$path   <- "dummy.pdf"
   sess$tables <- list(t1 = df1, t2 = df2)
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   stack_tables(sess, "combined", c("t1", "t2"), .fill = TRUE)
   combined <- sess$tables[["combined"]]
@@ -201,7 +201,7 @@ test_that("stack_tables() records the step", {
   sess$path   <- "dummy.pdf"
   sess$tables <- list(t1 = df, t2 = df)
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   stack_tables(sess, "out", c("t1", "t2"))
   expect_equal(sess$steps[[1]]$step, "stack_tables")
@@ -217,7 +217,7 @@ test_that("merge_tables() performs an inner join on by column", {
   sess$path   <- "dummy.pdf"
   sess$tables <- list(left = left, right = right)
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   merge_tables(sess, "merged", left = "left", right = "right", by = "id")
   merged <- sess$tables[["merged"]]
@@ -231,7 +231,7 @@ test_that("merge_tables() records step with by and all arguments", {
   sess$path   <- "dummy.pdf"
   sess$tables <- list(a = df, b = df)
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   merge_tables(sess, "out", left = "a", right = "b", by = "x", all = FALSE)
   s <- sess$steps[[1]]
@@ -349,28 +349,28 @@ test_that("clean_numbers() records the step", {
 # ── suggest_schema() ──────────────────────────────────────────────────────── #
 
 test_that(".guess_col_type() detects integer", {
-  expect_equal(pdfmacro:::.guess_col_type(c("1", "2", "3")), "integer")
+  expect_equal(macrox:::.guess_col_type(c("1", "2", "3")), "integer")
 })
 
 test_that(".guess_col_type() detects numeric (decimal)", {
-  expect_equal(pdfmacro:::.guess_col_type(c("1.5", "2.7")), "numeric")
+  expect_equal(macrox:::.guess_col_type(c("1.5", "2.7")), "numeric")
 })
 
 test_that(".guess_col_type() detects integer after stripping thousands commas", {
-  expect_equal(pdfmacro:::.guess_col_type(c("1,234", "5,678")), "integer")
+  expect_equal(macrox:::.guess_col_type(c("1,234", "5,678")), "integer")
 })
 
 test_that(".guess_col_type() detects date %d/%m/%Y", {
-  expect_equal(pdfmacro:::.guess_col_type(c("01/01/2024", "31/12/2024")),
+  expect_equal(macrox:::.guess_col_type(c("01/01/2024", "31/12/2024")),
                "date:%d/%m/%Y")
 })
 
 test_that(".guess_col_type() returns character for mixed text", {
-  expect_equal(pdfmacro:::.guess_col_type(c("Jan", "Feb", "Mar")), "character")
+  expect_equal(macrox:::.guess_col_type(c("Jan", "Feb", "Mar")), "character")
 })
 
 test_that(".guess_col_type() returns character for empty input", {
-  expect_equal(pdfmacro:::.guess_col_type(character(0)), "character")
+  expect_equal(macrox:::.guess_col_type(character(0)), "character")
 })
 
 test_that("suggest_schema() returns named character vector", {

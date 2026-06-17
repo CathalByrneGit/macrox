@@ -29,7 +29,7 @@ test_that("detect_tables() shows only rows >= min_rows (default 1)", {
   sess$path  <- "dummy.pdf"
   sess$tables <- list(); sess$steps <- list(); sess$text <- NULL
   sess$detect <- NULL
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   testthat::local_mocked_bindings(
     pdf_info           = function(...) list(pages = 1L),
@@ -56,7 +56,7 @@ test_that("detect_tables() suppresses chart-like tables via max_header_chars", {
   sess$path  <- "dummy.pdf"
   sess$tables <- list(); sess$steps <- list(); sess$text <- NULL
   sess$detect <- NULL
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   testthat::local_mocked_bindings(
     pdf_info           = function(...) list(pages = 1L),
@@ -81,7 +81,7 @@ test_that("detect_tables() with max_header_chars = Inf shows everything with row
   sess$path  <- "dummy.pdf"
   sess$tables <- list(); sess$steps <- list(); sess$text <- NULL
   sess$detect <- NULL
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   testthat::local_mocked_bindings(
     pdf_info           = function(...) list(pages = 1L),
@@ -104,7 +104,7 @@ test_that("detect_tables() with min_rows = 0 shows empty tables", {
   sess$path  <- "dummy.pdf"
   sess$tables <- list(); sess$steps <- list(); sess$text <- NULL
   sess$detect <- NULL
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   testthat::local_mocked_bindings(
     pdf_info           = function(...) list(pages = 1L),
@@ -126,7 +126,7 @@ test_that("detect_tables() stores results in sess$detect", {
   sess$path  <- "dummy.pdf"
   sess$tables <- list(); sess$steps <- list(); sess$text <- NULL
   sess$detect <- NULL
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
 
   testthat::local_mocked_bindings(
     pdf_info       = function(...) list(pages = 1L),

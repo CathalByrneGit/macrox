@@ -12,6 +12,6 @@ make_sess <- function(df = NULL, label = "tbl") {
   sess$tables <- setNames(list(df), label)
   sess$items  <- list()
   sess$steps  <- list()
-  class(sess) <- "pdfmacro_session"
+  class(sess) <- "macrox_session"
   sess
 }

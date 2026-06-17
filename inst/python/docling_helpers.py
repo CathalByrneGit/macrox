@@ -1,4 +1,4 @@
-"""Docling helpers for pdfmacro — table extraction from PDF pages.
+"""Docling helpers for macrox — table extraction from PDF pages.
 
 Documents are cached after conversion so repeated calls for different
 tables on the same page do not re-run the full pipeline.
@@ -28,7 +28,7 @@ def docling_extract_tables(pdf_path, page_no):
     except ImportError:
         raise ImportError(
             "docling is not installed. "
-            "Run pdfmacro::setup_docling() to install it."
+            "Run macrox::setup_docling() to install it."
         )
 
     cache_key = (str(pdf_path), int(page_no))
@@ -73,7 +73,7 @@ def docling_detect_range(pdf_path, pages):
     except ImportError:
         raise ImportError(
             "docling is not installed. "
-            "Run pdfmacro::setup_docling() to install it."
+            "Run macrox::setup_docling() to install it."
         )
 
     pages = [int(p) for p in pages]

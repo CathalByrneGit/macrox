@@ -7,7 +7,7 @@
 preview(sess, table, n = 6)
 }
 \arguments{
-\item{sess}{A \code{pdfmacro_session} object.}
+\item{sess}{A \code{macrox_session} object.}
 
 \item{table}{Character label of the table to preview.}
 

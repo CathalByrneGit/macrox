@@ -11,68 +11,87 @@ select_item(
   cast = NULL,
   page = NULL,
   area = NULL,
+  backend = c("llm", "gliner"),
   chat = NULL,
   provider = "anthropic",
   model = NULL,
   base_url = NULL,
-  dpi = 120L
+  dpi = 120L,
+  gliner_model = "fastino/gliner2-base-v1",
+  all_matches = FALSE
 )
 }
 \arguments{
-\item{sess}{A \code{pdfmacro_session} object.}
+\item{sess}{A \code{macrox_session} object.}
 
-\item{label}{Character label for the extracted item (e.g. \code{"invoice_number"}).}
+\item{label}{Character label for the item (e.g. \code{"invoice_number"}).}
 
-\item{prompt}{Instruction for the LLM (e.g. \code{"Extract the invoice ID."}).}
+\item{prompt}{Description of the field to extract.  For the LLM backend
+this is the full instruction; for GLiNER it is the field description
+passed alongside \code{label} as the entity type.}
 
 \item{cast}{Optional type to cast the returned string to: \code{"character"}
 (default), \code{"numeric"}, \code{"integer"}, or \code{"date:<fmt>"} e.g.
 \code{"date:\%d/\%m/\%Y"}.}
 
-\item{page}{Page number to render as an image and send to the LLM.
-\code{NULL} (default) sends all page text instead — faster and cheaper for
-digital PDFs.}
+\item{page}{Page number.  For \code{backend = "llm"}, \code{NULL} sends all page text
+and a non-NULL value renders an image.  For \code{backend = "gliner"}, \code{NULL}
+uses all pages' text and a non-NULL value uses only that page's text
+(no image rendering).}
 
-\item{area}{Named \code{c(top, left, bottom, right)} in PDF points. Only used
-when \code{page} is specified.}
+\item{area}{Named \code{c(top, left, bottom, right)} in PDF points.  Only used
+when \code{backend = "llm"} and \code{page} is non-NULL.}
 
-\item{chat}{An existing \code{ellmer} Chat object, e.g.
-\code{ellmer::chat_anthropic()} or \code{ellmer::chat_openai_compatible(base_url = "http://localhost:11434/v1", model = "llama2")}. The chat is cloned
-before use. When supplied, \code{provider}, \code{model}, and \code{base_url} are
-ignored for the call but recorded (derived from the chat object) so the
-step can be replayed. See \code{\link[=select_table_llm]{select_table_llm()}}.}
+\item{backend}{Extraction backend: \code{"llm"} (default, requires ellmer) or
+\code{"gliner"} (local GLiNER2 model, requires reticulate + gliner2 Python
+package installed via \code{\link[=setup_gliner]{setup_gliner()}}).}
 
-\item{provider}{LLM provider (default \code{"anthropic"}). See \code{\link[=select_table_llm]{select_table_llm()}}.
-Ignored when \code{chat} is supplied.}
+\item{chat}{An existing \code{ellmer} Chat object.  Only used when
+\code{backend = "llm"}.  See \code{\link[=select_table_llm]{select_table_llm()}}.}
 
-\item{model}{Model name. \code{NULL} uses the provider default. Ignored when
-\code{chat} is supplied.}
+\item{provider}{LLM provider (default \code{"anthropic"}).  Only used when
+\code{backend = "llm"} and \code{chat} is \code{NULL}.}
+
+\item{model}{Model name.  Only used when \code{backend = "llm"}.}
 
 \item{base_url}{Base URL for \code{"openai_compatible"} providers.}
 
-\item{dpi}{Render resolution when \code{page} is specified (default 120).}
+\item{dpi}{Render resolution when \code{backend = "llm"} and \code{page} is set
+(default 120).}
+
+\item{gliner_model}{GLiNER2 model name (HuggingFace repo).  Only used when
+\code{backend = "gliner"}.  Default \code{"fastino/gliner2-base-v1"} (205M
+params); use \code{"fastino/gliner2-large-v1"} for higher accuracy.}
+
+\item{all_matches}{Logical; only used when \code{backend = "gliner"}.  If \code{TRUE},
+return every occurrence of the entity found in the text as a character
+vector instead of just the first match.  Default \code{FALSE}.}
 }
 \value{
 \code{sess} invisibly (step is recorded).
 }
 \description{
-Sends either the full document text (when \code{page = NULL}) or a rendered page
-image (when \code{page} is specified) to an LLM and extracts a single structured
-value. Results are stored in \code{sess$items[[label]]} and recorded as a step.
+Extracts a single structured value from a PDF using either an LLM or a
+local GLiNER2 model.  Results are stored in \code{sess$items[[label]]} and
+recorded as a step.
 }
 \examples{
 \dontrun{
+# LLM backend (default)
 sess |> select_item("invoice_number",
   prompt = "Extract the invoice ID or reference number.")
 
-sess |> select_item("invoice_date",
-  prompt = "The billing issue date.",
-  cast   = "date:\%d/\%m/\%Y")
+# GLiNER backend — local, no API key needed
+setup_gliner()
+sess |> select_item("invoice_number",
+  prompt  = "Invoice ID or reference number",
+  backend = "gliner")
 
-# Send a specific page image instead of document text
+# GLiNER on a specific page
 sess |> select_item("total_amount",
-  prompt = "The grand total payable.",
-  page   = 1L,
-  cast   = "numeric")
+  prompt  = "Grand total amount payable",
+  page    = 1L,
+  cast    = "numeric",
+  backend = "gliner")
 }
 }

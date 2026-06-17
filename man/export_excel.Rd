@@ -4,12 +4,12 @@
 \alias{export_excel}
 \title{Export all extracted tables to an Excel workbook}
 \usage{
-export_excel(sess, path = "pdfmacro_tables.xlsx", tables = NULL)
+export_excel(sess, path = "macrox_tables.xlsx", tables = NULL)
 }
 \arguments{
-\item{sess}{A \code{pdfmacro_session} object.}
+\item{sess}{A \code{macrox_session} object.}
 
-\item{path}{Output \code{.xlsx} file path (default \code{"pdfmacro_tables.xlsx"}).}
+\item{path}{Output \code{.xlsx} file path (default \code{"macrox_tables.xlsx"}).}
 
 \item{tables}{Character vector of table labels to include. Default: all.}
 }

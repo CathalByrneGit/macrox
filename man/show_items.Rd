@@ -7,7 +7,7 @@
 show_items(sess)
 }
 \arguments{
-\item{sess}{A \code{pdfmacro_session} object.}
+\item{sess}{A \code{macrox_session} object.}
 }
 \value{
 \code{sess} invisibly. # not recorded
