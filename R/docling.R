@@ -105,21 +105,7 @@ select_table_docling <- function(sess, label, page, table_index = 1L) {
     ))
   }
 
-  tbl     <- result$tables[[idx]]
-  headers <- unlist(tbl$headers)
-  data    <- tbl$data
-
-  mat <- do.call(rbind, lapply(data, function(row) {
-    v          <- as.character(unlist(row))
-    length(v)  <- length(headers)
-    v[is.na(v)] <- ""
-    v
-  }))
-  if (!is.matrix(mat)) mat <- matrix(mat, nrow = 1L, ncol = length(headers))
-
-  df           <- as.data.frame(mat, stringsAsFactors = FALSE)
-  names(df)    <- make.names(headers, unique = TRUE)
-  rownames(df) <- NULL
+  df <- .docling_tbl_to_df(result$tables[[idx]])
 
   if (nrow(df) == 0L) cli::cli_abort("Docling returned an empty table.")
 
@@ -170,6 +156,21 @@ close_docling <- function() {
       "i" = "Install with: {.code install.packages('reticulate')}"
     ))
   }
+}
+
+.docling_tbl_to_df <- function(tbl) {
+  headers <- unlist(tbl$headers)
+  mat <- do.call(rbind, lapply(tbl$data, function(row) {
+    v <- as.character(unlist(row))
+    length(v) <- length(headers)
+    v[is.na(v)] <- ""
+    v
+  }))
+  if (!is.matrix(mat)) mat <- matrix(mat, nrow = 1L, ncol = length(headers))
+  df           <- as.data.frame(mat, stringsAsFactors = FALSE)
+  names(df)    <- make.names(headers, unique = TRUE)
+  rownames(df) <- NULL
+  df
 }
 
 .load_docling_helpers <- function(envname = "r-pdfmacro") {

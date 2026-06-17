@@ -22,7 +22,7 @@ pdfmacro records every step of a PDF table extraction workflow as a YAML macro a
 ## Installation
 
 ```{r install}
-remotes::install_github("your/pdfmacro")
+remotes::install_github("cathalbyrnegit/pdfmacro")
 
 # Optional but recommended
 install.packages(c(

@@ -315,7 +315,25 @@ pdf_replay_batch <- function(files, macro, macro_path = ".", .progress = TRUE,
       model        = step$model,
       base_url     = step$base_url,
       dpi          = step$dpi          %||% 120L,
+      gliner_model = step$gliner_model %||% "fastino/gliner2-base-v1",
+      all_matches  = isTRUE(step$all_matches)
+    ),
+
+    select_struct = select_struct(
+      sess,
+      label        = step$label,
+      entity       = step$entity       %||% step$label,
+      fields       = unlist(step$fields),
+      list_fields  = unlist(step$list_fields) %||% character(0),
+      enum_fields  = unlist(step$enum_fields) %||% character(0),
+      page         = step$page         %||% 1L,
       gliner_model = step$gliner_model %||% "fastino/gliner2-base-v1"
+    ),
+
+    struct_to_df = struct_to_df(
+      sess,
+      label          = step$label,
+      min_confidence = step$min_confidence
     ),
 
     cli::cli_abort("Unknown step type: {.val {step$step}}")

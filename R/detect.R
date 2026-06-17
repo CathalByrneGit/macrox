@@ -3,85 +3,114 @@
 #' Scans the specified pages of the PDF for tables and prints a summary.
 #' This function is NOT recorded in the macro — it is for exploration only.
 #'
+#' Results are stored in `sess$detect` as a list of
+#' `list(page, index, df)` entries that can be passed directly to
+#' [select_table()] via `table_index`. When `method = "docling"`, pages are
+#' converted in a single pass and the results are cached so that subsequent
+#' [select_table_docling()] calls on those pages run instantly.
+#'
 #' @param sess A `pdfmacro_session` object.
 #' @param pages Integer vector of pages to scan. Defaults to all pages.
-#' @param method Extraction method: `"lattice"` (default) or `"stream"`.
+#' @param method Extraction method: `"lattice"` (default), `"stream"`, or
+#'   `"docling"`. Docling converts all requested pages in one pass and is
+#'   best for scanned PDFs or complex layouts.
 #' @param min_rows Minimum number of data rows a table must have to be shown
-#'   and stored. Tables with fewer rows are silently skipped. Default `1`
-#'   (i.e. 0-row tables — header-only extractions — are dropped). Set to `0`
-#'   to see everything.
-#' @param max_header_chars Maximum character length allowed for the first column
-#'   name before the table is flagged as a likely chart/figure and skipped.
-#'   Long first-column names like
-#'   `"X800.000.700.000.600.000..."` are a reliable signal that tabulapdf has
-#'   picked up a bar/line chart axis rather than a real table. Default `40`.
-#'   Set to `Inf` to disable.
-#' @return `sess` invisibly. # not recorded
+#'   and stored. Default `1`. Set to `0` to see everything.
+#' @param max_header_chars Maximum character length allowed for the first
+#'   column name before the table is flagged as a likely chart/figure and
+#'   skipped. Default `40`. Set to `Inf` to disable. (Lattice/stream only —
+#'   Docling's layout model distinguishes charts from tables natively.)
+#' @return `sess` invisibly (not recorded).
 #' @export
-detect_tables <- function(sess, pages = NULL, method = "lattice",
+detect_tables <- function(sess, pages = NULL,
+                           method = c("lattice", "stream", "docling"),
                            min_rows = 1L, max_header_chars = 40L) {
+  method  <- match.arg(method)
   info    <- pdftools::pdf_info(sess$path)
   n_pages <- info$pages
 
   if (is.null(pages)) pages <- seq_len(n_pages)
-  pages <- pages[pages >= 1 & pages <= n_pages]
+  pages <- pages[pages >= 1L & pages <= n_pages]
 
-  results  <- list()
-  n_shown  <- 0L
+  results       <- list()
+  n_shown       <- 0L
   n_skip_rows   <- 0L
   n_skip_header <- 0L
 
-  for (pg in pages) {
-    # Cache page text
-    if (is.null(sess$text)) sess$text <- vector("list", n_pages)
-    if (is.null(sess$text[[pg]])) {
-      tryCatch(
-        sess$text[[pg]] <- pdftools::pdf_text(sess$path)[pg],
-        error = function(e) NULL
-      )
-    }
+  if (method == "docling") {
+    .require_docling()
+    .load_docling_helpers()
 
-    if (!requireNamespace("tabulapdf", quietly = TRUE)) {
-      cli::cli_warn("tabulapdf not installed — skipping page {pg}. Install tabulapdf for lattice/stream extraction.")
-      next
-    }
-    tbls <- tryCatch(
-      tabulapdf::extract_tables(sess$path, pages = pg, method = method,
-                                 guess = TRUE, output = "matrix"),
-      error = function(e) {
-        cli::cli_warn("Page {pg}: extraction failed — {conditionMessage(e)}")
-        list()
-      }
+    cli::cli_inform(c(
+      "i" = "Running Docling on {length(pages)} page{?s} in one pass",
+      "i" = "(first call loads models — allow 30-60 s)..."
+    ))
+
+    raw <- tryCatch(
+      reticulate::py_to_r(
+        reticulate::py$docling_detect_range(sess$path, as.integer(pages))
+      ),
+      error = function(e) cli::cli_abort("Docling detection failed: {conditionMessage(e)}")
     )
 
-    for (j in seq_along(tbls)) {
-      df  <- .matrix_to_df(tbls[[j]])
-      nr  <- nrow(df)
-      nc  <- ncol(df)
+    for (item in raw) {
+      pg   <- as.integer(item$page)
+      tbls <- item$tables
+      for (j in seq_along(tbls)) {
+        df <- .docling_tbl_to_df(tbls[[j]])
+        nr <- nrow(df); nc <- ncol(df)
+        if (nr < min_rows) { n_skip_rows <- n_skip_rows + 1L; next }
+        cols <- paste(head(names(df), 4L), collapse = ", ")
+        if (nc > 4L) cols <- paste0(cols, "...")
+        cli::cli_inform("Page {pg}, table {j}: {nr} x {nc}   | {cols}")
+        results[[length(results) + 1L]] <- list(page = pg, index = j, df = df)
+        n_shown <- n_shown + 1L
+      }
+    }
 
-      # ── Filter: too few rows ────────────────────────────────────────────
-      if (nr < min_rows) {
-        n_skip_rows <- n_skip_rows + 1L
-        next
+  } else {
+    # ── tabulapdf path (lattice / stream) ──────────────────────────────────
+    for (pg in pages) {
+      if (is.null(sess$text)) sess$text <- vector("list", n_pages)
+      if (is.null(sess$text[[pg]])) {
+        tryCatch(
+          sess$text[[pg]] <- pdftools::pdf_text(sess$path)[pg],
+          error = function(e) NULL
+        )
       }
 
-      # ── Filter: first column name suspiciously long (chart signal) ──────
-      first_col <- if (nc > 0) names(df)[[1L]] else ""
-      if (nchar(first_col) > max_header_chars) {
-        n_skip_header <- n_skip_header + 1L
+      if (!requireNamespace("tabulapdf", quietly = TRUE)) {
+        cli::cli_warn("tabulapdf not installed — skipping page {pg}.")
         next
       }
+      tbls <- tryCatch(
+        tabulapdf::extract_tables(sess$path, pages = pg, method = method,
+                                   guess = TRUE, output = "matrix"),
+        error = function(e) {
+          cli::cli_warn("Page {pg}: extraction failed — {conditionMessage(e)}")
+          list()
+        }
+      )
 
-      cols <- paste(head(names(df), 4), collapse = ", ")
-      if (nc > 4) cols <- paste0(cols, "...")
-      cli::cli_inform("Page {pg}, table {j}: {nr} x {nc}   | {cols}")
+      for (j in seq_along(tbls)) {
+        df        <- .matrix_to_df(tbls[[j]])
+        nr        <- nrow(df); nc <- ncol(df)
+        first_col <- if (nc > 0L) names(df)[[1L]] else ""
 
-      results[[length(results) + 1]] <- list(page = pg, index = j, df = df)
-      n_shown <- n_shown + 1L
+        if (nr < min_rows) { n_skip_rows <- n_skip_rows + 1L; next }
+        if (nchar(first_col) > max_header_chars) { n_skip_header <- n_skip_header + 1L; next }
+
+        cols <- paste(head(names(df), 4L), collapse = ", ")
+        if (nc > 4L) cols <- paste0(cols, "...")
+        cli::cli_inform("Page {pg}, table {j}: {nr} x {nc}   | {cols}")
+
+        results[[length(results) + 1L]] <- list(page = pg, index = j, df = df)
+        n_shown <- n_shown + 1L
+      }
     }
   }
 
-  # ── Summary footer ────────────────────────────────────────────────────────
+  # ── Summary footer ──────────────────────────────────────────────────────────
   skipped <- n_skip_rows + n_skip_header
   if (skipped > 0L) {
     parts <- character(0)
@@ -105,35 +134,58 @@ detect_tables <- function(sess, pages = NULL, method = "lattice",
 #'
 #' @param path Path to a PDF file.
 #' @param pages Integer vector of pages to scan. Defaults to all pages.
-#' @param method Extraction method.
+#' @param method Extraction method: `"lattice"` (default), `"stream"`, or
+#'   `"docling"`.
 #' @param min_rows Minimum data rows required (default `1`).
 #' @param max_header_chars Maximum first-column name length before skipping
-#'   (default `40`).
+#'   (default `40`). Ignored when `method = "docling"`.
 #' @return Named list: page number (character) → list of data frames.
 #' @export
-detect_tables_quietly <- function(path, pages = NULL, method = "lattice",
+detect_tables_quietly <- function(path, pages = NULL,
+                                   method = c("lattice", "stream", "docling"),
                                    min_rows = 1L, max_header_chars = 40L) {
+  method  <- match.arg(method)
   info    <- pdftools::pdf_info(path)
   n_pages <- info$pages
   if (is.null(pages)) pages <- seq_len(n_pages)
 
   out <- list()
-  for (pg in pages) {
-    if (!requireNamespace("tabulapdf", quietly = TRUE)) next
-    tbls <- tryCatch(
-      tabulapdf::extract_tables(path, pages = pg, method = method,
-                                 guess = TRUE, output = "matrix"),
+
+  if (method == "docling") {
+    .require_docling()
+    .load_docling_helpers()
+    raw <- tryCatch(
+      reticulate::py_to_r(
+        reticulate::py$docling_detect_range(path, as.integer(pages))
+      ),
       error = function(e) list()
     )
-    keep <- lapply(tbls, function(m) {
-      df        <- .matrix_to_df(m)
-      first_col <- if (ncol(df) > 0) names(df)[[1L]] else ""
-      if (nrow(df) < min_rows)                    return(NULL)
-      if (nchar(first_col) > max_header_chars)    return(NULL)
-      df
-    })
-    keep <- Filter(Negate(is.null), keep)
-    if (length(keep) > 0) out[[as.character(pg)]] <- keep
+    for (item in raw) {
+      pg   <- as.character(item$page)
+      keep <- Filter(Negate(is.null), lapply(item$tables, function(tbl) {
+        df <- .docling_tbl_to_df(tbl)
+        if (nrow(df) < min_rows) NULL else df
+      }))
+      if (length(keep) > 0L) out[[pg]] <- keep
+    }
+  } else {
+    for (pg in pages) {
+      if (!requireNamespace("tabulapdf", quietly = TRUE)) next
+      tbls <- tryCatch(
+        tabulapdf::extract_tables(path, pages = pg, method = method,
+                                   guess = TRUE, output = "matrix"),
+        error = function(e) list()
+      )
+      keep <- Filter(Negate(is.null), lapply(tbls, function(m) {
+        df        <- .matrix_to_df(m)
+        first_col <- if (ncol(df) > 0L) names(df)[[1L]] else ""
+        if (nrow(df) < min_rows)                 return(NULL)
+        if (nchar(first_col) > max_header_chars) return(NULL)
+        df
+      }))
+      if (length(keep) > 0L) out[[as.character(pg)]] <- keep
+    }
   }
+
   out
 }

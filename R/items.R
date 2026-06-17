@@ -40,6 +40,9 @@
 #' @param gliner_model GLiNER2 model name (HuggingFace repo).  Only used when
 #'   `backend = "gliner"`.  Default `"fastino/gliner2-base-v1"` (205M
 #'   params); use `"fastino/gliner2-large-v1"` for higher accuracy.
+#' @param all_matches Logical; only used when `backend = "gliner"`.  If `TRUE`,
+#'   return every occurrence of the entity found in the text as a character
+#'   vector instead of just the first match.  Default `FALSE`.
 #' @return `sess` invisibly (step is recorded).
 #'
 #' @examples
@@ -72,7 +75,8 @@ select_item <- function(sess, label, prompt,
                          model        = NULL,
                          base_url     = NULL,
                          dpi          = 120L,
-                         gliner_model = "fastino/gliner2-base-v1") {
+                         gliner_model = "fastino/gliner2-base-v1",
+                         all_matches  = FALSE) {
   backend <- match.arg(backend)
 
   # ── GLiNER path ─────────────────────────────────────────────────────────────
@@ -80,7 +84,9 @@ select_item <- function(sess, label, prompt,
     py        <- .ensure_gliner(gliner_model)
     all_pages <- pdftools::pdf_text(sess$path)
     text      <- if (!is.null(page)) {
-      all_pages[[as.integer(page)]]
+      pg <- as.integer(unlist(page))
+      pg <- pg[pg >= 1L & pg <= length(all_pages)]
+      if (length(pg) == 1L) all_pages[[pg]] else as.list(all_pages[pg])
     } else {
       paste(all_pages, collapse = "\n\n---\n\n")
     }
@@ -88,8 +94,15 @@ select_item <- function(sess, label, prompt,
     cli::cli_inform(c("i" = "Extracting {.val {label}} via GLiNER2..."))
     raw_value <- tryCatch(
       {
-        val <- py$gliner_extract_item(text, label, prompt)
-        if (is.null(val)) "" else as.character(val)
+        val <- py$gliner_extract_item(text, label, prompt,
+                                      all_matches = isTRUE(all_matches))
+        if (is.null(val)) {
+          if (isTRUE(all_matches)) character(0L) else ""
+        } else if (is.list(val)) {
+          as.character(unlist(val))
+        } else {
+          as.character(val)
+        }
       },
       error = function(e) cli::cli_abort(
         "GLiNER2 extraction failed for {.val {label}}: {conditionMessage(e)}"
@@ -98,6 +111,14 @@ select_item <- function(sess, label, prompt,
 
     cast_value <- .cast_item(raw_value, cast, label)
 
+    val_summary <- if (length(cast_value) > 1L) {
+      paste0("[", length(cast_value), " matches: ",
+             paste(head(as.character(cast_value), 3L), collapse = ", "),
+             if (length(cast_value) > 3L) ", …" else "", "]")
+    } else {
+      as.character(cast_value)
+    }
+
     if (is.null(sess$items)) sess$items <- list()
     sess$items[[label]] <- list(
       value        = cast_value,
@@ -105,7 +126,8 @@ select_item <- function(sess, label, prompt,
       cast         = cast %||% "character",
       prompt       = prompt,
       backend      = "gliner",
-      gliner_model = gliner_model
+      gliner_model = gliner_model,
+      all_matches  = isTRUE(all_matches)
     )
 
     record_step(sess, list(
@@ -115,11 +137,12 @@ select_item <- function(sess, label, prompt,
       cast         = cast,
       page         = page,
       backend      = "gliner",
-      gliner_model = gliner_model
+      gliner_model = gliner_model,
+      all_matches  = isTRUE(all_matches)
     ))
 
     cli::cli_inform(c(
-      "v" = "Item {.val {label}}: {.strong {as.character(cast_value)}} [GLiNER2]"
+      "v" = "Item {.val {label}}: {.strong {val_summary}} [GLiNER2]"
     ))
     return(invisible(sess))
   }
@@ -204,6 +227,324 @@ select_item <- function(sess, label, prompt,
 }
 
 
+#' Extract multiple metadata fields in one GLiNER model pass
+#'
+#' Runs a single GLiNER2 inference call to extract several named fields from a
+#' PDF, which is significantly faster than calling [select_item()] once per
+#' field. Each field is recorded as a separate `select_item` step so macros
+#' replay with the standard `select_item` mechanism.
+#'
+#' GLiNER2 can return multiple occurrences of the same entity type when they
+#' are present in the text; `select_items_batch` surfaces the first match per
+#' field (the same behaviour as [select_item()]).
+#'
+#' @param sess A `pdfmacro_session` object.
+#' @param items Named character vector: names are field labels, values are
+#'   natural-language prompts describing the field.
+#'   E.g. `c(invoice_no = "Invoice ID or reference number",
+#'            total = "Grand total amount payable")`.
+#' @param page Page number to extract from.  `NULL` (default) concatenates all
+#'   pages' text.
+#' @param cast Named character vector of cast types keyed by label.  Unlisted
+#'   fields default to `"character"`.  Supported types: `"character"`,
+#'   `"numeric"`, `"integer"`, `"date:<fmt>"` (e.g. `"date:%d/%m/%Y"`).
+#' @param gliner_model GLiNER2 model identifier.  Default
+#'   `"fastino/gliner2-base-v1"` (205M); use `"fastino/gliner2-large-v1"` for
+#'   higher accuracy.
+#' @param all_matches If `TRUE`, return every occurrence found per label as a
+#'   character vector.  Labels listed in `cast` are still applied element-wise.
+#'   Default `FALSE`.
+#' @return `sess` invisibly (one `select_item` step recorded per field).
+#' @export
+select_items_batch <- function(sess, items, page = NULL, cast = NULL,
+                                gliner_model = "fastino/gliner2-base-v1",
+                                all_matches  = FALSE) {
+  if (!is.character(items) || is.null(names(items)) ||
+      any(!nzchar(names(items)))) {
+    cli::cli_abort(c(
+      "{.arg items} must be a named character vector.",
+      "i" = 'E.g. {.code c(invoice_no = "Invoice ID", total = "Grand total")}'
+    ))
+  }
+  if (is.null(cast)) cast <- character(0)
+
+  py       <- .ensure_gliner(gliner_model)
+  all_text <- pdftools::pdf_text(sess$path)
+  text     <- if (!is.null(page)) {
+    pg <- as.integer(unlist(page))
+    pg <- pg[pg >= 1L & pg <= length(all_text)]
+    if (length(pg) == 1L) all_text[[pg]] else as.list(all_text[pg])
+  } else {
+    paste(all_text, collapse = "\n\n---\n\n")
+  }
+
+  cli::cli_inform(c(
+    "i" = "Extracting {length(items)} field{?s} via GLiNER2 in one pass..."
+  ))
+
+  raw <- tryCatch(
+    reticulate::py_to_r(
+      py$gliner_batch_extract(text, as.list(items),
+                              all_matches = isTRUE(all_matches))
+    ),
+    error = function(e) cli::cli_abort(
+      "GLiNER2 batch extraction failed: {conditionMessage(e)}"
+    )
+  )
+
+  if (is.null(sess$items)) sess$items <- list()
+
+  for (lbl in names(items)) {
+    prompt    <- items[[lbl]]
+    cast_type <- if (lbl %in% names(cast)) cast[[lbl]] else "character"
+    raw_val   <- if (isTRUE(all_matches)) {
+      as.character(unlist(raw[[lbl]] %||% list()))
+    } else {
+      raw[[lbl]] %||% ""
+    }
+    cast_val  <- .cast_item(raw_val, cast_type, lbl)
+
+    val_summary <- if (length(cast_val) > 1L) {
+      paste0("[", length(cast_val), " matches: ",
+             paste(head(as.character(cast_val), 3L), collapse = ", "),
+             if (length(cast_val) > 3L) ", …" else "", "]")
+    } else {
+      as.character(cast_val)
+    }
+
+    sess$items[[lbl]] <- list(
+      value        = cast_val,
+      raw          = raw_val,
+      cast         = cast_type,
+      prompt       = prompt,
+      backend      = "gliner",
+      gliner_model = gliner_model,
+      all_matches  = isTRUE(all_matches)
+    )
+
+    record_step(sess, list(
+      step         = "select_item",
+      label        = lbl,
+      prompt       = prompt,
+      cast         = cast_type,
+      page         = page,
+      backend      = "gliner",
+      gliner_model = gliner_model,
+      all_matches  = isTRUE(all_matches)
+    ))
+
+    cli::cli_inform(c(
+      "v" = "  {.val {lbl}}: {.strong {val_summary}}"
+    ))
+  }
+
+  invisible(sess)
+}
+
+
+#' Extract structured records from a PDF page using GLiNER2
+#'
+#' Uses GLiNER2's `extract_json` to extract a structured entity schema
+#' (multiple fields, optional list fields, multiple records) from a PDF page.
+#' Results are stored as a data frame in `sess$tables[[label]]`, identical to
+#' tabulapdf / LLM table extraction — downstream steps and exports work
+#' unchanged.
+#'
+#' @param sess A `pdfmacro_session` object.
+#' @param label Table label to store results under.
+#' @param entity Entity type name used in the GLiNER2 schema. Defaults to
+#'   `label`.
+#' @param fields Named character vector: `field_name = "description"`. Every
+#'   name becomes a column in the resulting data frame.
+#' @param list_fields Character vector of field names that may contain multiple
+#'   values (GLiNER2 `list` type). Multiple values are collapsed with `"; "`.
+#'   Default `character(0)`.
+#' @param enum_fields Named character vector of enumerated field types:
+#'   `field_name = "[val1|val2|val3]"`. Restricts what the model extracts to the
+#'   listed choices. Default `character(0)`.
+#' @param page Integer or integer vector of pages to extract from. Multiple
+#'   pages use a single `batch_extract_json` call. Default `1L`.
+#' @param gliner_model GLiNER2 model identifier.
+#'   Default `"fastino/gliner2-base-v1"`.
+#' @return `sess` invisibly (step recorded).
+#' @export
+select_struct <- function(sess, label, entity = label,
+                           fields,
+                           list_fields  = character(0),
+                           enum_fields  = character(0),
+                           page         = 1L,
+                           gliner_model = "fastino/gliner2-base-v1") {
+  stopifnot(
+    is.character(fields), length(fields) >= 1L,
+    !is.null(names(fields)), all(nzchar(names(fields)))
+  )
+
+  # Build GLiNER2 schema strings: "name::type::description"
+  # enum:  "name::[v1|v2]::str::description"  (4-part)
+  # list:  "name::list::description"           (3-part)
+  # str:   "name::str::description"            (3-part)
+  specs <- vapply(names(fields), function(nm) {
+    if (nm %in% names(enum_fields)) {
+      choices <- trimws(enum_fields[[nm]])
+      paste0(nm, "::", choices, "::str::", fields[[nm]])
+    } else if (nm %in% list_fields) {
+      paste0(nm, "::list::", fields[[nm]])
+    } else {
+      paste0(nm, "::str::", fields[[nm]])
+    }
+  }, character(1))
+
+  py        <- .ensure_gliner(gliner_model)
+  all_pages <- pdftools::pdf_text(sess$path)
+  pg        <- as.integer(unlist(page))
+  pg        <- pg[pg >= 1L & pg <= length(all_pages)]
+  text      <- if (length(pg) == 1L) all_pages[[pg]] else as.list(all_pages[pg])
+
+  cli::cli_inform(c(
+    "i" = "Extracting struct {.val {entity}} ({length(fields)} field{?s}) via GLiNER2..."
+  ))
+
+  raw_records <- tryCatch(
+    reticulate::py_to_r(
+      py$gliner_extract_struct(
+        text        = text,
+        entity      = entity,
+        field_specs = as.list(specs)
+      )
+    ),
+    error = function(e) cli::cli_abort(
+      "GLiNER2 struct extraction failed: {conditionMessage(e)}"
+    )
+  )
+
+  col_names <- names(fields)
+
+  if (is.null(sess$structs)) sess$structs <- list()
+  sess$structs[[label]] <- list(
+    records  = raw_records,
+    col_names = col_names,
+    entity   = entity,
+    specs    = specs
+  )
+
+  record_step(sess, list(
+    step         = "select_struct",
+    label        = label,
+    entity       = entity,
+    fields       = as.list(fields),
+    list_fields  = as.character(list_fields),
+    enum_fields  = as.list(enum_fields),
+    page         = pg,
+    gliner_model = gliner_model
+  ))
+
+  n <- length(raw_records)
+  cli::cli_inform(c(
+    "v" = "Struct {.val {label}}: {n} record{?s} ({length(col_names)} field{?s}). Run {.fn struct_to_df} to convert."
+  ))
+  invisible(sess)
+}
+
+
+#' Convert raw struct extraction to a data frame
+#'
+#' Takes the raw GLiNER2 records stored by [select_struct()] (which include
+#' per-field confidence scores) and converts them to a data frame stored in
+#' `sess$tables[[label]]`. Optionally filters out low-confidence records.
+#'
+#' @param sess A `pdfmacro_session` object.
+#' @param label Label matching a prior [select_struct()] call.
+#' @param min_confidence Numeric in `[0, 1]`. Records whose mean field
+#'   confidence is below this threshold are dropped. `NULL` (default) keeps all.
+#' @return `sess` invisibly (step recorded).
+#' @export
+struct_to_df <- function(sess, label, min_confidence = NULL) {
+  raw_obj <- sess$structs[[label]]
+  if (is.null(raw_obj)) {
+    cli::cli_abort(
+      "No struct data for {.val {label}}. Run {.fn select_struct} first."
+    )
+  }
+
+  records   <- raw_obj$records
+  col_names <- raw_obj$col_names
+
+  # GLiNER2 returns each field as a list of {text:..., confidence:...} dicts.
+  # Multi-value fields (length > 1) are expanded into separate rows (parallel).
+  # Fields with fewer values than the row count are padded with NA.
+
+  .parse_field <- function(v) {
+    if (is.null(v) || identical(v, FALSE) || (is.list(v) && length(v) == 0L))
+      return(list(vals = NA_character_, confs = NA_real_))
+    if (!is.list(v))
+      return(list(vals = as.character(v), confs = NA_real_))
+    if (!is.null(v[[1L]][["text"]])) {
+      list(
+        vals  = vapply(v, function(i) as.character(i[["text"]]  %||% NA_character_), character(1)),
+        confs = vapply(v, function(i) as.numeric(i[["confidence"]] %||% NA_real_),   numeric(1))
+      )
+    } else {
+      list(vals = paste(as.character(unlist(v)), collapse = "; "), confs = NA_real_)
+    }
+  }
+
+  # Expand one GLiNER2 record into ≥1 data frame rows
+  .expand_record <- function(rec) {
+    parsed <- lapply(col_names, function(fn) .parse_field(rec[[fn]]))
+    n      <- max(vapply(parsed, function(p) length(p$vals), integer(1)))
+    lapply(seq_len(n), function(i) {
+      vals  <- lapply(parsed, function(p) if (i <= length(p$vals))  p$vals[[i]]  else NA_character_)
+      confs <- lapply(parsed, function(p) if (i <= length(p$confs)) p$confs[[i]] else NA_real_)
+      as.data.frame(setNames(c(vals, confs), all_names), stringsAsFactors = FALSE)
+    })
+  }
+
+  conf_names <- paste0(col_names, "_conf")
+  all_names  <- c(col_names, conf_names)
+
+  if (length(records) == 0L) {
+    df <- as.data.frame(
+      setNames(replicate(length(all_names), character(0), simplify = FALSE),
+               all_names),
+      stringsAsFactors = FALSE
+    )
+  } else {
+    rows <- unlist(lapply(records, .expand_record), recursive = FALSE)
+
+    # Filter by per-row mean confidence after expansion
+    if (!is.null(min_confidence)) {
+      conf_cols <- paste0(col_names, "_conf")
+      keep <- vapply(rows, function(r) {
+        mc <- mean(as.numeric(unlist(r[conf_cols])), na.rm = TRUE)
+        if (is.nan(mc)) TRUE else mc >= min_confidence
+      }, logical(1))
+      rows <- rows[keep]
+    }
+
+    df <- if (length(rows) == 0L)
+      as.data.frame(
+        setNames(replicate(length(all_names), character(0), simplify = FALSE), all_names),
+        stringsAsFactors = FALSE)
+    else
+      do.call(rbind, rows)
+  }
+
+  if (is.null(sess$tables)) sess$tables <- list()
+  sess$tables[[label]] <- df
+
+  record_step(sess, list(
+    step           = "struct_to_df",
+    label          = label,
+    min_confidence = min_confidence
+  ))
+
+  cli::cli_inform(c(
+    "v" = "Converted {.val {label}} to table: {nrow(df)} row{?s} × {ncol(df)} col{?s}."
+  ))
+  invisible(sess)
+}
+
+
 .cast_item <- function(raw_value, cast, label) {
   if (!is.null(cast) && nchar(trimws(cast)) > 0L) {
     tryCatch(
@@ -263,7 +604,8 @@ update_item <- function(sess, label, prompt = NULL, cast = NULL,
       model        = step$model,
       base_url     = step$base_url,
       dpi          = step$dpi          %||% 120L,
-      gliner_model = step$gliner_model %||% "fastino/gliner2-base-v1"
+      gliner_model = step$gliner_model %||% "fastino/gliner2-base-v1",
+      all_matches  = isTRUE(step$all_matches)
     )
     sess$.replaying <- old_rep
     sess$steps[[idx]] <- step   # restore the updated step
@@ -285,9 +627,14 @@ show_items <- function(sess) {
   }
   cli::cli_rule(left = paste0("Items (", length(sess$items), ")"))
   for (lbl in names(sess$items)) {
-    item <- sess$items[[lbl]]
+    item    <- sess$items[[lbl]]
+    val_str <- if (length(item$value) > 1L) {
+      paste0("[", paste(as.character(item$value), collapse = ", "), "]")
+    } else {
+      as.character(item$value)
+    }
     cli::cli_bullets(setNames(
-      paste0("{.val {lbl}}: {.strong {as.character(item$value)}}  [{item$cast}]"),
+      paste0("{.val {lbl}}: {.strong {val_str}}  [{item$cast}]"),
       "*"
     ))
   }

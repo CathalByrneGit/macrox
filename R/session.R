@@ -85,6 +85,7 @@ pdf_session <- function(path = NULL) {
   sess$path       <- path
   sess$tables     <- list()
   sess$items      <- list()
+  sess$structs    <- list()  # raw select_struct() output (records + confidence)
   sess$steps      <- list()
   sess$text       <- NULL   # lazy page-text cache
   sess$detect     <- NULL   # detect_tables() output cache

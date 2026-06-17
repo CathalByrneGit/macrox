@@ -1,7 +1,9 @@
 """GLiNER2 helpers for pdfmacro — local NLP-based field extraction.
 
-The model is loaded once and reused across calls.  Use gliner_setup() to
-load (or swap) the model and gliner_clear() to release it.
+Single-page calls use extract_entities / extract_json (one text, one pass).
+Multi-page calls use batch_extract_entities / batch_extract_json (list of
+texts, one forward pass across all pages).  The R side passes a Python list
+when multiple pages are requested and a plain string for a single page.
 """
 
 _gliner_model = None
@@ -27,68 +29,123 @@ def gliner_loaded_model():
     return _gliner_model_name
 
 
-def gliner_extract_item(text, label, description):
-    """Extract a single field value from text.
+def _cap(t):
+    return str(t)[:20000]
 
-    Tries schema-based extraction (extract_json) first, then falls back to
-    entity extraction.  Returns the first match as a string, or None.
+
+def _entities_from_result(result, label):
+    entities = result.get("entities", {}) if isinstance(result, dict) else {}
+    return [str(m).strip() for m in entities.get(label, []) if str(m).strip()]
+
+
+def gliner_extract_item(text, label, description, all_matches=False):
+    """Extract a field from one page (str) or multiple pages (list of str).
+
+    Single page  → extract_entities()        (one inference pass)
+    Multi-page   → batch_extract_entities()  (one forward pass, N texts)
+
+    Matches from all pages are pooled.  all_matches=False returns the first
+    match found; all_matches=True returns every match across all pages.
+    """
+    if _gliner_model is None:
+        raise RuntimeError("GLiNER2 model not loaded. Call setup_gliner() first.")
+
+    label_map = {label: description}
+
+    if isinstance(text, list):
+        texts   = [_cap(t) for t in text]
+        results = _gliner_model.batch_extract_entities(texts, label_map)
+        matches = []
+        for r in results:
+            matches.extend(_entities_from_result(r, label))
+    else:
+        result  = _gliner_model.extract_entities(_cap(text), label_map)
+        matches = _entities_from_result(result, label)
+
+    if all_matches:
+        return matches
+    return matches[0] if matches else None
+
+
+def gliner_batch_extract(text, items, all_matches=False):
+    """Extract multiple named fields from one page (str) or multiple (list).
+
+    Single page  → extract_entities()        (one pass, all fields)
+    Multi-page   → batch_extract_entities()  (one forward pass, N texts)
+
+    Returns {label: first_match_or_None} or {label: [all_matches]}.
+    """
+    if _gliner_model is None:
+        raise RuntimeError("GLiNER2 model not loaded. Call setup_gliner() first.")
+    if not items:
+        return {}
+
+    label_map = dict(items)
+
+    if isinstance(text, list):
+        texts   = [_cap(t) for t in text]
+        results = _gliner_model.batch_extract_entities(texts, label_map)
+        out = {lbl: [] for lbl in label_map}
+        for r in results:
+            for lbl in label_map:
+                out[lbl].extend(_entities_from_result(r, lbl))
+        return {
+            lbl: (ms if all_matches else (ms[0] if ms else None))
+            for lbl, ms in out.items()
+        }
+    else:
+        result   = _gliner_model.extract_entities(_cap(text), label_map)
+        entities = result.get("entities", {}) if isinstance(result, dict) else {}
+        return {
+            lbl: (
+                [str(m).strip() for m in entities.get(lbl, []) if str(m).strip()]
+                if all_matches else
+                next((str(m).strip() for m in entities.get(lbl, []) if str(m).strip()), None)
+            )
+            for lbl in label_map
+        }
+
+
+def gliner_extract_struct(text, entity, field_specs):
+    """Extract structured records from one page (str) or multiple (list).
+
+    Single page  → extract_json()        (one pass)
+    Multi-page   → batch_extract_json()  (one forward pass, N texts)
+
+    Always requests per-field confidence scores. Records from all pages are
+    combined into a single flat list. Each record contains data fields plus a
+    '_confidence' dict of {field_name: score} when the model provides it.
 
     Parameters
     ----------
-    text        : str  — document or page text
-    label       : str  — field name (e.g. "invoice_number")
-    description : str  — natural-language description / prompt
+    text        : str or list of str
+    entity      : str  — entity type name in the schema
+    field_specs : list of str  — pre-formatted GLiNER2 schema strings, e.g.:
+                    "name::str::Full product name"
+                    "tier::[basic|premium]::str::Subscription level"
+                    "features::list::Key features"
     """
     if _gliner_model is None:
-        raise RuntimeError(
-            "GLiNER2 model not loaded. Call setup_gliner() first."
+        raise RuntimeError("GLiNER2 model not loaded. Call setup_gliner() first.")
+
+    schema = {entity: list(field_specs)}
+
+    if isinstance(text, list):
+        texts   = [_cap(t) for t in text]
+        results = _gliner_model.batch_extract_json(
+            texts, schema, include_confidence=True
         )
-
-    text = str(text)[:20000]  # cap to avoid OOM on very long docs
-
-    # ── Attempt 1: schema-based extraction ────────────────────────────────────
-    try:
-        schema = {"document": [f"{label}::str::{description}"]}
-        result = _gliner_model.extract_json(text, schema)
-        doc = result.get("document") if isinstance(result, dict) else None
-        if doc is not None:
-            if isinstance(doc, dict):
-                val = doc.get(label)
-            elif isinstance(doc, list) and doc:
-                first = doc[0]
-                val = first.get(label) if isinstance(first, dict) else None
-            else:
-                val = None
-            if val is not None and str(val).strip():
-                return str(val).strip()
-    except Exception:
-        pass
-
-    # ── Attempt 2: entity extraction using label as entity type ───────────────
-    try:
-        result = _gliner_model.extract_entities(text, [label])
-        entities = result.get("entities", {}) if isinstance(result, dict) else {}
-        matches = entities.get(label, [])
-        if matches:
-            return str(matches[0]).strip()
-    except Exception:
-        pass
-
-    return None
-
-
-def gliner_extract_entities(text, entity_types):
-    """Extract multiple entity types in one pass.
-
-    Returns a dict of {entity_type: [value, ...]}.
-    """
-    if _gliner_model is None:
-        raise RuntimeError(
-            "GLiNER2 model not loaded. Call setup_gliner() first."
+        records = []
+        for r in results:
+            if isinstance(r, dict):
+                records.extend(r.get(entity, []))
+    else:
+        result = _gliner_model.extract_json(
+            _cap(text), schema, include_confidence=True
         )
-    text = str(text)[:20000]
-    result = _gliner_model.extract_entities(text, list(entity_types))
-    return result.get("entities", {}) if isinstance(result, dict) else {}
+        records = result.get(entity, []) if isinstance(result, dict) else []
+
+    return records
 
 
 def gliner_clear():

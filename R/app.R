@@ -152,9 +152,15 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
           bslib::card_header(shiny::icon("tag"), " Extracted items"),
           bslib::card_body(shiny::uiOutput("items_list_ui")),
           bslib::card_footer(
-            shiny::actionButton("open_extract_item", "Extract item",
-                                icon  = shiny::icon("plus"),
-                                class = "btn-warning btn-sm")
+            shiny::div(
+              class = "d-flex gap-2",
+              shiny::actionButton("open_extract_item", "Extract item",
+                                  icon  = shiny::icon("plus"),
+                                  class = "btn-warning btn-sm"),
+              shiny::actionButton("open_batch_items", "Batch (GLiNER)",
+                                  icon  = shiny::icon("layer-group"),
+                                  class = "btn-outline-warning btn-sm")
+            )
           )
         ),
         bslib::card(
@@ -386,7 +392,11 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
             shiny::tags$dt(shiny::tags$code("lattice")),
             shiny::tags$dd("tabulapdf. Best for clean PDFs with visible grid lines. Requires Java."),
             shiny::tags$dt(shiny::tags$code("stream")),
-            shiny::tags$dd("tabulapdf whitespace mode. Best for tables aligned by spaces rather than lines.")
+            shiny::tags$dd("tabulapdf whitespace mode. Best for tables aligned by spaces rather than lines."),
+            shiny::tags$dt(shiny::tags$code("llm")),
+            shiny::tags$dd("Sends a rendered page image to an LLM. Best for complex or scanned layouts where other methods fail. Requires an API key."),
+            shiny::tags$dt(shiny::tags$code("docling")),
+            shiny::tags$dd("IBM Docling ML layout model. Works fully offline after one-time setup. Best for scanned PDFs and complex layouts. Run ", shiny::tags$code("setup_docling()"), " once before first use.")
           )
         )
       )
@@ -452,14 +462,102 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
     "  if (e.key === 'ArrowLeft')  { var b = document.getElementById('ep_prev'); if(b) b.click(); }",
     "});"
   )
+
+  # Client-side extraction timer — starts on button click (before server receives
+  # event), stopped from R via shinyjs::hide() + interval clear in do_extract.
+  extract_timer_js <- shiny::HTML("
+    var _etInterval = null;
+    function startExtractTimer() {
+      var t0 = Date.now();
+      shinyjs.show('extract_spinner');
+      var td = document.getElementById('extract_timer_display');
+      if (td) td.textContent = '0';
+      clearInterval(_etInterval);
+      _etInterval = setInterval(function() {
+        var el = document.getElementById('extract_timer_display');
+        if (el) el.textContent = Math.floor((Date.now() - t0) / 1000);
+      }, 250);
+    }
+    function stopExtractTimer() {
+      clearInterval(_etInterval);
+      _etInterval = null;
+      shinyjs.hide('extract_spinner');
+    }
+    document.addEventListener('click', function(e) {
+      if (e.target.closest && e.target.closest('#do_extract')) {
+        var lbl = document.getElementById('ext_label');
+        if (lbl && lbl.value && lbl.value.trim().length > 0) startExtractTimer();
+      }
+    });
+  ")
+
+  item_spinner_js <- shiny::HTML("
+    document.addEventListener('click', function(e) {
+      if (e.target.closest && e.target.closest('#do_extract_item')) {
+        var lbl = document.getElementById('new_item_label');
+        var prm = document.getElementById('new_item_prompt');
+        if (lbl && lbl.value.trim() && prm && prm.value.trim()) {
+          document.getElementById('item_spinner_text').textContent = 'Extracting item…';
+          shinyjs.show('item_spinner');
+        }
+      }
+      if (e.target.closest && e.target.closest('#do_batch_items')) {
+        document.getElementById('item_spinner_text').textContent = 'Extracting batch…';
+        shinyjs.show('item_spinner');
+      }
+    });
+  ")
+  # Fixed-position extraction spinner — outside any renderUI (never recreated).
+  # shinyjs::hidden() enforces display:none!important via CSS class; show/hide
+  # are driven by shinyjs.show/hide in JS so the class approach is consistent.
+  extract_spinner_el <- shinyjs::hidden(
+    shiny::div(
+      id    = "extract_spinner",
+      style = paste0(
+        "position:fixed;bottom:1rem;right:1rem;z-index:9999;",
+        "background:rgba(33,37,41,.92);color:#fff;",
+        "padding:.55rem 1rem;border-radius:.45rem;",
+        "box-shadow:0 2px 12px rgba(0,0,0,.45);"
+      ),
+      class = "d-flex align-items-center gap-2",
+      shiny::div(class = "spinner-border spinner-border-sm text-warning", role = "status",
+                 shiny::tags$span(class = "visually-hidden", "Extracting...")),
+      shiny::tags$span(
+        "Extracting… ",
+        shiny::tags$span(id = "extract_timer_display", "0"),
+        "s"
+      )
+    )
+  )
+
+  item_spinner_el <- shinyjs::hidden(
+    shiny::div(
+      id    = "item_spinner",
+      style = paste0(
+        "position:fixed;bottom:1rem;left:1rem;z-index:9999;",
+        "background:rgba(33,37,41,.92);color:#fff;",
+        "padding:.55rem 1rem;border-radius:.45rem;",
+        "box-shadow:0 2px 12px rgba(0,0,0,.45);"
+      ),
+      class = "d-flex align-items-center gap-2",
+      shiny::div(class = "spinner-border spinner-border-sm text-warning", role = "status",
+                 shiny::tags$span(class = "visually-hidden", "Processing...")),
+      shiny::tags$span(id = "item_spinner_text", "Extracting item…")
+    )
+  )
+
   bslib::page_sidebar(
     title   = "pdfmacro",
     sidebar = sidebar,
     main,
     theme   = theme,
     shiny::tags$head(shiny::tags$script(kb_js)),
+    shiny::tags$head(shiny::tags$script(extract_timer_js)),
+    shiny::tags$head(shiny::tags$script(item_spinner_js)),
     pdfjs_head,
-    shinyjs::useShinyjs()
+    shinyjs::useShinyjs(),
+    extract_spinner_el,
+    item_spinner_el
   )
 }
 
@@ -476,13 +574,15 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
     n_pages       = 1L,
     tables        = list(),
     items         = list(),
+    structs       = list(),
     steps         = list(),
     active_label  = NULL,
     viewer_page   = 1L,
     active_area   = NULL,
     area_active    = FALSE,  # TRUE only after user clicks 'Use selection'
     page_text     = NULL,
-    validations   = list()  # stores validate_table() results keyed by label
+    validations   = list(), # stores validate_table() results keyed by label
+    scan_results  = NULL    # detect_tables_quietly() output for the Index Scan button
   )
 
   # ── Dark mode ─────────────────────────────────────────────────────────────
@@ -521,6 +621,17 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
     session   = session
   )
 
+  # shinyFiles doesn't auto-close its modal after selection — dismiss it with JS.
+  # Bootstrap 5 (used by bslib v5) requires the native API, not jQuery.
+  .close_sf_modal <- function() {
+    shinyjs::runjs(
+      "document.querySelectorAll('.modal.show').forEach(function(el) {
+         var m = bootstrap.Modal.getInstance(el);
+         if (m) m.hide();
+       });"
+    )
+  }
+
   shiny::observeEvent(input$pdf_select, {
     req(!is.integer(input$pdf_select))
     info_df <- shinyFiles::parseFilePaths(.sf_roots, input$pdf_select)
@@ -539,6 +650,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
     rv$pdf_serve_url <- paste0(
       "pdfmacro_", session$token, "/", utils::URLencode(basename(fpath))
     )
+    .close_sf_modal()
   })
 
   output$file_status <- shiny::renderUI({
@@ -672,45 +784,83 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
             bslib::nav_panel("Index",
               shiny::numericInput("ext_page_idx",   "Page",         value = 1, min = 1),
               shiny::numericInput("ext_tbl_idx",    "Table index",  value = 1, min = 1),
-              shiny::numericInput("ext_header_idx", "Header rows",  value = 1, min = 1)
+              shiny::numericInput("ext_header_idx", "Header rows",  value = 1, min = 1),
+              shiny::actionButton("scan_page_tables", "Scan page",
+                icon = shiny::icon("search"),
+                class = "btn-outline-secondary btn-sm w-100 mt-1")
             ),
             bslib::nav_panel("Fuzzy",
               shiny::textInput("ext_label_match", "Caption text",
                                placeholder = "e.g. Mart Movements by Breed"),
               shiny::numericInput("ext_max_dist", "Max distance", 0.2, min = 0, max = 1, step = 0.05)
+            ),
+            bslib::nav_panel("Struct",
+              shiny::textInput("gs_entity", "Entity",
+                placeholder = "e.g. product, invoice, person"),
+              shiny::textInput("gs_page", "Page(s)",
+                placeholder = "1  or  1,3  or  1-5"),
+              shiny::textAreaInput("gs_fields", "Fields (one per line)",
+                placeholder = paste(
+                  "name: Full product name",
+                  "price: Price with currency",
+                  "tier [basic|premium]: Subscription tier",
+                  "features [list]: Key features",
+                  sep = "\n"),
+                rows = 5),
+              shiny::selectInput("gs_model", "GLiNER model",
+                choices = c("fastino/gliner2-base-v1", "fastino/gliner2-large-v1")),
+              shiny::tags$small(class = "text-muted",
+                shiny::icon("robot"), " Requires ",
+                shiny::tags$code("setup_gliner()"), ". ",
+                "Annotate: ", shiny::tags$code("[list]"), " for multi-value, ",
+                shiny::tags$code("[v1|v2]"), " for enum. One row per entity found.")
             )
           ),
-          shiny::selectInput("ext_method", "Method",
-                             choices = c("bbox", "lattice", "stream", "llm"),
-                             selected = "bbox"),
+          shiny::uiOutput("scan_results_ui"),
           shiny::conditionalPanel(
-            "input.ext_method == 'llm'",
-            shiny::hr(),
-            shiny::div(class = "d-flex gap-2",
-              shiny::selectizeInput("llm_provider", "Provider",
-                choices = c("anthropic", "openai", "google_gemini", "openrouter",
-                            "groq", "mistral", "deepseek", "ollama", "openai_compatible"),
-                selected = "anthropic", width = "50%",
-                options = list(create = TRUE, createOnBlur = TRUE)),
-              shiny::textInput("llm_model", "Model",
-                placeholder = "default", width = "50%")
+            "input.ext_tab !== 'Struct'",
+            shiny::selectInput("ext_method", "Method",
+                               choices = c("bbox", "lattice", "stream", "llm", "docling"),
+                               selected = "bbox"),
+            shiny::conditionalPanel(
+              "input.ext_method == 'docling'",
+              shiny::hr(),
+              shiny::numericInput("docling_table_index", "Table index", value = 1L, min = 1L, width = "40%"),
+              shiny::tags$small(class = "text-muted",
+                shiny::icon("robot"), " Requires ",
+                shiny::tags$code("setup_docling()"), " — run once, then restart R. ",
+                "First call on a new page loads ML models (30-60 s); subsequent calls are instant."
+              )
             ),
             shiny::conditionalPanel(
-              "input.llm_provider === 'openai_compatible'",
-              shiny::textInput("llm_base_url", "Base URL",
-                placeholder = "http://localhost:1234/v1")
-            ),
-            shiny::textAreaInput("llm_schema", "Schema",
-              placeholder = "Month: character\nMale: integer\nFemale: integer\nTotal: integer\n\nLeave blank to auto-detect.",
-              rows = 5),
-            shiny::textAreaInput("llm_prompt", "Extra instructions",
-              placeholder = "e.g. Ignore the footnote row at the bottom.",
-              rows = 2),
-            shiny::tags$small(class = "text-muted",
-              shiny::icon("key"), " Set ",
-              shiny::tags$code("ANTHROPIC_API_KEY"),
-              " / ", shiny::tags$code("OPENAI_API_KEY"),
-              " / ", shiny::tags$code("GEMINI_API_KEY"), " in .Renviron"
+              "input.ext_method == 'llm'",
+              shiny::hr(),
+              shiny::div(class = "d-flex gap-2",
+                shiny::selectizeInput("llm_provider", "Provider",
+                  choices = c("anthropic", "openai", "google_gemini", "openrouter",
+                              "groq", "mistral", "deepseek", "ollama", "openai_compatible"),
+                  selected = "anthropic", width = "50%",
+                  options = list(create = TRUE, createOnBlur = TRUE)),
+                shiny::textInput("llm_model", "Model",
+                  placeholder = "default", width = "50%")
+              ),
+              shiny::conditionalPanel(
+                "input.llm_provider === 'openai_compatible'",
+                shiny::textInput("llm_base_url", "Base URL",
+                  placeholder = "http://localhost:1234/v1")
+              ),
+              shiny::textAreaInput("llm_schema", "Schema",
+                placeholder = "Month: character\nMale: integer\nFemale: integer\nTotal: integer\n\nLeave blank to auto-detect.",
+                rows = 5),
+              shiny::textAreaInput("llm_prompt", "Extra instructions",
+                placeholder = "e.g. Ignore the footnote row at the bottom.",
+                rows = 2),
+              shiny::tags$small(class = "text-muted",
+                shiny::icon("key"), " Set ",
+                shiny::tags$code("ANTHROPIC_API_KEY"),
+                " / ", shiny::tags$code("OPENAI_API_KEY"),
+                " / ", shiny::tags$code("GEMINI_API_KEY"), " in .Renviron"
+              )
             )
           ),
           shiny::actionButton("do_extract", "Extract",
@@ -895,8 +1045,15 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
 
     # ── Do extract ────────────────────────────────────────────────────────────
   shiny::observeEvent(input$do_extract, {
-    req(rv$pdf_path)
+    # Explicit stopExtractTimer() at EVERY exit point — on.exit is unreliable
+    # when req() throws a silent condition and Shiny intercepts it before the
+    # session flushes the queued JS message.
+    if (is.null(rv$pdf_path)) {
+      shinyjs::hide("extract_spinner"); shinyjs::runjs("clearInterval(window._etInterval);window._etInterval=null;")
+      return()
+    }
     if (nchar(trimws(input$ext_label %||% "")) == 0) {
+      shinyjs::hide("extract_spinner"); shinyjs::runjs("clearInterval(window._etInterval);window._etInterval=null;")
       shiny::showNotification(
         "Please enter a table label before extracting.",
         type = "warning", duration = 4
@@ -908,6 +1065,8 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
     tab    <- input$ext_tab
 
     result <- tryCatch({
+
+      struct_done <- FALSE
 
       if (tab == "Box") {
         page        <- as.integer(input$ext_page_box)
@@ -932,15 +1091,69 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
             type = "warning", duration = 8
           )
         }
-      } else {
-        lm <- trimws(input$ext_label_match); req(nchar(lm) > 0)
+      } else if (tab == "Fuzzy") {
+        lm <- trimws(input$ext_label_match %||% "")
+        if (nchar(lm) == 0) stop("Enter a caption to search for in the Fuzzy tab.")
         if (is.null(rv$page_text)) rv$page_text <- pdftools::pdf_text(rv$pdf_path)
         found <- .fuzzy_find_page(list(text = rv$page_text), lm, "jw", input$ext_max_dist)
         page <- found$page; header_rows <- 1L; table_index <- 1L
         area <- NULL; label_match <- lm
+      } else if (tab == "Struct") {
+        page <- .parse_page_range(input$gs_page %||% "") %||% 1L
+        fields_text <- trimws(input$gs_fields %||% "")
+        if (!nzchar(fields_text)) stop("Define at least one field in the Struct tab.")
+        parsed <- .parse_struct_fields(fields_text)
+        if (length(parsed$fields) == 0L) stop("No valid 'field: description' pairs found.")
+        gs_model <- input$gs_model %||% "fastino/gliner2-base-v1"
+        tmp <- new.env(parent = emptyenv())
+        tmp$path <- rv$pdf_path; tmp$tables <- list(); tmp$items <- list()
+        tmp$structs <- list(); tmp$steps <- list()
+        class(tmp) <- "pdfmacro_session"
+        entity_val <- trimws(input$gs_entity %||% "")
+        if (!nzchar(entity_val)) entity_val <- label
+        select_struct(tmp, label = label, entity = entity_val,
+          fields = parsed$fields, list_fields = parsed$list_fields,
+          enum_fields = parsed$enum_fields,
+          page = page, gliner_model = gs_model)
+        struct_to_df(tmp, label)
+        df <- tmp$tables[[label]]
+        if (is.null(df) || nrow(df) == 0L) stop("No structured records found.")
+        rv$tables[[label]] <- df
+        rv$structs[[label]] <- tmp$structs[[label]]
+        for (s in tmp$steps) {
+          rv$steps <- .replace_or_append_extraction(rv$steps, label, s)
+        }
+        rv$active_label <- label
+        rv$active_area  <- NULL
+        first_page <- if (is.list(page)) page[[1L]] else page[[1L]]
+        shiny::updateNumericInput(session, "viewer_page", value = first_page)
+        shiny::showNotification(
+          paste0("Extracted struct '", label, "': ", nrow(df), " record",
+                 if (nrow(df) == 1L) "" else "s", " × ", ncol(df), " field",
+                 if (ncol(df) == 1L) "" else "s"),
+          type = "message"
+        )
+        struct_done <- TRUE
       }
 
-      if (method == "llm") {
+      if (!isTRUE(struct_done)) {
+
+      if (method == "docling") {
+        if (!requireNamespace("reticulate", quietly = TRUE))
+          stop("Install reticulate and run pdfmacro::setup_docling() first.")
+        tbl_idx <- as.integer(input$docling_table_index %||% 1L)
+        tmp <- new.env(parent = emptyenv())
+        tmp$path <- rv$pdf_path; tmp$tables <- list(); tmp$steps <- list()
+        tmp$.replaying <- TRUE; class(tmp) <- "pdfmacro_session"
+        select_table_docling(tmp, label = label, page = page, table_index = tbl_idx)
+        df <- tmp$tables[[label]]
+        if (is.null(df) || nrow(df) == 0) stop("Docling returned no data.")
+        rv$tables[[label]] <- df
+        new_step <- list(
+          step = "select_table_docling", label = label,
+          page = page, table_index = tbl_idx)
+        rv$steps <- .replace_or_append_extraction(rv$steps, label, new_step)
+      } else if (method == "llm") {
         if (!requireNamespace("ellmer", quietly = TRUE))
           stop("Install the 'ellmer' package for LLM extraction.")
         schema_val <- .parse_schema_text(input$llm_schema %||% "")
@@ -1005,8 +1218,11 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
         paste0("Extracted '", label, "': ", nrow(df), " \u00d7 ", ncol(df)),
         type = "message"
       )
+      } # end if (!isTRUE(struct_done))
       "ok"
     }, error = function(e) e$message)
+
+    shinyjs::hide("extract_spinner"); shinyjs::runjs("clearInterval(window._etInterval);window._etInterval=null;")
 
     if (!identical(result, "ok")) {
       shiny::showNotification(paste("Extraction failed:", result), type = "error")
@@ -1020,10 +1236,76 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
                   rownames = FALSE)
   })
 
+  # ── Scan page (detect tables) ─────────────────────────────────────────────
+  shiny::observeEvent(input$scan_page_tables, {
+    req(rv$pdf_path)
+    page   <- as.integer(input$ext_page_idx %||% 1L)
+    method <- input$ext_method %||% "lattice"
+    if (!method %in% c("lattice", "stream", "docling")) method <- "lattice"
+    rv$scan_results <- NULL
+    id <- shiny::showNotification(
+      paste0("Scanning page ", page, " with ", method, "…"),
+      duration = NULL, type = "message"
+    )
+    on.exit(shiny::removeNotification(id))
+    rv$scan_results <- tryCatch(
+      detect_tables_quietly(rv$pdf_path, pages = page, method = method),
+      error = function(e) {
+        shiny::showNotification(paste("Scan failed:", e$message), type = "error")
+        NULL
+      }
+    )
+  })
+
+  output$scan_results_ui <- shiny::renderUI({
+    res <- rv$scan_results
+    if (is.null(res)) return(NULL)
+    items <- .flatten_scan(res)
+    if (length(items) == 0L) {
+      return(shiny::div(class = "text-muted small mt-1 mb-1",
+        shiny::icon("circle-xmark"), " No tables detected on this page."))
+    }
+    cards <- lapply(seq_along(items), function(i) {
+      it  <- items[[i]]
+      nr  <- nrow(it$df); nc <- ncol(it$df)
+      cols <- paste(head(names(it$df), 4L), collapse = ", ")
+      if (nc > 4L) cols <- paste0(cols, "…")
+      shiny::div(
+        class = "d-flex align-items-center justify-content-between border rounded px-2 py-1 mb-1",
+        shiny::div(
+          shiny::div(class = "small fw-semibold",
+            paste0("Table ", it$index, " — p.", it$page)),
+          shiny::div(class = "text-muted", style = "font-size:0.75rem",
+            paste0(nr, " × ", nc, "  ", cols))
+        ),
+        shiny::actionButton(
+          paste0("scan_btn_", i), "Use",
+          class = "btn-sm btn-outline-warning py-0",
+          onclick = sprintf(
+            "Shiny.setInputValue('scan_use_selected', %d, {priority: 'event'})", i)
+        )
+      )
+    })
+    shiny::div(class = "mt-1 mb-1",
+      shiny::div(class = "text-muted small mb-1",
+        shiny::icon("table"), paste0(" ", length(items), " table(s) found:")),
+      do.call(shiny::tagList, cards)
+    )
+  })
+
+  shiny::observeEvent(input$scan_use_selected, {
+    req(rv$scan_results)
+    i     <- as.integer(input$scan_use_selected)
+    items <- .flatten_scan(rv$scan_results)
+    if (i < 1L || i > length(items)) return()
+    it <- items[[i]]
+    shiny::updateNumericInput(session, "ext_page_idx", value = it$page)
+    shiny::updateNumericInput(session, "ext_tbl_idx",  value = it$index)
+    bslib::nav_select("ext_tab", "Index")
+  }, ignoreNULL = TRUE)
+
   # ── Tables panel ──────────────────────────────────────────────────────────
   output$tables_panel <- shiny::renderUI({
-    # Depend on both tables AND steps so the panel refreshes after step removal
-    .n_steps <- length(rv$steps)
     if (length(rv$tables) == 0) {
       return(bslib::card(bslib::card_body(
         shiny::div(class = "text-center text-muted py-5",
@@ -1072,9 +1354,16 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
     do.call(bslib::navset_card_underline, c(tabs, list(id = "tables_navset")))
   })
 
-  # Render each table DT and wire up transform buttons dynamically
+  # Render each table DT and wire up transform buttons dynamically.
+  # registered_tbl_labels tracks which labels already have observers so the
+  # observe loop below never registers duplicates — re-running on rv$tables
+  # change (e.g. after rename/cast writes back) would otherwise stack observers.
+  registered_tbl_labels <- character(0)
+
   shiny::observe({
-    for (lbl in names(rv$tables)) {
+    new_labels <- setdiff(names(rv$tables), registered_tbl_labels)
+    for (lbl in new_labels) {
+      registered_tbl_labels <<- c(registered_tbl_labels, lbl)
       local({
         l <- lbl
         output[[paste0("tbl_dt_", l)]] <- DT::renderDT({
@@ -1415,9 +1704,20 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
             class = "d-flex align-items-start gap-2",
             shiny::div(
               shiny::tags$small(class = "text-muted", lbl),
-              shiny::div(class = "fw-bold", as.character(item$value)),
+              if (length(item$value) > 1L) {
+                shiny::div(
+                  class = "fw-bold",
+                  shiny::tags$ol(
+                    class = "mb-0 ps-3",
+                    lapply(as.character(item$value), shiny::tags$li)
+                  )
+                )
+              } else {
+                shiny::div(class = "fw-bold", as.character(item$value))
+              },
               shiny::tags$small(class = "text-muted",
-                item$cast, " · ", item$provider)
+                item$cast, " · ",
+                if (identical(item$backend, "gliner")) "GLiNER" else item$provider %||% "llm")
             ),
             shiny::div(
               class = "ms-auto d-flex gap-1",
@@ -1463,10 +1763,19 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
       title = "Extract item",
       shiny::p(class = "text-muted small",
         "Items are single metadata fields (invoice number, date, total etc.) ",
-        "extracted via LLM from the document text or a specific page image."),
-      shiny::textInput("new_item_label",  "Label",
-                       placeholder = "e.g. invoice_number"),
-      shiny::textAreaInput("new_item_prompt", "Prompt",
+        "extracted via LLM or the local GLiNER model."),
+      # Label + backend on the same row
+      shiny::div(
+        class = "d-flex gap-2 mb-2 align-items-end",
+        shiny::div(class = "flex-fill",
+          shiny::textInput("new_item_label", "Label",
+                           placeholder = "e.g. invoice_number")),
+        shiny::div(
+          shiny::selectInput("new_item_backend", "Backend",
+            choices  = c("LLM" = "llm", "GLiNER (local)" = "gliner"),
+            selected = "llm", width = "160px"))
+      ),
+      shiny::textAreaInput("new_item_prompt", "Prompt / field description",
                            placeholder = "Extract the invoice ID or reference number.",
                            rows = 2),
       shiny::div(
@@ -1475,18 +1784,40 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
           choices = c("character", "numeric", "integer",
                       "date:%d/%m/%Y", "date:%Y-%m-%d"),
           width = "35%"),
-        shiny::numericInput("new_item_page", "Page (clear for whole file)",
-                            value = rv$viewer_page,
-                            min = 1, width = "35%"),
+        shiny::textInput("new_item_page", "Page(s) (blank = whole file)",
+                         placeholder = "1  or  1,3  or  1-5", width = "35%")
+      ),
+      # LLM-only: provider selector
+      shiny::conditionalPanel(
+        "input.new_item_backend == 'llm'",
         shiny::selectizeInput("new_item_provider", "Provider",
           choices = c("anthropic", "openai", "google_gemini", "openrouter",
                       "groq", "mistral", "deepseek", "ollama", "openai_compatible"),
-          selected = "anthropic", width = "40%",
+          selected = "anthropic",
           options = list(create = TRUE, createOnBlur = TRUE))
       ),
-      # Area coordinates — shown when a page is specified
+      # GLiNER-only: model selector + all_matches + setup hint
       shiny::conditionalPanel(
-        "!isNaN(parseFloat(input.new_item_page))",
+        "input.new_item_backend == 'gliner'",
+        shiny::div(
+          class = "d-flex gap-2 align-items-end",
+          shiny::div(class = "flex-fill",
+            shiny::selectInput("new_item_gliner_model", "GLiNER model",
+              choices = c("Base (205M)"  = "fastino/gliner2-base-v1",
+                          "Large (340M)" = "fastino/gliner2-large-v1"),
+              selected = "fastino/gliner2-base-v1")),
+          shiny::div(class = "pb-2",
+            shiny::checkboxInput("new_item_all_matches", "All matches", value = FALSE))
+        ),
+        shiny::tags$small(class = "text-muted",
+          shiny::icon("robot"),
+          " Requires ", shiny::tags$code("setup_gliner()"),
+          " — run once, then restart R. ",
+          shiny::tags$em("All matches"), " returns every occurrence found.")
+      ),
+      # Area coordinates — LLM only, shown when a page is specified
+      shiny::conditionalPanel(
+        "input.new_item_backend == 'llm' && /^\\s*\\d+\\s*$/.test(input.new_item_page || '')",
         shiny::div(
           class = "border rounded p-2 mb-2",
           style = "background:var(--raised);",
@@ -1533,23 +1864,35 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
     shiny::updateNumericInput(session, "new_item_left",   value = unname(round(area["left"])))
     shiny::updateNumericInput(session, "new_item_bottom", value = unname(round(area["bottom"])))
     shiny::updateNumericInput(session, "new_item_right",  value = unname(round(area["right"])))
-    shiny::updateNumericInput(session, "new_item_page",   value = unname(rv$viewer_page))
+    shiny::updateTextInput(session, "new_item_page", value = as.character(unname(rv$viewer_page)))
     shiny::showNotification("Area filled from brush selection.", type = "message")
   }, ignoreInit = TRUE)
 
   shiny::observeEvent(input$do_extract_item, {
-    lbl    <- trimws(input$new_item_label %||% "")
-    prompt <- trimws(input$new_item_prompt %||% "")
+    lbl     <- trimws(input$new_item_label %||% "")
+    prompt  <- trimws(input$new_item_prompt %||% "")
+    backend <- input$new_item_backend %||% "llm"
     if (nchar(lbl) == 0 || nchar(prompt) == 0) {
+      shinyjs::hide("item_spinner")
       shiny::showNotification("Label and prompt are required.", type = "warning")
       return()
     }
-    req(rv$pdf_path)
-    page_val <- if (is.na(input$new_item_page %||% NA)) NULL else as.integer(input$new_item_page)
-    cast_val <- input$new_item_cast %||% "character"
+    if (is.null(rv$pdf_path)) {
+      shinyjs::hide("item_spinner")
+      return()
+    }
+    page_raw <- trimws(input$new_item_page %||% "")
+    page_val <- if (backend == "gliner") {
+      .parse_page_range(page_raw)
+    } else {
+      if (nzchar(page_raw)) as.integer(page_raw) else NULL
+    }
+    cast_val         <- input$new_item_cast %||% "character"
+    gliner_model_val <- input$new_item_gliner_model %||% "fastino/gliner2-base-v1"
+    provider_val     <- input$new_item_provider %||% "anthropic"
 
-    # Build area vector only when all four coords are filled and a page is set
-    area_val <- if (!is.null(page_val) &&
+    # Area only applies to LLM + page is set + all four coords filled
+    area_val <- if (backend == "llm" && !is.null(page_val) &&
                     !is.na(input$new_item_top)    && !is.na(input$new_item_left) &&
                     !is.na(input$new_item_bottom) && !is.na(input$new_item_right)) {
       c(top    = input$new_item_top,    left   = input$new_item_left,
@@ -1561,24 +1904,147 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
       tmp$path   <- rv$pdf_path
       tmp$tables <- list(); tmp$items <- list(); tmp$steps <- list()
       tmp$.replaying <- TRUE; class(tmp) <- "pdfmacro_session"
-      select_item(tmp, label = lbl, prompt = prompt,
-                  cast = cast_val, page = page_val, area = area_val,
-                  provider = input$new_item_provider %||% "anthropic",
-                  dpi = 120L)
+
+      all_matches_val <- isTRUE(input$new_item_all_matches) && backend == "gliner"
+      if (backend == "gliner") {
+        select_item(tmp, label = lbl, prompt = prompt,
+                    cast = cast_val, page = page_val,
+                    backend = "gliner", gliner_model = gliner_model_val,
+                    all_matches = all_matches_val)
+        rv$steps <- .module_record(rv$steps, list(
+          step = "select_item", label = lbl, prompt = prompt,
+          cast = cast_val, page = page_val,
+          backend = "gliner", gliner_model = gliner_model_val,
+          all_matches = all_matches_val
+        ), session = NULL)
+      } else {
+        select_item(tmp, label = lbl, prompt = prompt,
+                    cast = cast_val, page = page_val, area = area_val,
+                    backend = "llm", provider = provider_val, dpi = 120L)
+        rv$steps <- .module_record(rv$steps, list(
+          step = "select_item", label = lbl, prompt = prompt,
+          cast = cast_val, page = page_val, area = area_val,
+          backend = "llm", provider = provider_val, dpi = 120L
+        ), session = NULL)
+      }
+
       rv$items[[lbl]] <- tmp$items[[lbl]]
-      rv$steps <- .module_record(rv$steps, list(
-        step = "select_item", label = lbl, prompt = prompt,
-        cast = cast_val, page = page_val, area = area_val,
-        provider = input$new_item_provider %||% "anthropic",
-        dpi = 120L
-      ), session = NULL)
+      shinyjs::hide("item_spinner")
       shiny::removeModal()
       bslib::nav_select("main_tabs", "Items", session = session)
       shiny::showNotification(
         paste0("'", lbl, "': ", as.character(tmp$items[[lbl]]$value)),
         type = "message")
     }, error = function(e) {
+      shinyjs::hide("item_spinner")
       shiny::showNotification(paste("Extraction failed:", e$message), type = "error")
+    })
+  })
+
+  # ── Batch GLiNER items modal ─────────────────────────────────────────────
+  shiny::observeEvent(input$open_batch_items, {
+    shiny::showModal(shiny::modalDialog(
+      title = "Batch extract items (GLiNER)",
+      shiny::p(class = "text-muted small",
+        "Enter one field per line as ", shiny::tags$code("label: description"),
+        ". All fields are extracted in a single GLiNER model pass."),
+      shiny::textAreaInput("batch_items_text",
+        label = "Fields (label: description, one per line)",
+        placeholder = paste(
+          "invoice_no: Invoice ID or reference number",
+          "total: Grand total amount payable",
+          "date: Invoice date",
+          sep = "\n"
+        ),
+        rows = 6),
+      shiny::div(
+        class = "d-flex gap-2 mb-2 align-items-end",
+        shiny::textInput("batch_items_page", "Page(s) (blank = whole file)",
+                         placeholder = "1  or  1,3  or  1-5", width = "35%"),
+        shiny::selectInput("batch_items_model", "GLiNER model",
+          choices = c("Base (205M)"  = "fastino/gliner2-base-v1",
+                      "Large (340M)" = "fastino/gliner2-large-v1"),
+          selected = "fastino/gliner2-base-v1", width = "45%"),
+        shiny::div(class = "pb-2",
+          shiny::checkboxInput("batch_items_all_matches", "All matches", value = FALSE))
+      ),
+      shiny::tags$small(class = "text-muted",
+        shiny::icon("robot"),
+        " Requires ", shiny::tags$code("setup_gliner()"), " — run once, restart R. ",
+        shiny::tags$em("All matches"), " returns every occurrence per field."),
+      footer = shiny::tagList(
+        shiny::modalButton("Cancel"),
+        shiny::actionButton("do_batch_items", "Extract all",
+                            class = "btn-warning", icon = shiny::icon("layer-group"))
+      )
+    ))
+  })
+
+  shiny::observeEvent(input$do_batch_items, {
+    raw_text <- trimws(input$batch_items_text %||% "")
+    if (nchar(raw_text) == 0) {
+      shinyjs::hide("item_spinner")
+      shiny::showNotification("Enter at least one label: description line.",
+                              type = "warning")
+      return()
+    }
+    if (is.null(rv$pdf_path)) {
+      shinyjs::hide("item_spinner")
+      return()
+    }
+
+    # Parse "label: description" lines
+    lines <- Filter(nzchar, trimws(strsplit(raw_text, "\n")[[1]]))
+    parsed <- lapply(lines, function(l) {
+      colon <- regexpr(":", l, fixed = TRUE)
+      if (colon < 2L) return(NULL)
+      list(
+        label = trimws(substr(l, 1L, colon - 1L)),
+        desc  = trimws(substr(l, colon + 1L, nchar(l)))
+      )
+    })
+    parsed <- Filter(Negate(is.null), parsed)
+    if (length(parsed) == 0) {
+      shinyjs::hide("item_spinner")
+      shiny::showNotification(
+        "Could not parse any lines. Use \"label: description\" format.",
+        type = "warning")
+      return()
+    }
+
+    items_vec <- setNames(
+      vapply(parsed, `[[`, character(1), "desc"),
+      vapply(parsed, `[[`, character(1), "label")
+    )
+    page_val  <- .parse_page_range(input$batch_items_page %||% "")
+    model_val       <- input$batch_items_model %||% "fastino/gliner2-base-v1"
+    all_matches_val <- isTRUE(input$batch_items_all_matches)
+
+    tryCatch({
+      tmp <- new.env(parent = emptyenv())
+      tmp$path <- rv$pdf_path
+      tmp$tables <- list(); tmp$items <- list(); tmp$steps <- list()
+      tmp$.replaying <- TRUE; class(tmp) <- "pdfmacro_session"
+
+      select_items_batch(tmp, items = items_vec, page = page_val,
+                         gliner_model = model_val, all_matches = all_matches_val)
+
+      for (lbl in names(tmp$items)) {
+        rv$items[[lbl]] <- tmp$items[[lbl]]
+      }
+      rv$steps <- c(rv$steps, tmp$steps)
+
+      shinyjs::hide("item_spinner")
+      shiny::removeModal()
+      bslib::nav_select("main_tabs", "Items", session = session)
+      shiny::showNotification(
+        paste0("Extracted ", length(tmp$items), " item",
+               if (length(tmp$items) != 1) "s" else "", " via GLiNER."),
+        type = "message")
+    }, error = function(e) {
+      shinyjs::hide("item_spinner")
+      shiny::showNotification(paste("Batch extraction failed:", e$message),
+                              type = "error")
     })
   })
 
@@ -1651,7 +2117,7 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
     # Only wipe the table if no other extraction step for this label remains
     if (is_extraction && !is.null(lbl)) {
       other_extract <- any(vapply(remaining, function(s)
-        isTRUE(s$step %in% c("select_table", "select_table_llm")) &&
+        isTRUE(s$step %in% c("select_table", "select_table_llm", "select_table_docling")) &&
         identical(s$label, lbl), logical(1)))
 
       rv$steps <- remaining
@@ -1866,21 +2332,25 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
     req(!is.integer(input$replay_macro_file))
     i <- shinyFiles::parseFilePaths(.sf_roots_rb, input$replay_macro_file)
     req(nrow(i) > 0); rv_replay$macro_path <- normalizePath(as.character(i$datapath[[1]]))
+    .close_sf_modal()
   })
   shiny::observeEvent(input$replay_pdf_file, {
     req(!is.integer(input$replay_pdf_file))
     i <- shinyFiles::parseFilePaths(.sf_roots_rb, input$replay_pdf_file)
     req(nrow(i) > 0); rv_replay$pdf_path <- normalizePath(as.character(i$datapath[[1]]))
+    .close_sf_modal()
   })
   shiny::observeEvent(input$batch_macro_file, {
     req(!is.integer(input$batch_macro_file))
     i <- shinyFiles::parseFilePaths(.sf_roots_rb, input$batch_macro_file)
     req(nrow(i) > 0); rv_batch$macro_path <- normalizePath(as.character(i$datapath[[1]]))
+    .close_sf_modal()
   })
   shiny::observeEvent(input$batch_pdf_files, {
     req(!is.integer(input$batch_pdf_files))
     i <- shinyFiles::parseFilePaths(.sf_roots_rb, input$batch_pdf_files)
     req(nrow(i) > 0); rv_batch$pdf_paths <- normalizePath(as.character(i$datapath))
+    .close_sf_modal()
   })
 
   output$replay_macro_status <- shiny::renderUI({
@@ -2013,8 +2483,79 @@ pdf_app <- function(viewer = c("browser", "dialog", "pane")) {
 # extraction step in-place rather than appending a duplicate.
 # Downstream transform steps (rename, cast, filter etc.) are preserved so they
 # still apply to the refreshed data on next replay.
+.parse_page_range <- function(txt) {
+  if (is.null(txt) || !nzchar(trimws(as.character(txt)))) return(NULL)
+  txt   <- gsub(" ", "", as.character(txt))
+  parts <- strsplit(txt, ",")[[1L]]
+  pages <- integer(0)
+  for (p in parts) {
+    if (grepl("^\\d+-\\d+$", p)) {
+      bounds <- as.integer(strsplit(p, "-")[[1L]])
+      pages  <- c(pages, seq(bounds[[1L]], bounds[[2L]]))
+    } else {
+      v <- suppressWarnings(as.integer(p))
+      if (!is.na(v)) pages <- c(pages, v)
+    }
+  }
+  pages <- sort(unique(pages[pages >= 1L]))
+  if (length(pages) == 0L) NULL else pages
+}
+
+.flatten_scan <- function(res) {
+  items <- list()
+  for (pg_chr in names(res)) {
+    pg   <- as.integer(pg_chr)
+    tbls <- res[[pg_chr]]
+    for (j in seq_along(tbls)) {
+      items[[length(items) + 1L]] <- list(page = pg, index = j, df = tbls[[j]])
+    }
+  }
+  items
+}
+
+.parse_struct_fields <- function(text) {
+  # Parses lines of the form:
+  #   name: description                     → str field
+  #   name [list]: description              → list field
+  #   name [basic|premium]: description     → enum field (choices = [basic|premium])
+  # Returns list(fields = c(name=desc), list_fields = c(...), enum_fields = c(name="[v1|v2]"))
+  lines <- strsplit(trimws(text), "\n")[[1L]]
+  lines <- trimws(lines)
+  lines <- lines[nzchar(lines)]
+
+  fields      <- character(0)
+  list_fields <- character(0)
+  enum_fields <- character(0)
+
+  for (line in lines) {
+    colon <- regexpr(":", line, fixed = TRUE)
+    if (colon < 2L) next
+    raw_name   <- trimws(substr(line, 1L, colon - 1L))
+    field_desc <- trimws(substr(line, colon + 1L, nchar(line)))
+    if (!nzchar(raw_name) || !nzchar(field_desc)) next
+
+    # Detect bracket annotation: "name [list]" or "name [v1|v2]"
+    bracket <- regmatches(raw_name, regexpr("\\[([^\\]]+)\\]", raw_name, perl = TRUE))
+    if (length(bracket) == 1L) {
+      field_name <- trimws(sub("\\s*\\[[^\\]]+\\]", "", raw_name, perl = TRUE))
+      spec <- gsub("\\[|\\]", "", bracket)
+      if (identical(tolower(spec), "list")) {
+        list_fields <- c(list_fields, field_name)
+      } else {
+        enum_fields[[field_name]] <- paste0("[", spec, "]")
+      }
+    } else {
+      field_name <- raw_name
+    }
+    if (!nzchar(field_name)) next
+    fields[[field_name]] <- field_desc
+  }
+  list(fields = fields, list_fields = list_fields, enum_fields = enum_fields)
+}
+
 .replace_or_append_extraction <- function(steps, label, new_step) {
-  extract_types <- c("select_table", "select_table_llm")
+  extract_types <- c("select_table", "select_table_llm", "select_table_docling",
+                     "select_struct")
   idx <- which(vapply(steps, function(s)
     isTRUE(s$step %in% extract_types) && identical(s$label, label),
     logical(1)))
