@@ -146,13 +146,17 @@ sess |> select_table_docling("financials", page = 10, table_index = 1)
 Sends a rendered page image to a large language model. Best for multi-level spanning headers and irregular layouts that defeat positional extraction. Requires the `ellmer` package and a provider API key set in `.Renviron`.
 
 ```r
-# Auto-detect columns
+# Pass any ellmer chat object directly
+chat <- ellmer::chat_anthropic()
+sess |> select_table_llm("stillborn", page = 40, area = area, chat = chat)
+
+# Or specify provider/model inline (chat object created automatically)
 sess |> select_table_llm("stillborn", page = 40, area = area,
                           provider = "anthropic")
 
 # Predefined schema — better accuracy, consistent replay
 sess |> select_table_llm("breed_sire", page = 16, area = area,
-  provider = "anthropic",
+  chat     = chat,
   schema   = c(Breed = "character", Male = "integer",
                Female = "integer", Total = "integer"),
   prompt   = "Flatten the two-row header with _ separators.")
@@ -162,15 +166,26 @@ sess |> update_llm_schema("breed_sire",
   schema = c(Breed = "character", Male = "integer", Total = "integer"))
 ```
 
-`provider` can be the name of any [ellmer](https://ellmer.tidyverse.org/) chat
-constructor, without the `chat_` prefix — e.g. `"anthropic"`, `"openai"`,
-`"google_gemini"`, `"openrouter"`, `"groq"`, `"mistral"`, `"deepseek"`,
-`"ollama"`, or `"openai_compatible"`. `model` defaults to a sensible choice
-for `"anthropic"`, `"openai"`, and `"google_gemini"`; other providers require
-`model` to be set explicitly.
+**Using `chat =`** — you can pass any [ellmer](https://ellmer.tidyverse.org/)
+chat object. This gives you full control over model parameters, system prompts,
+and provider configuration:
 
-For `openai_compatible` (any OpenAI-API-compatible endpoint — LM Studio, vLLM, etc.)
-or hosted gateways like `openrouter`:
+```r
+chat <- ellmer::chat_openai(model = "gpt-4o")
+chat <- ellmer::chat_google_gemini(model = "gemini-2.0-flash")
+chat <- ellmer::chat_ollama(model = "llava")
+
+# Same chat object works for tables and items
+sess |> select_table_llm("tbl", page = 1, chat = chat)
+sess |> select_item("ref", prompt = "Reference number", chat = chat)
+```
+
+**Using `provider =`** — shorthand when defaults are fine. `provider` can be the
+name of any ellmer chat constructor without the `chat_` prefix — e.g.
+`"anthropic"`, `"openai"`, `"google_gemini"`, `"openrouter"`, `"groq"`,
+`"mistral"`, `"deepseek"`, `"ollama"`, or `"openai_compatible"`. `model`
+defaults to a sensible choice for `"anthropic"`, `"openai"`, and
+`"google_gemini"`; other providers require `model` to be set explicitly.
 
 ```r
 sess |> select_table_llm("my_table", page = 5,
