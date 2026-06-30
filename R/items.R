@@ -149,7 +149,7 @@ select_item <- function(sess, label, prompt,
 
   # ── LLM path ────────────────────────────────────────────────────────────────
   .check_ellmer()
-  resolved <- .resolve_llm_chat(chat, provider, model, base_url)
+  resolved <- .resolve_llm_chat(chat, provider, model, base_url, sess$llm_config)
   chat_obj <- resolved$chat
   provider <- resolved$provider
   model    <- resolved$model

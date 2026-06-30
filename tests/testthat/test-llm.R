@@ -241,8 +241,58 @@ test_that(".resolve_llm_chat() builds a chat from provider/model/base_url when c
 
   resolved <- macrox:::.resolve_llm_chat(NULL, "anthropic", NULL, NULL)
   expect_equal(resolved$provider, "anthropic")
-  expect_equal(resolved$model, "claude-opus-4-5-20251001")
+  expect_equal(resolved$model, "claude-opus-4-8")
   expect_s3_class(resolved$chat, "Chat")
+})
+
+test_that(".resolve_llm_chat() uses sess_chat when chat is NULL", {
+  skip_if_not_installed("ellmer")
+
+  sess_chat <- ellmer::chat_openai_compatible(
+    base_url = "http://localhost:11434/v1",
+    model    = "llama2"
+  )
+  resolved <- macrox:::.resolve_llm_chat(NULL, "anthropic", NULL, NULL, sess_chat)
+  expect_equal(resolved$provider, "openai_compatible")
+  expect_equal(resolved$model, "llama2")
+})
+
+test_that(".resolve_llm_chat() prefers explicit chat over sess_chat", {
+  skip_if_not_installed("ellmer")
+
+  sess_chat    <- ellmer::chat_openai_compatible(base_url = "http://localhost:11434/v1", model = "llama2")
+  explicit_chat <- ellmer::chat_openai_compatible(base_url = "http://localhost:11434/v1", model = "mistral")
+  resolved <- macrox:::.resolve_llm_chat(explicit_chat, "anthropic", NULL, NULL, sess_chat)
+  expect_equal(resolved$model, "mistral")
+})
+
+test_that("mx_configure_llm() stores llm_config on session", {
+  skip_if_not_installed("ellmer")
+
+  sess <- new.env(parent = emptyenv())
+  sess$path   <- "dummy.pdf"
+  sess$tables <- list()
+  sess$steps  <- list()
+  class(sess) <- "macrox_session"
+
+  mx_configure_llm(sess, provider = "anthropic", model = "claude-opus-4-8")
+  expect_true(!is.null(sess$llm_config))
+  expect_s3_class(sess$llm_config, "Chat")
+})
+
+test_that("mx_configure_llm() accepts a chat object", {
+  skip_if_not_installed("ellmer")
+
+  sess <- new.env(parent = emptyenv())
+  sess$path   <- "dummy.pdf"
+  sess$tables <- list()
+  sess$steps  <- list()
+  class(sess) <- "macrox_session"
+
+  ch <- ellmer::chat_openai_compatible(base_url = "http://localhost:11434/v1", model = "llava")
+  mx_configure_llm(sess, chat = ch)
+  info <- macrox:::.chat_provider_info(sess$llm_config)
+  expect_equal(info$model, "llava")
 })
 
 test_that(".resolve_llm_chat() errors when chat is not an ellmer Chat", {

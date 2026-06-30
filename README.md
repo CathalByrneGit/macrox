@@ -166,9 +166,24 @@ sess |> update_llm_schema("breed_sire",
   schema = c(Breed = "character", Male = "integer", Total = "integer"))
 ```
 
+**Session-level LLM config** — call `mx_configure_llm()` once to avoid
+repeating `provider =` / `model =` on every extraction call:
+
+```r
+# Configure once — all subsequent LLM calls use this automatically
+sess |> mx_configure_llm(provider = "anthropic", model = "claude-opus-4-8")
+sess |> select_table_llm("table1", page = 5)        # no provider= needed
+sess |> select_item("date", prompt = "Report date")  # same session config
+
+# Or pass a fully configured chat object for complete control
+sess |> mx_configure_llm(chat = ellmer::chat_anthropic(
+  model  = "claude-opus-4-8",
+  system = "Extract data exactly as shown."
+))
+```
+
 **Using `chat =`** — you can pass any [ellmer](https://ellmer.tidyverse.org/)
-chat object. This gives you full control over model parameters, system prompts,
-and provider configuration:
+chat object per call. Overrides the session config for that call:
 
 ```r
 chat <- ellmer::chat_openai(model = "gpt-4o")
@@ -487,7 +502,7 @@ steps:
     page: 16
     area: [60, 25, 620, 790]
     provider: anthropic
-    model: claude-opus-4-5-20251001
+    model: claude-opus-4-8
     schema:
       Breed: character
       Male: integer
@@ -577,6 +592,7 @@ Returns `list(tables = reactive(...), steps = reactive(...))`.
 |---|---|---|
 | `mx_app(viewer)` | — | Launch standalone Shiny app |
 | `mx_session(path)` | — | Open a script session; omit `path` for file chooser |
+| `mx_configure_llm(sess, ...)` | — | Set a session-level default LLM (provider / model / chat) |
 | **Detection** | | |
 | `detect_tables(sess, pages, method, ...)` | No | Scan pages for tables (lattice / stream / docling) |
 | `detect_tables_quietly(path, pages, ...)` | — | Silent detection for agents |

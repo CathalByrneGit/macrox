@@ -73,7 +73,7 @@ select_table_llm <- function(sess, label,
                               table_index = 1L) {
   mode <- match.arg(mode)
   .check_ellmer()
-  resolved <- .resolve_llm_chat(chat, provider, model, base_url)
+  resolved <- .resolve_llm_chat(chat, provider, model, base_url, sess$llm_config)
   chat_obj <- resolved$chat
   provider <- resolved$provider
   model    <- resolved$model
@@ -267,7 +267,7 @@ update_llm_schema <- function(sess, label, schema,
 
 .llm_default_model <- function(provider) {
   default <- switch(provider,
-    anthropic     = "claude-opus-4-5-20251001",
+    anthropic     = "claude-opus-4-8",
     openai        = "gpt-4o",
     google_gemini = "gemini-2.0-flash",
     NULL
@@ -281,8 +281,19 @@ update_llm_schema <- function(sess, label, schema,
   default
 }
 
+.llm_default_system_prompt <- function() {
+  paste0(
+    "You are a precise data extraction assistant specialising in PDF document analysis. ",
+    "Extract data exactly as it appears in the source — do not infer, estimate, or add ",
+    "information not visible in the document. Return only the requested structured data; ",
+    "no preamble or commentary."
+  )
+}
+
 # Dispatch to any ellmer::chat_<provider>() constructor.
-.make_llm_chat <- function(provider, model, base_url = NULL) {
+# `system` is forwarded to the constructor when supported; for the anthropic
+# provider a sensible extraction-focused default is used when system is NULL.
+.make_llm_chat <- function(provider, model, base_url = NULL, system = NULL) {
   fn_name <- paste0("chat_", provider)
 
   if (!fn_name %in% getNamespaceExports("ellmer")) {
@@ -310,7 +321,81 @@ update_llm_schema <- function(sess, label, schema,
   args <- list(model = model)
   if (!is.null(base_url)) args$base_url <- base_url
 
+  # Inject system prompt when the constructor accepts it.
+  # For anthropic we supply a helpful extraction-focused default so that
+  # bare calls (no chat =, no explicit system) still get good guidance.
+  sys <- system %||% if (provider == "anthropic") .llm_default_system_prompt() else NULL
+  if (!is.null(sys) && "system" %in% fn_args) args$system <- sys
+
   do.call(chat_fn, args)
+}
+
+
+#' Configure a session-level default LLM
+#'
+#' Sets a single LLM configuration for the session so that
+#' \code{\link{select_table_llm}()} and \code{\link{select_item}()} can be
+#' called without specifying \code{provider}, \code{model}, or \code{chat} on
+#' every call.  The configured chat object is cloned for each extraction so its
+#' conversation history is never shared between calls.
+#'
+#' @param sess A \code{macrox_session} object.
+#' @param chat An existing \code{ellmer} Chat object, e.g.
+#'   \code{ellmer::chat_anthropic()}.  When supplied, \code{provider},
+#'   \code{model}, \code{base_url}, and \code{system} are ignored.
+#' @param provider Provider name (default \code{"anthropic"}).  Any provider
+#'   for which \code{ellmer} exports \code{chat_<provider>()} is supported.
+#'   Ignored when \code{chat} is supplied.
+#' @param model Model name.  \code{NULL} uses a sensible default for the
+#'   provider.  Ignored when \code{chat} is supplied.
+#' @param base_url Base URL for \code{"openai_compatible"} providers.
+#' @param system System prompt passed to the provider constructor.  \code{NULL}
+#'   (default) uses a built-in extraction-focused prompt for the
+#'   \code{"anthropic"} provider; other providers receive no default.  Ignored
+#'   when \code{chat} is supplied.
+#' @return \code{sess} invisibly.
+#' @examples
+#' \dontrun{
+#' sess <- mx_session("report.pdf")
+#'
+#' # Use Anthropic with a specific model — all subsequent LLM calls use it
+#' sess |> mx_configure_llm(provider = "anthropic", model = "claude-opus-4-8")
+#' sess |> select_table_llm("my_table", page = 5)
+#' sess |> select_item("date", prompt = "Publication date")
+#'
+#' # Or pass a fully configured chat object for maximum control
+#' chat <- ellmer::chat_anthropic(
+#'   model  = "claude-opus-4-8",
+#'   system = "Extract data exactly as shown."
+#' )
+#' sess |> mx_configure_llm(chat = chat)
+#' }
+#' @export
+mx_configure_llm <- function(sess,
+                              chat     = NULL,
+                              provider = "anthropic",
+                              model    = NULL,
+                              base_url = NULL,
+                              system   = NULL) {
+  .check_ellmer()
+
+  if (!is.null(chat)) {
+    if (!inherits(chat, "Chat")) {
+      cli::cli_abort(c(
+        "{.arg chat} must be an {.pkg ellmer} Chat object.",
+        "i" = "e.g. {.code ellmer::chat_anthropic()}"
+      ))
+    }
+    sess$llm_config <- chat
+    info <- .chat_provider_info(chat)
+    cli::cli_inform(c("v" = "Session LLM configured: {info$provider} / {info$model}"))
+  } else {
+    model_used      <- model %||% .llm_default_model(provider)
+    sess$llm_config <- .make_llm_chat(provider, model_used, base_url, system)
+    cli::cli_inform(c("v" = "Session LLM configured: {provider} / {model_used}"))
+  }
+
+  invisible(sess)
 }
 
 # Map an ellmer Provider S7 class to the slug used by chat_<slug>().
@@ -350,9 +435,10 @@ update_llm_schema <- function(sess, label, schema,
   list(provider = slug, model = chat$get_model(), base_url = base_url)
 }
 
-# Resolve a Chat object + its provider/model/base_url, either from a
-# user-supplied ellmer Chat or by constructing one from provider/model/base_url.
-.resolve_llm_chat <- function(chat, provider, model, base_url) {
+# Resolve a Chat object + its provider/model/base_url.
+# Priority: explicit `chat` arg > session-level `sess_chat` > build from provider/model.
+.resolve_llm_chat <- function(chat, provider, model, base_url, sess_chat = NULL) {
+  # 1. Explicit chat argument takes highest priority.
   if (!is.null(chat)) {
     if (!inherits(chat, "Chat")) {
       cli::cli_abort(c(
@@ -369,6 +455,22 @@ update_llm_schema <- function(sess, label, schema,
     ))
   }
 
+  # 2. Session-level configured chat (set via mx_configure_llm()).
+  if (!is.null(sess_chat)) {
+    if (!inherits(sess_chat, "Chat")) {
+      cli::cli_warn("Session LLM config is not a valid Chat object — ignoring.")
+    } else {
+      info <- .chat_provider_info(sess_chat)
+      return(list(
+        chat     = sess_chat$clone(),
+        provider = info$provider,
+        model    = info$model,
+        base_url = info$base_url
+      ))
+    }
+  }
+
+  # 3. Build from provider / model / base_url (uses sensible defaults).
   model <- model %||% .llm_default_model(provider)
   list(
     chat     = .make_llm_chat(provider, model, base_url),
