@@ -166,6 +166,22 @@ sess |> update_llm_schema("breed_sire",
   schema = c(Breed = "character", Male = "integer", Total = "integer"))
 ```
 
+**Global default (`.Rprofile`)** — set once, applies to every session and
+every script without any in-code configuration:
+
+```r
+# ~/.Rprofile  (or project .Rprofile)
+options(
+  macrox.llm.provider = "anthropic",
+  macrox.llm.model    = "claude-opus-4-8"
+)
+```
+
+All LLM functions (`select_table_llm()`, `select_item()`, `mx_configure_llm()`,
+`stack_pages()`) read these options as their parameter defaults.  An explicit
+`provider =` / `model =` argument or `mx_configure_llm()` call always takes
+precedence.
+
 **Session-level LLM config** — call `mx_configure_llm()` once to avoid
 repeating `provider =` / `model =` on every extraction call:
 
@@ -270,10 +286,21 @@ sess |> select_table_llm("stillborn", page = 40, area = area,
 When the same table spans several consecutive pages:
 
 ```r
+# bbox / lattice / stream — repeated headers consumed automatically
 sess |> stack_pages("breed_all", pages = 10:14, area = area, method = "bbox")
+
+# LLM — use when the table has complex or irregular layout across pages
+sess |> stack_pages("breed_all", pages = 10:14, area = area, method = "llm",
+  provider = "anthropic",
+  schema   = c(Breed = "character", Male = "integer", Total = "integer"),
+  prompt   = "Flatten two-row header with _ separator.")
 ```
 
-`stack_pages()` extracts the table from each page and row-binds the results. Repeated headers are consumed automatically (`header_match = TRUE` by default).
+`stack_pages()` extracts the table from each page and row-binds the results.
+For `bbox`/`lattice`/`stream`, repeated headers are consumed automatically
+(`header_match = TRUE` by default).  For `llm`, columns are schema-defined so
+headers are never repeated — supply `schema` for consistent column names across
+pages.
 
 ---
 
@@ -669,6 +696,7 @@ Returns `list(tables = reactive(...), steps = reactive(...))`.
 | Complex layout, offline | `docling` |
 | Multi-level / spanning headers | `llm` with `schema =` |
 | Highly irregular layout | `llm` |
+| Multi-page table, complex layout | `stack_pages()` with `method = "llm"` |
 | No API key / offline | `bbox`, tabulapdf, or `docling` |
 | Single metadata fields (invoice #, date) | `select_item()` with `llm` or `gliner` |
 | Structured records from text | `select_struct()` with GLiNER2 |

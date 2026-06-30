@@ -327,3 +327,42 @@ test_that("update_llm_schema() preserves base_url on re-extract", {
 
   expect_equal(sess$steps[[1]]$base_url, "http://localhost:1234/v1")
 })
+
+
+# --------------------------------------------------------------------------- #
+#  Global options (macrox.llm.provider / macrox.llm.model)                   #
+# --------------------------------------------------------------------------- #
+
+test_that("global option macrox.llm.provider is respected by .llm_default_model fallback", {
+  # The option feeds into the function parameter default, so calling with no
+  # explicit provider picks it up automatically.
+  old <- options(macrox.llm.provider = "openai", macrox.llm.model = "gpt-4o-mini")
+  on.exit(options(old), add = TRUE)
+
+  # Default arg for select_table_llm uses getOption() — verify the value reaches
+  # the formals without a real API call.
+  fn_default_provider <- eval(formals(select_table_llm)$provider)
+  fn_default_model    <- eval(formals(select_table_llm)$model)
+  expect_equal(fn_default_provider, "openai")
+  expect_equal(fn_default_model, "gpt-4o-mini")
+})
+
+test_that("global option macrox.llm.provider is respected by select_item formals", {
+  old <- options(macrox.llm.provider = "google_gemini", macrox.llm.model = NULL)
+  on.exit(options(old), add = TRUE)
+
+  fn_default_provider <- eval(formals(select_item)$provider)
+  expect_equal(fn_default_provider, "google_gemini")
+})
+
+test_that("explicit provider= overrides global option", {
+  skip_if_not_installed("ellmer")
+
+  old <- options(macrox.llm.provider = "openai", macrox.llm.model = "gpt-4o")
+  on.exit(options(old), add = TRUE)
+
+  # When chat= is supplied it wins over everything, including the global option
+  ch <- ellmer::chat_openai_compatible(base_url = "http://localhost:11434/v1", model = "llava")
+  resolved <- macrox:::.resolve_llm_chat(ch, "openai", "gpt-4o", NULL, NULL)
+  expect_equal(resolved$model, "llava")  # chat= wins over option
+})

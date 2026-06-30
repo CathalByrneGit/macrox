@@ -163,3 +163,71 @@ test_that("stack_pages() continues when a page fails", {
   expect_true("partial" %in% names(sess$tables))
   expect_equal(nrow(sess$tables$partial), 2L)
 })
+
+
+# --------------------------------------------------------------------------- #
+#  stack_pages() — LLM method                                                  #
+# --------------------------------------------------------------------------- #
+
+test_that("stack_pages() with method='llm' records step with LLM params", {
+  skip_if_not_installed("ellmer")
+
+  call_count <- 0L
+  testthat::local_mocked_bindings(
+    select_table_llm = function(sess, label, page, ...) {
+      call_count <<- call_count + 1L
+      sess$tables[[label]] <- data.frame(
+        Month = c("Jan", "Feb"), Total = c("10", "20"),
+        stringsAsFactors = FALSE
+      )
+      invisible(sess)
+    }
+  )
+
+  sess <- new.env(parent = emptyenv())
+  sess$path       <- "dummy.pdf"
+  sess$tables     <- list()
+  sess$steps      <- list()
+  sess$llm_config <- NULL
+  class(sess)     <- "macrox_session"
+
+  ch <- ellmer::chat_openai_compatible(base_url = "http://localhost:11434/v1", model = "llava")
+  stack_pages(sess, "multi_page", pages = c(5L, 6L), method = "llm",
+              chat   = ch,
+              schema = c(Month = "character", Total = "integer"))
+
+  expect_equal(call_count, 2L)
+  expect_true("multi_page" %in% names(sess$tables))
+  df <- sess$tables[["multi_page"]]
+  expect_equal(nrow(df), 4L)
+
+  s <- sess$steps[[1]]
+  expect_equal(s$step,   "stack_pages")
+  expect_equal(s$method, "llm")
+  expect_equal(s$provider, "openai_compatible")
+  expect_equal(s$model,    "llava")
+  expect_equal(unlist(s$schema), c(Month = "character", Total = "integer"))
+})
+
+test_that("stack_pages() with method='llm' aborts when all pages fail", {
+  skip_if_not_installed("ellmer")
+
+  testthat::local_mocked_bindings(
+    select_table_llm = function(sess, label, page, ...) stop("LLM error")
+  )
+
+  sess <- new.env(parent = emptyenv())
+  sess$path       <- "dummy.pdf"
+  sess$tables     <- list()
+  sess$steps      <- list()
+  sess$llm_config <- NULL
+  class(sess)     <- "macrox_session"
+
+  ch <- ellmer::chat_openai_compatible(base_url = "http://localhost:11434/v1", model = "llava")
+  expect_error(
+    suppressWarnings(
+      stack_pages(sess, "bad", pages = c(1L, 2L), method = "llm", chat = ch)
+    ),
+    "no data on any"
+  )
+})
