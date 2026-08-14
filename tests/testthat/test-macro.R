@@ -278,3 +278,286 @@ test_that("mx_replay() replays add_column and stack_tables steps", {
   expect_equal(nrow(result$all), 6L)
   expect_true("year" %in% names(result$t1))
 })
+
+
+# --------------------------------------------------------------------------- #
+#  Parameterised macros                                                        #
+# --------------------------------------------------------------------------- #
+
+test_that(".substitute_params() replaces $name in character fields", {
+  steps <- list(
+    list(step = "add_column", table = "tbl", name = "yr", expr = "$year"),
+    list(step = "filter_rows", table = "tbl",
+         exclude_where = "month != '$month_name'")
+  )
+  result <- macrox:::.apply_params(
+    steps,
+    list(year = 2025L, month_name = "Jan")
+  )
+  expect_equal(result[[1]]$expr, "2025")
+  expect_equal(result[[2]]$exclude_where, "month != 'Jan'")
+})
+
+test_that(".substitute_params() leaves non-character fields untouched", {
+  steps <- list(list(step = "select_table", page = 3L,
+                     label = "tbl", area = c(10, 20, 30, 40)))
+  result <- macrox:::.apply_params(steps, list(p = 99L))
+  expect_equal(result[[1]]$page, 3L)   # integer unchanged
+  expect_equal(result[[1]]$area, c(10, 20, 30, 40))
+})
+
+test_that(".substitute_params() handles nested list fields", {
+  steps <- list(list(
+    step   = "cast_types",
+    table  = "tbl",
+    types  = list(year_col = "$type_spec")
+  ))
+  result <- macrox:::.apply_params(steps, list(type_spec = "integer"))
+  expect_equal(result[[1]]$types$year_col, "integer")
+})
+
+test_that("save_macro() stores params declaration in YAML", {
+  sess    <- make_sess_with_steps()
+  tmp_dir <- tempdir()
+  out     <- save_macro(sess, "param_macro", path = tmp_dir, overwrite = TRUE,
+                        params = c(year = "integer", region = "character"))
+  content <- yaml::read_yaml(out)
+  expect_true(!is.null(content$macro$params))
+  expect_equal(content$macro$params$year$type,   "integer")
+  expect_equal(content$macro$params$region$type, "character")
+})
+
+test_that("save_macro() stores bare param names without type info", {
+  sess    <- make_sess_with_steps()
+  tmp_dir <- tempdir()
+  out     <- save_macro(sess, "bare_params", path = tmp_dir, overwrite = TRUE,
+                        params = c("year", "month"))
+  content <- yaml::read_yaml(out)
+  expect_true(!is.null(content$macro$params))
+  expect_true("year"  %in% names(content$macro$params))
+  expect_true("month" %in% names(content$macro$params))
+})
+
+test_that("load_macro() attaches params attribute", {
+  sess    <- make_sess_with_steps()
+  tmp_dir <- tempdir()
+  save_macro(sess, "with_params", path = tmp_dir, overwrite = TRUE,
+             params = c(year = "integer"))
+  steps <- load_macro("with_params", path = tmp_dir)
+  p     <- attr(steps, "params")
+  expect_false(is.null(p))
+  expect_true("year" %in% names(p))
+})
+
+test_that("mx_replay() substitutes params into step fields", {
+  testthat::local_mocked_bindings(
+    mx_session = function(path) {
+      s <- new.env(parent = emptyenv())
+      s$path <- path; s$tables <- list(); s$items <- list()
+      s$steps <- list(); s$.replaying <- FALSE
+      class(s) <- "macrox_session"
+      s
+    }
+  )
+
+  captured_expr <- NULL
+  testthat::local_mocked_bindings(
+    add_column = function(sess, table, name, expr) {
+      captured_expr <<- expr
+      sess$tables[[table]][[name]] <- rep(eval(parse(text = expr)), nrow(sess$tables[[table]]))
+      invisible(sess)
+    }
+  )
+
+  steps <- list(
+    list(step = "add_column", table = "scores",
+         name = "year", expr = "$year")
+  )
+
+  # Pre-populate a table so add_column has something to act on
+  preseed <- function(path) {
+    s <- new.env(parent = emptyenv())
+    s$path <- path; s$items <- list(); s$steps <- list()
+    s$tables <- list(scores = data.frame(x = 1:3, stringsAsFactors = FALSE))
+    s$.replaying <- FALSE
+    class(s) <- "macrox_session"
+    s
+  }
+  testthat::local_mocked_bindings(mx_session = preseed)
+
+  mx_replay("dummy.pdf", steps, params = list(year = 2025L))
+  expect_equal(captured_expr, "2025")
+})
+
+test_that("mx_replay() warns when declared params are missing", {
+  steps <- list(list(step = "add_column", table = "t", name = "yr", expr = "$year"))
+  attr(steps, "params") <- list(year = list(type = "integer"))
+
+  testthat::local_mocked_bindings(
+    mx_session = function(path) {
+      s <- new.env(parent = emptyenv())
+      s$path <- path; s$tables <- list(t = data.frame(x = 1L));
+      s$items <- list(); s$steps <- list(); s$.replaying <- FALSE
+      class(s) <- "macrox_session"
+      s
+    },
+    add_column = function(sess, ...) invisible(sess)
+  )
+
+  expect_warning(
+    mx_replay("dummy.pdf", steps),  # no params supplied
+    "not supplied"
+  )
+})
+
+
+# --------------------------------------------------------------------------- #
+#  test_macro() — snapshot testing                                              #
+# --------------------------------------------------------------------------- #
+
+test_that("test_macro() writes a snapshot on first call", {
+  tables <- list(
+    monthly = data.frame(month = month.abb[1:3], count = 1:3L,
+                         stringsAsFactors = FALSE)
+  )
+  snap_dir <- file.path(tempdir(), "snaps_new")
+  unlink(snap_dir, recursive = TRUE)
+
+  result <- test_macro(tables = tables, name = "first_run",
+                       snapshot_dir = snap_dir)
+
+  snap_file <- file.path(snap_dir, "first_run.snap.yml")
+  expect_true(file.exists(snap_file))
+  content <- yaml::read_yaml(snap_file)
+  expect_equal(content$tables$monthly$nrow, 3L)
+  expect_equal(unlist(content$tables$monthly$cols), c("month", "count"))
+})
+
+test_that("test_macro() passes when output matches snapshot", {
+  tables <- list(
+    monthly = data.frame(month = month.abb[1:3], count = 1:3L,
+                         stringsAsFactors = FALSE)
+  )
+  snap_dir <- file.path(tempdir(), "snaps_match")
+  unlink(snap_dir, recursive = TRUE)
+
+  # First call: write snapshot
+  test_macro(tables = tables, name = "match_run", snapshot_dir = snap_dir)
+
+  # Second call: compare — should pass silently
+  expect_no_error(
+    test_macro(tables = tables, name = "match_run", snapshot_dir = snap_dir)
+  )
+})
+
+test_that("test_macro() fails when row count changes", {
+  tables_ref <- list(
+    t = data.frame(a = 1:3, stringsAsFactors = FALSE)
+  )
+  tables_new <- list(
+    t = data.frame(a = 1:5, stringsAsFactors = FALSE)
+  )
+  snap_dir <- file.path(tempdir(), "snaps_rowchange")
+  unlink(snap_dir, recursive = TRUE)
+
+  test_macro(tables = tables_ref, name = "row_chg", snapshot_dir = snap_dir)
+
+  expect_error(
+    test_macro(tables = tables_new, name = "row_chg", snapshot_dir = snap_dir),
+    "row count mismatch"
+  )
+})
+
+test_that("test_macro() fails when column names change", {
+  tables_ref <- list(
+    t = data.frame(a = 1:3, b = 4:6, stringsAsFactors = FALSE)
+  )
+  tables_new <- list(
+    t = data.frame(a = 1:3, c = 4:6, stringsAsFactors = FALSE)
+  )
+  snap_dir <- file.path(tempdir(), "snaps_colchange")
+  unlink(snap_dir, recursive = TRUE)
+
+  test_macro(tables = tables_ref, name = "col_chg", snapshot_dir = snap_dir)
+
+  expect_error(
+    test_macro(tables = tables_new, name = "col_chg", snapshot_dir = snap_dir),
+    "column mismatch"
+  )
+})
+
+test_that("test_macro() fails when first rows change", {
+  tables_ref <- list(
+    t = data.frame(v = c("A", "B", "C"), stringsAsFactors = FALSE)
+  )
+  tables_new <- list(
+    t = data.frame(v = c("X", "B", "C"), stringsAsFactors = FALSE)
+  )
+  snap_dir <- file.path(tempdir(), "snaps_headchange")
+  unlink(snap_dir, recursive = TRUE)
+
+  test_macro(tables = tables_ref, name = "head_chg", snapshot_dir = snap_dir)
+
+  expect_error(
+    test_macro(tables = tables_new, name = "head_chg", snapshot_dir = snap_dir),
+    "first rows differ"
+  )
+})
+
+test_that("test_macro() update = TRUE overwrites snapshot", {
+  tables_ref <- list(t = data.frame(x = 1:3, stringsAsFactors = FALSE))
+  tables_new <- list(t = data.frame(x = 1:5, stringsAsFactors = FALSE))
+
+  snap_dir <- file.path(tempdir(), "snaps_update")
+  unlink(snap_dir, recursive = TRUE)
+
+  test_macro(tables = tables_ref, name = "upd", snapshot_dir = snap_dir)
+
+  # Update with new tables — should succeed and overwrite
+  expect_no_error(
+    test_macro(tables = tables_new, name = "upd", snapshot_dir = snap_dir,
+               update = TRUE)
+  )
+
+  # Now matching new snapshot: 5 rows — should pass
+  expect_no_error(
+    test_macro(tables = tables_new, name = "upd", snapshot_dir = snap_dir)
+  )
+})
+
+test_that("test_macro() detects added tables", {
+  snap_dir <- file.path(tempdir(), "snaps_added")
+  unlink(snap_dir, recursive = TRUE)
+
+  test_macro(tables = list(t1 = data.frame(x = 1L)),
+             name = "added_tbl", snapshot_dir = snap_dir)
+
+  expect_error(
+    test_macro(tables = list(t1 = data.frame(x = 1L),
+                             t2 = data.frame(y = 2L)),
+               name = "added_tbl", snapshot_dir = snap_dir),
+    "New tables not in snapshot"
+  )
+})
+
+test_that("test_macro() detects removed tables", {
+  snap_dir <- file.path(tempdir(), "snaps_removed")
+  unlink(snap_dir, recursive = TRUE)
+
+  test_macro(tables = list(t1 = data.frame(x = 1L),
+                           t2 = data.frame(y = 2L)),
+             name = "rm_tbl", snapshot_dir = snap_dir)
+
+  expect_error(
+    test_macro(tables = list(t1 = data.frame(x = 1L)),
+               name = "rm_tbl", snapshot_dir = snap_dir),
+    "removed since snapshot"
+  )
+})
+
+test_that("test_macro() errors without file+macro or tables", {
+  expect_error(
+    test_macro(name = "no_input"),
+    "either"
+  )
+})

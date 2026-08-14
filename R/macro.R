@@ -4,9 +4,15 @@
 #' @param name Macro name (used as the filename stem).
 #' @param path Directory to write the `.yml` file (default `.`).
 #' @param overwrite Logical; overwrite an existing file? (default FALSE)
+#' @param params Optional parameter declarations for parameterised macros.
+#'   Accepts a named character vector `c(year = "integer", month = "character")`
+#'   or a bare character vector of names `c("year", "month")`.
+#'   Declared parameters can be referenced as `$name` in any step field
+#'   (e.g. `expr = "$year"`) and supplied at replay time via
+#'   `mx_replay(..., params = list(year = 2025L))`.
 #' @return The output file path, invisibly.
 #' @export
-save_macro <- function(sess, name, path = ".", overwrite = FALSE) {
+save_macro <- function(sess, name, path = ".", overwrite = FALSE, params = NULL) {
   if (length(sess$steps) == 0) {
     cli::cli_abort("No steps recorded. Nothing to save.")
   }
@@ -25,22 +31,46 @@ save_macro <- function(sess, name, path = ".", overwrite = FALSE) {
     s[!grepl("^\\.", names(s))]
   })
 
-  macro <- list(
-    macro = list(
-      name     = name,
-      created  = format(Sys.time(), "%Y-%m-%d %H:%M"),
-      source   = basename(sess$path),
-      n_steps  = length(clean_steps)
-    ),
-    steps = clean_steps
+  # Normalise params declaration
+  params_norm <- .normalise_params_decl(params)
+
+  hdr <- list(
+    name    = name,
+    created = format(Sys.time(), "%Y-%m-%d %H:%M"),
+    source  = basename(sess$path),
+    n_steps = length(clean_steps)
   )
+  if (!is.null(params_norm)) hdr$params <- params_norm
+
+  macro <- list(macro = hdr, steps = clean_steps)
 
   yaml::write_yaml(macro, out_file)
   cli::cli_inform(c(
     "v" = "Macro saved: {.path {out_file}}",
     "i" = "{length(clean_steps)} step{?s} recorded."
   ))
+  if (!is.null(params_norm)) {
+    cli::cli_inform(c("i" = "Params declared: {.val {names(params_norm)}}"))
+  }
   invisible(out_file)
+}
+
+
+# --------------------------------------------------------------------------- #
+#  .normalise_params_decl() — internal                                         #
+# --------------------------------------------------------------------------- #
+
+.normalise_params_decl <- function(params) {
+  if (is.null(params)) return(NULL)
+  if (is.character(params) && is.null(names(params))) {
+    # c("year", "month") — bare names, no type information
+    setNames(lapply(params, function(p) list()), params)
+  } else if (is.character(params)) {
+    # c(year = "integer", month = "character")
+    lapply(as.list(params), function(t) list(type = t))
+  } else {
+    params
+  }
 }
 
 
@@ -48,7 +78,8 @@ save_macro <- function(sess, name, path = ".", overwrite = FALSE) {
 #'
 #' @param name Macro name (stem) or full path to a `.yml` file.
 #' @param path Directory to look in when `name` has no extension (default `.`).
-#' @return The list of step definitions.
+#' @return The list of step definitions. If the macro declares parameters, a
+#'   `params` attribute is attached — inspect with `attr(steps, "params")`.
 #' @export
 load_macro <- function(name, path = ".") {
   if (grepl("\\.yml$", name)) {
@@ -69,7 +100,12 @@ load_macro <- function(name, path = ".") {
     "i" = "{hdr$n_steps} step{?s} | created {hdr$created} | source: {hdr$source}"
   ))
 
-  macro$steps
+  steps <- macro$steps
+  if (!is.null(hdr$params)) {
+    attr(steps, "params") <- hdr$params
+    cli::cli_inform(c("i" = "Params declared: {.val {names(hdr$params)}}"))
+  }
+  steps
 }
 
 
@@ -79,13 +115,32 @@ load_macro <- function(name, path = ".") {
 #' @param macro Either a macro name / path (character) or a step list returned
 #'   by [load_macro()].
 #' @param macro_path Directory to look for the macro file (default `.`).
+#' @param params Named list of parameter values for parameterised macros, e.g.
+#'   `list(year = 2025L, region = "Cork")`. Each `$name` placeholder in step
+#'   fields is replaced with the corresponding value.
 #' @return Named list of extracted data frames.
 #' @export
-mx_replay <- function(file, macro, macro_path = ".") {
+mx_replay <- function(file, macro, macro_path = ".", params = list()) {
   if (is.character(macro)) {
     steps <- load_macro(macro, path = macro_path)
   } else {
     steps <- macro
+  }
+
+  # Warn if declared params are not supplied
+  declared <- attr(steps, "params")
+  if (!is.null(declared)) {
+    missing_params <- setdiff(names(declared), names(params))
+    if (length(missing_params) > 0L) {
+      cli::cli_warn(c(
+        "!" = "Macro param{?s} not supplied: {.val {missing_params}}",
+        "i" = "Placeholders will remain unsubstituted in step fields."
+      ))
+    }
+  }
+
+  if (length(params) > 0L) {
+    steps <- .apply_params(steps, params)
   }
 
   sess              <- mx_session(file)
@@ -108,19 +163,48 @@ mx_replay <- function(file, macro, macro_path = ".") {
 }
 
 
+# --------------------------------------------------------------------------- #
+#  Parameter substitution — internal                                           #
+# --------------------------------------------------------------------------- #
+
+# Recursively replace $name placeholders in character fields of a step list.
+.substitute_params <- function(x, replacements) {
+  if (is.list(x)) return(lapply(x, .substitute_params, replacements))
+  if (is.character(x)) {
+    for (k in names(replacements)) x <- gsub(k, replacements[[k]], x, fixed = TRUE)
+    return(x)
+  }
+  x
+}
+
+.apply_params <- function(steps, params) {
+  if (length(params) == 0L) return(steps)
+  replacements <- setNames(
+    vapply(params, as.character, character(1)),
+    paste0("$", names(params))
+  )
+  result <- lapply(steps, .substitute_params, replacements)
+  attr(result, "params") <- attr(steps, "params")
+  result
+}
+
+
 #' Replay a macro across multiple PDF files
 #'
 #' @param files Character vector of PDF file paths.
 #' @param macro Macro name, path, or step list (see [mx_replay()]).
 #' @param macro_path Directory for macro lookup (default `.`).
+#' @param params Named list of parameter values passed to each [mx_replay()]
+#'   call. Useful when all files share the same parameters. To vary parameters
+#'   per file, call [mx_replay()] directly in a loop.
 #' @param .progress Show file-level progress messages (default TRUE).
 #' @param .parallel If `TRUE`, run files in parallel using purrr + mirai.
 #'   Requires `purrr >= 1.1.0` and `mirai`. Set up workers first with
 #'   `mirai::daemons(n)`. Defaults to `FALSE` (sequential).
 #' @return Named list (file basenames) of table lists. Files that fail are NULL.
 #' @export
-mx_replay_batch <- function(files, macro, macro_path = ".", .progress = TRUE,
-                              .parallel = FALSE) {
+mx_replay_batch <- function(files, macro, macro_path = ".", params = list(),
+                              .progress = TRUE, .parallel = FALSE) {
   if (is.character(macro)) {
     steps <- load_macro(macro, path = macro_path)
   } else {
@@ -130,7 +214,7 @@ mx_replay_batch <- function(files, macro, macro_path = ".", .progress = TRUE,
   names_out  <- basename(files)
   replay_one <- function(f) {
     tryCatch(
-      mx_replay(f, steps),
+      mx_replay(f, steps, params = params),
       error = function(e) {
         cli::cli_warn("Failed: {.file {basename(f)}} — {conditionMessage(e)}")
         NULL
