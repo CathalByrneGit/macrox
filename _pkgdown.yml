@@ -38,6 +38,7 @@ reference:
     desc: Create and manage extraction sessions.
     contents:
       - mx_session
+      - mx_profile
       - show_steps
       - remove_step
 
@@ -45,6 +46,7 @@ reference:
     desc: Scan a PDF for table locations.
     contents:
       - detect_tables
+      - detect_tables_quietly
       - locate_area
 
   - title: Table extraction
@@ -54,6 +56,8 @@ reference:
       - select_table_docling
       - select_table_llm
       - stack_pages
+      - stack_tables
+      - merge_tables
 
   - title: Metadata extraction
     desc: Extract individual fields and structured records.
@@ -65,6 +69,7 @@ reference:
       - show_items
       - update_item
       - update_llm_schema
+      - suggest_schema
 
   - title: LLM configuration
     desc: Configure the LLM provider at session or global level.
@@ -78,6 +83,8 @@ reference:
       - cast_types
       - filter_rows
       - add_column
+      - fill_down
+      - clean_numbers
 
   - title: Inspection
     desc: Preview and visualise extracted data.
@@ -117,6 +124,7 @@ reference:
   - title: Testing
     desc: Snapshot-test macro outputs in CI.
     contents:
+      - test_macro
       - test_extraction
       - expect_table_snapshot
 
@@ -133,3 +141,4 @@ reference:
       - setup_docling
       - close_docling
       - setup_gliner
+      - close_gliner
