@@ -78,8 +78,6 @@ reference:
       - cast_types
       - filter_rows
       - add_column
-      - mutate_column
-      - pivot_table
 
   - title: Inspection
     desc: Preview and visualise extracted data.
@@ -107,18 +105,20 @@ reference:
     desc: Validate table structure and values.
     contents:
       - validate_table
-      - add_validation_rule
+      - show_validations
 
   - title: Export
     desc: Write extracted data to files.
     contents:
-      - export_tables
+      - export_csv
+      - export_excel
       - export_json
 
   - title: Testing
     desc: Snapshot-test macro outputs in CI.
     contents:
-      - test_macro
+      - test_extraction
+      - expect_table_snapshot
 
   - title: Shiny
     desc: Embed macrox in a Shiny application.
