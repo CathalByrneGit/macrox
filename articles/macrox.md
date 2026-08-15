@@ -1,0 +1,711 @@
+# Getting Started with macrox
+
+macrox records every step of a PDF table extraction workflow as a YAML
+macro and replays it automatically on new files. Think of it as Power
+Query for PDFs — interactive exploration that compiles into a
+reproducible pipeline.
+
+------------------------------------------------------------------------
+
+## Installation
+
+``` r
+remotes::install_github("cathalbyrnegit/macrox")
+
+# Optional but recommended
+install.packages(c(
+  "magick",      # page annotation and image cropping
+  "ellmer",      # LLM extraction
+  "validate",    # data quality rules
+  "shinyAce",    # YAML editor in app
+  "shinyFiles",  # filesystem browser in app
+  "shinyjs",     # JS helpers in app
+  "writexl",     # Excel export
+  "jsonlite"     # JSON export
+))
+```
+
+------------------------------------------------------------------------
+
+## Quick start
+
+``` r
+library(macrox)
+
+# Open a session
+sess <- mx_session("report_2024.pdf")
+
+# Scan for tables
+sess |> detect_tables(pages = 1:20)
+
+# Draw an area, extract, clean
+area <- sess |> locate_area(page = 8)
+sess |> select_table("monthly", page = 8, area = area, method = "bbox")
+sess |> rename_columns("monthly", c(Month = "month", Total = "total"))
+sess |> cast_types("monthly", c(total = "integer"))
+sess |> filter_rows("monthly", exclude_where = "month == 'Total'")
+
+# Save the macro
+sess |> save_macro("my_report")
+
+# Replay next year
+mx_replay("report_2025.pdf", macro = "my_report")
+```
+
+------------------------------------------------------------------------
+
+## Standalone app
+
+``` r
+mx_app()           # system browser
+mx_app("dialog")   # RStudio dialog
+mx_app("pane")     # Viewer pane
+```
+
+The app provides a full extraction workflow without writing any R code.
+Select a PDF with the filesystem browser, draw a bounding box on the
+page image, configure the extraction method, and hit **Extract**. All
+steps are recorded and can be exported as a YAML macro or downloaded as
+CSV / Excel.
+
+**Tabs:**
+
+| Tab         | Purpose                                                                                                                                |
+|-------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| **Extract** | Full PDF viewer, draw-to-select area, method picker (bbox / lattice / stream / docling / llm), live preview. `←` / `→` navigate pages. |
+| **Tables**  | One tab per extracted table. Rename, cast types, filter rows (GUI), validate rules, column stats.                                      |
+| **Items**   | Extract single metadata fields (invoice numbers, dates, totals) via LLM or GLiNER2.                                                    |
+| **Struct**  | Extract structured records (multiple fields, multiple rows) via GLiNER2.                                                               |
+| **Steps**   | Recorded step badges. Remove steps, edit the YAML macro directly with syntax highlighting.                                             |
+| **Replay**  | Run a saved macro against a new PDF. Results load into Tables.                                                                         |
+| **Batch**   | Run one macro across multiple PDFs. Download as Excel or zip of CSVs.                                                                  |
+| **Export**  | Download CSV, Excel, JSON, or the YAML macro.                                                                                          |
+
+------------------------------------------------------------------------
+
+## Extraction methods
+
+macrox ships five extraction engines. They can be mixed freely within
+the same session and macro.
+
+### bbox — word-position engine (recommended default)
+
+Uses
+[`pdftools::pdf_data()`](https://docs.ropensci.org/pdftools//reference/pdftools.html)
+word-level bounding boxes. No Java required. Best for PDFs with charts
+on the same page, missing grid lines, or numbers running together.
+
+``` r
+area <- sess |> locate_area(page = 16)
+
+sess |> select_table("breed_sire", page = 16, area = area, method = "bbox")
+
+# Tune when columns merge or split
+sess |> select_table("monthly", page = 27, method = "bbox",
+  area    = c(top = 80, left = 30, bottom = 500, right = 750),
+  col_gap = 20,    # minimum horizontal gap (pts) between columns
+  row_tol = 3)     # vertical tolerance for grouping words into rows
+```
+
+### lattice / stream — tabulapdf engines
+
+For clean PDFs with visible grid lines (`lattice`) or whitespace-aligned
+columns (`stream`). Requires Java and the `tabulapdf` package (listed in
+Suggests — not required for other methods).
+
+``` r
+sess |> select_table("calf_monthly", page = 8, method = "lattice")
+sess |> select_table("calf_stream",  page = 9, method = "stream")
+```
+
+### docling — ML layout engine (IBM Research)
+
+Uses Docling’s deep learning layout models to detect and extract tables.
+Converts scanned PDFs and handles complex multi-column layouts where
+positional methods fail. Runs fully offline after a one-time model
+download (~2-3 GB). No API key required.
+
+``` r
+# One-time setup — installs docling into a Python virtualenv
+setup_docling()
+# Restart R before first use
+```
+
+``` r
+# Scan for tables using Docling's ML detection (single-pass, cached)
+sess |> detect_tables(pages = 1:20, method = "docling")
+
+# Extract a specific table
+sess |> select_table_docling("financials", page = 10, table_index = 1)
+
+# Release the document cache when done
+close_docling()
+```
+
+Docling caches converted pages in memory, so repeated calls for
+different tables on the same page are fast. Use
+[`close_docling()`](https://cathalbyrnegit.github.io/macrox/reference/close_docling.md)
+to release the cache.
+
+### llm — LLM engine via ellmer
+
+Sends a rendered page image to a large language model. Best for
+multi-level spanning headers, scanned PDFs, and any layout where
+positional extraction fails. Requires the `ellmer` package and a
+provider API key in `.Renviron`.
+
+``` r
+# Pass any ellmer chat object directly
+chat <- ellmer::chat_anthropic()
+sess |> select_table_llm("stillborn", page = 40, area = area, chat = chat)
+
+# Or specify provider/model inline (chat object created automatically)
+sess |> select_table_llm("stillborn", page = 40, area = area,
+                          provider = "anthropic")
+
+# Predefined schema — more accurate and consistent across replays
+sess |> select_table_llm("breed_sire", page = 16, area = area,
+  chat     = chat,
+  schema   = c(Breed = "character", Male = "integer",
+               Female = "integer", Total = "integer"),
+  prompt   = "Flatten the two-row header with _ separators.")
+
+# Refine schema without re-drawing the area
+sess |> update_llm_schema("breed_sire",
+  schema = c(Breed = "character", Male = "integer", Total = "integer"))
+```
+
+**Using `chat =`** — pass any [ellmer](https://ellmer.tidyverse.org/)
+chat object for full control over model parameters, system prompts, and
+provider configuration:
+
+``` r
+chat <- ellmer::chat_openai(model = "gpt-4o")
+chat <- ellmer::chat_google_gemini(model = "gemini-2.0-flash")
+chat <- ellmer::chat_ollama(model = "llava")
+
+# Same chat object works for tables and items
+sess |> select_table_llm("tbl", page = 1, chat = chat)
+sess |> select_item("ref", prompt = "Reference number", chat = chat)
+```
+
+**Using `provider =`** — shorthand when defaults are fine. `provider`
+can be the name of any ellmer chat constructor without the `chat_`
+prefix — e.g. `"anthropic"`, `"openai"`, `"google_gemini"`,
+`"openrouter"`, `"groq"`, `"mistral"`, `"deepseek"`, `"ollama"`, or
+`"openai_compatible"`.
+
+``` r
+sess |> select_table_llm("tbl", page = 5,
+  provider = "openai_compatible",
+  model    = "llama3.2-vision",
+  base_url = "http://localhost:1234/v1")
+
+sess |> select_table_llm("tbl", page = 5,
+  provider = "openrouter",
+  model    = "anthropic/claude-opus-4.5")
+```
+
+**API keys** — set in `.Renviron`, using whatever environment variable
+the chosen `ellmer::chat_<provider>()` expects:
+
+    ANTHROPIC_API_KEY=sk-ant-...
+    OPENAI_API_KEY=sk-...
+    GEMINI_API_KEY=AI...
+    OPENROUTER_API_KEY=sk-or-...
+
+------------------------------------------------------------------------
+
+## Multi-page tables
+
+When the same table spans several consecutive PDF pages,
+[`stack_pages()`](https://cathalbyrnegit.github.io/macrox/reference/stack_pages.md)
+extracts from each page and row-binds the results. Repeated headers are
+consumed automatically.
+
+``` r
+sess |> stack_pages("breed_all", pages = 10:14,
+  area   = c(top = 80, left = 30, bottom = 700, right = 550),
+  method = "bbox")
+
+# When pages 2+ don't repeat the header row:
+sess |> stack_pages("breed_all", pages = 10:14,
+  method       = "bbox",
+  header_match = FALSE)
+```
+
+------------------------------------------------------------------------
+
+## Extracting metadata items
+
+[`select_item()`](https://cathalbyrnegit.github.io/macrox/reference/select_item.md)
+extracts a single field from the document — invoice numbers, dates,
+totals, report titles — anything that isn’t a table row. Results sit
+alongside tables in `sess$items` and are included in
+[`export_json()`](https://cathalbyrnegit.github.io/macrox/reference/export_json.md).
+
+``` r
+# Text-based (default): sends all page text to the LLM — fast and cheap
+sess |> select_item("invoice_number",
+  prompt = "Extract the invoice ID or reference number.")
+
+sess |> select_item("invoice_date",
+  prompt = "The billing issue date.",
+  cast   = "date:%d/%m/%Y")
+
+sess |> select_item("total_amount",
+  prompt = "The grand total payable.",
+  cast   = "numeric")
+
+# Image-based: render a specific page (better for scanned or visual PDFs)
+sess |> select_item("stamp_ref", page = 1L,
+  prompt = "The approval stamp reference in the top-right corner.",
+  area   = c(top = 20, left = 500, bottom = 100, right = 780))
+
+# Review all items
+sess |> show_items()
+```
+
+### GLiNER2 backend — local, no API key
+
+The GLiNER2 backend extracts fields using a local NLP model. Runs on
+CPU, no API key needed.
+
+``` r
+# One-time setup
+setup_gliner()
+
+# Single field
+sess |> select_item("invoice_number",
+  prompt  = "Invoice ID or reference number",
+  backend = "gliner")
+
+# Batch extraction — multiple fields in one model pass (much faster)
+sess |> select_items_batch(c(
+  invoice_no = "Invoice ID or reference number",
+  total      = "Grand total amount payable",
+  due_date   = "Payment due date"
+), cast = c(total = "numeric", due_date = "date:%d/%m/%Y"))
+```
+
+### Structured record extraction
+
+[`select_struct()`](https://cathalbyrnegit.github.io/macrox/reference/select_struct.md)
+extracts multiple structured records — like a table, but from
+unstructured text using GLiNER2.
+
+``` r
+sess |> select_struct("line_items",
+  entity = "LineItem",
+  fields = c(
+    description = "Product or service description",
+    quantity    = "Number of units",
+    unit_price  = "Price per unit"
+  ),
+  list_fields = character(0),
+  page = 1L)
+
+# Convert to a data frame (with optional confidence filtering)
+sess |> struct_to_df("line_items", min_confidence = 0.5)
+
+# The result is now in sess$tables$line_items — clean, rename, export as usual
+sess |> preview("line_items")
+```
+
+------------------------------------------------------------------------
+
+## Cleaning tables
+
+``` r
+sess |> rename_columns("monthly", c(
+  Month = "month", Male = "male_count", Female = "female_count", Total = "total"
+))
+
+sess |> cast_types("monthly", c(
+  male_count   = "integer",
+  female_count = "integer",
+  total        = "integer"
+  # also: "numeric", "character", "date:%d/%m/%Y", "date:%Y-%m-%d"
+))
+
+sess |> filter_rows("monthly", exclude_where = "month == 'Total'")
+```
+
+### Forward-fill and number cleaning
+
+Government PDFs often have merged header cells that leave blanks in rows
+below.
+[`fill_down()`](https://cathalbyrnegit.github.io/macrox/reference/fill_down.md)
+propagates the last non-blank value downward.
+
+``` r
+# Forward-fill blank cells in specific columns
+sess |> fill_down("monthly", cols = "region")
+
+# Forward-fill all columns
+sess |> fill_down("monthly")
+
+# Strip currency symbols, thousands separators, parenthetical negatives
+sess |> clean_numbers("monthly", cols = c("male_count", "female_count"))
+
+# clean_numbers() with cols = NULL targets all non-numeric columns
+sess |> clean_numbers("monthly")
+```
+
+### Suggesting column types
+
+[`suggest_schema()`](https://cathalbyrnegit.github.io/macrox/reference/suggest_schema.md)
+inspects values and proposes a
+[`cast_types()`](https://cathalbyrnegit.github.io/macrox/reference/cast_types.md)
+call:
+
+``` r
+sess |> suggest_schema("monthly")
+#> Suggested schema for 'monthly'
+#>   month         ->  character
+#>   male_count    ->  integer
+#>   female_count  ->  integer
+#>   total         ->  integer
+```
+
+------------------------------------------------------------------------
+
+## Deriving and combining tables
+
+These steps are all recorded in the macro and replay automatically.
+
+``` r
+# Add a derived column (expression evaluated against the data frame)
+sess |> add_column("monthly", "year",  expr = "2024L")
+sess |> add_column("monthly", "ratio", expr = "male_count / total")
+
+# Row-bind tables with the same schema
+sess |> stack_tables("all_years",
+  tables = c("calves_2022", "calves_2023", "calves_2024"))
+
+# Optional: pad missing columns with NA when schemas differ slightly
+sess |> stack_tables("all_years",
+  tables = c("calves_2022", "calves_2023"),
+  .fill  = TRUE)
+
+# Join two tables
+sess |> merge_tables("combined",
+  left  = "monthly",
+  right = "county_totals",
+  by    = "month")
+```
+
+------------------------------------------------------------------------
+
+## Data validation
+
+[`validate_table()`](https://cathalbyrnegit.github.io/macrox/reference/validate_table.md)
+uses the `validate` package DSL. Rules are stored in the macro and
+re-run automatically on every replay — catching data drift silently.
+
+``` r
+sess |> validate_table("monthly", rules = c(
+  twelve_rows    = "nrow(.) == 12",
+  no_na_month    = "!any(is.na(month))",
+  positive_males = "all(male_count > 0, na.rm = TRUE)",
+  totals_sum     = "all(abs(male_count + female_count - total) < 2, na.rm = TRUE)"
+))
+# ✔ All 4 validation rules passed for 'monthly'
+
+# Review all validation results
+sess |> show_validations()
+
+# Strict mode — abort replay on failure (good for production pipelines)
+sess |> validate_table("monthly", rules = c(...), strict = TRUE)
+```
+
+------------------------------------------------------------------------
+
+## Reviewing and editing steps
+
+``` r
+sess |> show_steps()
+# * [1]  select_table   → monthly       | page 8 [bbox]
+# * [2]  rename_columns → monthly       | 4 renames
+# * [3]  cast_types     → monthly       | 4 casts
+# * [4]  filter_rows    → monthly       | exclude: month == 'Total'
+# * [5]  add_column     → monthly       | year = 2024L
+# * [6]  validate_table → monthly       | 4 rules
+# * [7]  select_item    → invoice_date  | cast: date
+
+sess |> remove_step(3)           # remove by index; clears table if extraction step
+sess |> preview_all()            # inspect all tables before saving
+```
+
+------------------------------------------------------------------------
+
+## Saving and replaying
+
+``` r
+# Save macro to disk
+sess |> save_macro("my_report", path = "inst/macros/")
+
+# Replay against a new file — returns named list of data frames
+tables <- mx_replay("report_2025.pdf", macro = "my_report")
+
+# Batch replay across multiple files
+files   <- list.files("reports/", pattern = "\\.pdf$", full.names = TRUE)
+results <- mx_replay_batch(files, macro = "my_report")
+```
+
+------------------------------------------------------------------------
+
+## Comparing runs
+
+``` r
+diff <- diff_replay(
+  "report_2024.pdf",
+  "report_2025.pdf",
+  macro = "my_report"
+)
+print(diff)
+# macrox diff
+#   Reference: report_2024.pdf
+#   New:       report_2025.pdf
+#
+# ✔ monthly        [unchanged]
+# ~ breed_by_sire  [changed] (rows: 17→18, +cols: HE, 2 cell changes)
+# ✔ calf_monthly   [unchanged]
+```
+
+------------------------------------------------------------------------
+
+## Exporting data
+
+``` r
+# CSV files — one per table
+sess |> export_csv(dir = "output/")
+
+# Single Excel workbook — one sheet per table
+sess |> export_excel("output/report_tables.xlsx")
+
+# JSON — items (metadata) + tables (row arrays) in one payload
+json <- sess |> export_json()                       # returns string
+sess |> export_json(path = "output/report.json")    # writes file
+sess |> export_json(include_steps = TRUE)           # include macro steps
+```
+
+The JSON output structure:
+
+``` json
+{
+  "source": "report_2024.pdf",
+  "extracted": "2026-05-01T14:32:00",
+  "items": {
+    "invoice_number": "INV-9821",
+    "total_amount": 1234.56
+  },
+  "tables": {
+    "monthly": [
+      { "month": "January", "total": 4700 },
+      { "month": "February", "total": 11270 }
+    ]
+  }
+}
+```
+
+------------------------------------------------------------------------
+
+## Agent integration
+
+[`test_extraction()`](https://cathalbyrnegit.github.io/macrox/reference/test_extraction.md)
+is the **R-Core Judge** for agentic workflows. It runs one extraction
+pass and returns a structured evaluation report — enabling an MCP agent
+to self-correct its parameters in a feedback loop.
+
+``` r
+# Single test pass — no session needed
+report <- test_extraction(
+  file        = "invoice.pdf",
+  page        = 1L,
+  area        = c(top = 200, left = 30, bottom = 600, right = 780),
+  method      = "bbox",
+  header_rows = 1L
+)
+
+report$status
+#> [1] "needs_alignment"
+
+report$metrics
+#> $rows_extracted      [1] 12
+#> $unnamed_headers     [1] "V1" "V2"
+#> $header_spill        [1] TRUE
+#> $empty_columns       list()
+
+report$guidance
+#> [1] "Header text detected in data rows — increase header_rows by 1. |
+#>       Unnamed columns (V1, V2) — adjust area coords or increase header_rows."
+```
+
+The return value serialises directly to JSON via
+[`jsonlite::toJSON()`](https://jeroen.r-universe.dev/jsonlite/reference/fromJSON.html),
+making it straightforward to wire into an MCP `test_parameters` tool.
+The agent loop runs
+[`test_extraction()`](https://cathalbyrnegit.github.io/macrox/reference/test_extraction.md)
+repeatedly — adjusting `area`, `header_rows`, and `method` based on
+`$guidance` — until `status == "success"`, then calls
+[`save_macro()`](https://cathalbyrnegit.github.io/macrox/reference/save_macro.md)
+to lock the verified parameters.
+
+Pre-flight validation before replay:
+
+``` r
+# Validate a macro file without running it
+result <- validate_macro("report_2025.pdf", macro = "my_report")
+print(result)
+# ✔ Macro valid
+#   ✔ [1] select_table / monthly
+#   ✔ [2] rename_columns / monthly
+```
+
+------------------------------------------------------------------------
+
+## The YAML macro
+
+All step types serialise cleanly. The full extraction parameters are
+stored so replay is exact.
+
+``` yaml
+macro:
+  name: my_report
+  created: '2026-05-01 14:32'
+  source: report_2024.pdf
+  n_steps: 10
+
+steps:
+  - step: select_table
+    label: monthly
+    page: 8
+    method: bbox
+    area: [80, 30, 500, 750]
+    header_rows: 1
+
+  - step: select_table_docling
+    label: financials
+    page: 10
+    table_index: 1
+
+  - step: select_table_llm
+    label: breed_sire
+    page: 16
+    area: [60, 25, 620, 790]
+    provider: anthropic
+    model: claude-opus-4-8
+    schema:
+      Breed: character
+      Male: integer
+      Total: integer
+    prompt: "Flatten the two-row header."
+
+  - step: select_item
+    label: report_date
+    prompt: "The publication date of this report."
+    cast: "date:%B %Y"
+    backend: llm
+    provider: anthropic
+
+  - step: select_struct
+    label: line_items
+    entity: LineItem
+    fields:
+      description: "Product or service description"
+      quantity: "Number of units"
+    page: 1
+
+  - step: rename_columns
+    table: monthly
+    mapping:
+      Month: month
+      Total: total
+
+  - step: cast_types
+    table: monthly
+    types:
+      total: integer
+
+  - step: fill_down
+    table: monthly
+    cols: [region]
+
+  - step: clean_numbers
+    table: monthly
+    cols: [total]
+
+  - step: validate_table
+    table: monthly
+    strict: false
+    rules:
+      twelve_rows: "nrow(.) == 12"
+      no_na:       "!any(is.na(month))"
+```
+
+------------------------------------------------------------------------
+
+## Shiny module
+
+Embed macrox in an existing Shiny app:
+
+``` r
+# UI
+bslib::accordion_panel(
+  "PDF Import",
+  icon = shiny::icon("file-pdf"),
+  macrox::macrox_ui(ns("pdf_import"))
+)
+
+# Server
+pdf_result <- macrox::macrox_server("pdf_import")
+
+observe({
+  tables <- pdf_result$tables()
+  req(length(tables) > 0)
+  for (nm in names(tables)) your_upload_fn(tables[[nm]], target = nm)
+})
+```
+
+------------------------------------------------------------------------
+
+## Choosing an extraction method
+
+| Situation                           | Recommended                                                                                                |
+|-------------------------------------|------------------------------------------------------------------------------------------------------------|
+| Clean PDF with visible grid lines   | `lattice`                                                                                                  |
+| Whitespace-aligned columns, no grid | `stream`                                                                                                   |
+| Charts and tables on the same page  | `bbox` + `area =`                                                                                          |
+| Numbers running together            | `bbox` + `col_gap =`                                                                                       |
+| Scanned PDF, no selectable text     | `docling` or `llm`                                                                                         |
+| Complex layout, offline             | `docling`                                                                                                  |
+| Multi-level / spanning headers      | `llm` with `schema =`                                                                                      |
+| Complex irregular layout            | `llm`                                                                                                      |
+| No API key / offline                | `bbox`, tabulapdf, or `docling`                                                                            |
+| Single metadata fields              | [`select_item()`](https://cathalbyrnegit.github.io/macrox/reference/select_item.md) with `llm` or `gliner` |
+| Structured records from text        | [`select_struct()`](https://cathalbyrnegit.github.io/macrox/reference/select_struct.md) with GLiNER2       |
+
+------------------------------------------------------------------------
+
+## Dependencies
+
+| Package                  | Role                                          | Required |
+|--------------------------|-----------------------------------------------|----------|
+| `pdftools`               | Word positions (`bbox`), page text, rendering | Yes      |
+| `stringdist`             | Fuzzy caption matching                        | Yes      |
+| `yaml`                   | Macro read/write                              | Yes      |
+| `cli`                    | Console output                                | Yes      |
+| `rlang`                  | `%\|\|%` operator                             | Yes      |
+| `tabulapdf`              | `lattice` / `stream` (needs Java)             | Suggests |
+| `reticulate`             | Python bridge for Docling and GLiNER2         | Suggests |
+| `magick`                 | Page annotation; image cropping for LLM       | Suggests |
+| `ellmer`                 | LLM extraction                                | Suggests |
+| `validate`               | Data quality rules                            | Suggests |
+| `jsonlite`               | JSON export                                   | Suggests |
+| `shiny` + `bslib` + `DT` | Standalone app and module                     | Suggests |
+| `shinyFiles`             | Filesystem browser in app                     | Suggests |
+| `shinyAce`               | YAML editor with syntax highlighting          | Suggests |
+| `shinyjs`                | JS helpers in app                             | Suggests |
+| `writexl`                | Excel export                                  | Suggests |
+| `zip`                    | Zip-of-CSVs export                            | Suggests |
