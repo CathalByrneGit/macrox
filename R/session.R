@@ -51,7 +51,10 @@ NULL
 #' Creates a session object that holds the PDF path, extracted tables, and a
 #' running log of every recorded step.
 #'
-#' @param path Path to a PDF file.
+#' @param path Path to a PDF file, or an image file (PNG, JPG, TIFF, BMP, GIF,
+#'   WEBP). Image files are automatically converted to PDF; only
+#'   [select_table_llm()] and [select_table_docling()] work on the resulting
+#'   session.
 #' @return An invisible `macrox_session` environment.
 #' @export
 mx_session <- function(path = NULL) {
@@ -78,11 +81,39 @@ mx_session <- function(path = NULL) {
   path <- normalizePath(path, mustWork = FALSE)
   if (!file.exists(path)) {
     cli::cli_abort("File not found: {.path {path}}")
-    
+  }
+
+  .image_exts <- c("png", "jpg", "jpeg", "tif", "tiff", "bmp", "gif", "webp")
+  ext         <- tolower(tools::file_ext(path))
+  from_image  <- FALSE
+
+  if (ext %in% .image_exts) {
+    if (!requireNamespace("magick", quietly = TRUE)) {
+      cli::cli_abort(c(
+        "Image input requires the {.pkg magick} package.",
+        "i" = "Install it with: {.code install.packages('magick')}"
+      ))
+    }
+    cli::cli_inform(c(
+      "i" = "Image file detected: {.file {basename(path)}}",
+      "i" = "Converting to PDF for processing.",
+      "!" = "Only {.fn select_table_llm} and {.fn select_table_docling} will work on this session.",
+      " " = "{.fn select_table} requires a native PDF with a text/vector layer."
+    ))
+    tmp_pdf <- tempfile(fileext = ".pdf")
+    magick::image_write(magick::image_read(path), tmp_pdf, format = "pdf")
+    path       <- tmp_pdf
+    from_image <- TRUE
+  } else if (ext != "pdf") {
+    cli::cli_abort(c(
+      "Unsupported file type: {.val {ext}}",
+      "i" = "Supported: {.val pdf} and images ({.val {paste(.image_exts, collapse = ', ')}})"
+    ))
   }
 
   sess <- new.env(parent = emptyenv())
   sess$path       <- path
+  sess$from_image <- from_image
   sess$tables     <- list()
   sess$items      <- list()
   sess$structs    <- list()  # raw select_struct() output (records + confidence)

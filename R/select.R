@@ -39,6 +39,13 @@ select_table <- function(sess, label,
                           row_tol = NULL, col_gap = NULL) {
   method <- match.arg(method)
 
+  if (isTRUE(sess$from_image)) {
+    cli::cli_abort(c(
+      "{.fn select_table} does not support image-derived sessions.",
+      "i" = "Use {.fn select_table_llm} or {.fn select_table_docling} instead."
+    ))
+  }
+
   # Fuzzy caption search
   if (!is.null(label_match)) {
     found       <- .fuzzy_find_page(sess, label_match, fuzzy_method, max_dist)
