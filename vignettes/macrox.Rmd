@@ -1,8 +1,8 @@
 ---
-title: "macrox: PDF Table Extraction Workflows"
+title: "Getting Started with macrox"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{macrox: PDF Table Extraction Workflows}
+  %\VignetteIndexEntry{Getting Started with macrox}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -558,7 +558,7 @@ steps:
     page: 16
     area: [60, 25, 620, 790]
     provider: anthropic
-    model: claude-opus-4-5-20251001
+    model: claude-opus-4-8
     schema:
       Breed: character
       Male: integer

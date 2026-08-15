@@ -13,14 +13,23 @@
 #' @param file2 Path to the new PDF.
 #' @param macro Macro name, path to a `.yml`, or a step list.
 #' @param macro_path Directory for macro lookup (default `.`).
+#' @param params Named list of parameter values applied to both replays (e.g.
+#'   `list(year = 2024L)`). Use `params2` to supply different values for the
+#'   second file.
+#' @param params2 Named list of parameter values for `file2` only. Defaults to
+#'   `params` when `NULL`.
 #' @return A `macrox_diff` object. Print gives a summary; [detail()] drills
 #'   into a single table.
 #' @export
-diff_replay <- function(file1, file2, macro, macro_path = ".") {
+diff_replay <- function(file1, file2, macro, macro_path = ".",
+                         params = list(), params2 = NULL) {
+  params2 <- params2 %||% params
+  # Load once so that if macro is a file path it is read and logged only once.
+  steps <- if (is.character(macro)) load_macro(macro, path = macro_path) else macro
   cli::cli_inform(c("i" = "Replaying macro on {.file {basename(file1)}}..."))
-  t1 <- mx_replay(file1, macro, macro_path)
+  t1 <- mx_replay(file1, steps, params = params)
   cli::cli_inform(c("i" = "Replaying macro on {.file {basename(file2)}}..."))
-  t2 <- mx_replay(file2, macro, macro_path)
+  t2 <- mx_replay(file2, steps, params = params2)
 
   all_labels <- union(names(t1), names(t2))
 

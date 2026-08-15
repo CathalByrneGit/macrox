@@ -245,42 +245,160 @@ select_table <- function(sess, label,
 #' Extract and stack the same table across multiple PDF pages
 #'
 #' Extracts a table from each page in `pages` and row-binds them into a single
-#' data frame. Handles repeated header rows automatically: when
-#' `header_match = TRUE` (default), each page is extracted with the same
-#' `header_rows` setting so the repeated header is consumed as column names and
-#' dropped from the data automatically. Use `header_match = FALSE` when pages
-#' 2+ start directly with data (no repeated header).
+#' data frame.  Supports all extraction engines including `"llm"`.
+#'
+#' For `"bbox"`, `"lattice"`, and `"stream"`: repeated header rows are handled
+#' automatically when `header_match = TRUE` (default) — the header is consumed
+#' as column names on each page and dropped from the data.  Set
+#' `header_match = FALSE` when pages 2+ start directly with data.
+#'
+#' For `"llm"`: the model returns schema-defined columns directly so there are
+#' no repeated headers to consume; `header_match` is ignored.  Supply `schema`
+#' for best accuracy and consistent column names across pages.
 #'
 #' @param sess A `macrox_session` object.
 #' @param label Character label for the combined table.
 #' @param pages Integer vector of page numbers to extract and stack (minimum 2).
 #' @param area Named `c(top, left, bottom, right)` in PDF points, or `NULL`
 #'   for the full page. Applied identically to every page.
-#' @param method Extraction engine: `"bbox"` (default), `"lattice"`, or
-#'   `"stream"`.
-#' @param header_rows Number of header rows (default 1). Applied to every page
-#'   when `header_match = TRUE`, only to the first page when `FALSE`.
-#' @param header_match Logical (default `TRUE`). When `TRUE` each page is
-#'   extracted with `header_rows` so repeated headers are consumed into column
-#'   names and dropped. Set `FALSE` when pages 2+ begin directly with data.
-#' @param row_tol `bbox` method only — passed to [select_table()].
-#' @param col_gap `bbox` method only — passed to [select_table()].
+#' @param method Extraction engine: `"bbox"` (default), `"lattice"`, `"stream"`,
+#'   or `"llm"`.
+#' @param chat An existing `ellmer` Chat object (LLM method only).  See
+#'   [select_table_llm()].
+#' @param provider LLM provider (LLM method only, default `"anthropic"`).
+#'   Ignored when `chat` is supplied.  Reads `getOption("macrox.llm.provider")`
+#'   when set.
+#' @param model Model name (LLM method only).  `NULL` uses the provider default.
+#'   Ignored when `chat` is supplied.  Reads `getOption("macrox.llm.model")`
+#'   when set.
+#' @param base_url Base URL for `"openai_compatible"` providers (LLM only).
+#' @param schema Named character vector of column types, e.g.
+#'   `c(Month = "character", Total = "integer")` (LLM method only).
+#'   `NULL` asks the model to auto-detect columns — a consistent schema is
+#'   strongly recommended for multi-page stacking.
+#' @param prompt Extra instructions appended to the base prompt (LLM only).
+#' @param dpi Render resolution for page images (LLM only, default 150).
+#' @param mode LLM extraction mode: `"structured"` (default) or `"page"`.
+#'   See [select_table_llm()].
+#' @param table_index Which table to pick when `mode = "page"` returns multiple
+#'   tables (LLM only, default 1).
+#' @param header_rows Number of header rows (non-LLM methods, default 1).
+#' @param header_match Logical (non-LLM methods, default `TRUE`). When `TRUE`
+#'   repeated headers are consumed as column names on every page.
+#' @param row_tol `bbox` method only.
+#' @param col_gap `bbox` method only.
 #' @return `sess` invisibly (step is recorded).
 #' @export
 stack_pages <- function(sess, label, pages,
                         area         = NULL,
-                        method       = c("bbox", "lattice", "stream"),
+                        method       = c("bbox", "lattice", "stream", "llm"),
+                        # LLM-specific params (ignored for non-LLM methods)
+                        chat         = NULL,
+                        provider     = getOption("macrox.llm.provider", "anthropic"),
+                        model        = getOption("macrox.llm.model", NULL),
+                        base_url     = NULL,
+                        schema       = NULL,
+                        prompt       = NULL,
+                        dpi          = 150L,
+                        mode         = c("structured", "page"),
+                        table_index  = 1L,
+                        # Non-LLM params
                         header_rows  = 1L,
                         header_match = TRUE,
                         row_tol      = NULL,
                         col_gap      = NULL) {
   method <- match.arg(method)
+  mode   <- match.arg(mode)
   pages  <- as.integer(pages)
   if (length(pages) < 2L) {
     cli::cli_abort("{.arg pages} must contain at least 2 page numbers.")
   }
 
-  cli::cli_inform(c("i" = "Stacking {length(pages)} page{?s} ({min(pages)}–{max(pages)}) [{method}]..."))
+  # ── LLM path ──────────────────────────────────────────────────────────────
+  if (method == "llm") {
+    .check_ellmer()
+    resolved <- .resolve_llm_chat(chat, provider, model, base_url, sess$llm_config)
+    chat_obj <- resolved$chat
+    provider <- resolved$provider
+    model    <- resolved$model
+    base_url <- resolved$base_url
+
+    cli::cli_inform(c(
+      "i" = "Stacking {length(pages)} page{?s} ({min(pages)}-{max(pages)}) [llm / {provider} / {model}]..."
+    ))
+
+    tmp            <- new.env(parent = emptyenv())
+    tmp$path       <- sess$path
+    tmp$tables     <- list()
+    tmp$steps      <- list()
+    tmp$.replaying <- TRUE
+    class(tmp)     <- "macrox_session"
+
+    frames <- list()
+    n_skip <- 0L
+
+    for (pg in pages) {
+      dfx <- tryCatch({
+        select_table_llm(tmp, label = ".sp_llm", page = pg, area = area,
+                         chat = chat_obj, schema = schema, prompt = prompt,
+                         dpi = as.integer(dpi), mode = mode,
+                         table_index = as.integer(table_index))
+        tmp$tables[[".sp_llm"]]
+      }, error = function(e) {
+        cli::cli_warn("Page {pg} skipped: {conditionMessage(e)}")
+        n_skip <<- n_skip + 1L
+        NULL
+      })
+      if (!is.null(dfx)) frames <- c(frames, list(dfx))
+    }
+
+    if (length(frames) == 0L) {
+      cli::cli_abort("LLM extraction returned no data on any of the {length(pages)} pages.")
+    }
+
+    # Align all frames to the column set of the first successful frame
+    ref_names <- names(frames[[1L]])
+    frames <- lapply(frames, function(df) {
+      shared <- intersect(ref_names, names(df))
+      if (length(shared) < length(ref_names)) {
+        cli::cli_warn(
+          "Column mismatch on a page: bound on {length(shared)}/{length(ref_names)} column{?s}."
+        )
+        ref_names <<- shared
+      }
+      df[, shared, drop = FALSE]
+    })
+
+    df           <- do.call(rbind, frames)
+    rownames(df) <- NULL
+
+    n_ok <- length(pages) - n_skip
+    cli::cli_inform(c(
+      "v" = "Table {.val {label}} stacked from {n_ok}/{length(pages)} page{?s} [llm]: {nrow(df)} × {ncol(df)}"
+    ))
+
+    set_table(sess, label, df)
+    record_step(sess, list(
+      step        = "stack_pages",
+      label       = label,
+      pages       = pages,
+      area        = area,
+      method      = "llm",
+      provider    = provider,
+      model       = model,
+      base_url    = base_url,
+      schema      = if (!is.null(schema)) as.list(schema) else NULL,
+      prompt      = prompt,
+      dpi         = as.integer(dpi),
+      mode        = mode,
+      table_index = as.integer(table_index)
+    ))
+
+    return(invisible(sess))
+  }
+
+  # ── Non-LLM path (bbox / lattice / stream) ────────────────────────────────
+  cli::cli_inform(c("i" = "Stacking {length(pages)} page{?s} ({min(pages)}-{max(pages)}) [{method}]..."))
 
   # Temporary session: .replaying = TRUE suppresses record_step inside select_table
   tmp            <- new.env(parent = emptyenv())

@@ -241,8 +241,58 @@ test_that(".resolve_llm_chat() builds a chat from provider/model/base_url when c
 
   resolved <- macrox:::.resolve_llm_chat(NULL, "anthropic", NULL, NULL)
   expect_equal(resolved$provider, "anthropic")
-  expect_equal(resolved$model, "claude-opus-4-5-20251001")
+  expect_equal(resolved$model, "claude-opus-4-8")
   expect_s3_class(resolved$chat, "Chat")
+})
+
+test_that(".resolve_llm_chat() uses sess_chat when chat is NULL", {
+  skip_if_not_installed("ellmer")
+
+  sess_chat <- ellmer::chat_openai_compatible(
+    base_url = "http://localhost:11434/v1",
+    model    = "llama2"
+  )
+  resolved <- macrox:::.resolve_llm_chat(NULL, "anthropic", NULL, NULL, sess_chat)
+  expect_equal(resolved$provider, "openai_compatible")
+  expect_equal(resolved$model, "llama2")
+})
+
+test_that(".resolve_llm_chat() prefers explicit chat over sess_chat", {
+  skip_if_not_installed("ellmer")
+
+  sess_chat    <- ellmer::chat_openai_compatible(base_url = "http://localhost:11434/v1", model = "llama2")
+  explicit_chat <- ellmer::chat_openai_compatible(base_url = "http://localhost:11434/v1", model = "mistral")
+  resolved <- macrox:::.resolve_llm_chat(explicit_chat, "anthropic", NULL, NULL, sess_chat)
+  expect_equal(resolved$model, "mistral")
+})
+
+test_that("mx_configure_llm() stores llm_config on session", {
+  skip_if_not_installed("ellmer")
+
+  sess <- new.env(parent = emptyenv())
+  sess$path   <- "dummy.pdf"
+  sess$tables <- list()
+  sess$steps  <- list()
+  class(sess) <- "macrox_session"
+
+  mx_configure_llm(sess, provider = "anthropic", model = "claude-opus-4-8")
+  expect_true(!is.null(sess$llm_config))
+  expect_s3_class(sess$llm_config, "Chat")
+})
+
+test_that("mx_configure_llm() accepts a chat object", {
+  skip_if_not_installed("ellmer")
+
+  sess <- new.env(parent = emptyenv())
+  sess$path   <- "dummy.pdf"
+  sess$tables <- list()
+  sess$steps  <- list()
+  class(sess) <- "macrox_session"
+
+  ch <- ellmer::chat_openai_compatible(base_url = "http://localhost:11434/v1", model = "llava")
+  mx_configure_llm(sess, chat = ch)
+  info <- macrox:::.chat_provider_info(sess$llm_config)
+  expect_equal(info$model, "llava")
 })
 
 test_that(".resolve_llm_chat() errors when chat is not an ellmer Chat", {
@@ -276,4 +326,43 @@ test_that("update_llm_schema() preserves base_url on re-extract", {
     re_extract = FALSE)
 
   expect_equal(sess$steps[[1]]$base_url, "http://localhost:1234/v1")
+})
+
+
+# --------------------------------------------------------------------------- #
+#  Global options (macrox.llm.provider / macrox.llm.model)                   #
+# --------------------------------------------------------------------------- #
+
+test_that("global option macrox.llm.provider is respected by .llm_default_model fallback", {
+  # The option feeds into the function parameter default, so calling with no
+  # explicit provider picks it up automatically.
+  old <- options(macrox.llm.provider = "openai", macrox.llm.model = "gpt-4o-mini")
+  on.exit(options(old), add = TRUE)
+
+  # Default arg for select_table_llm uses getOption() — verify the value reaches
+  # the formals without a real API call.
+  fn_default_provider <- eval(formals(select_table_llm)$provider)
+  fn_default_model    <- eval(formals(select_table_llm)$model)
+  expect_equal(fn_default_provider, "openai")
+  expect_equal(fn_default_model, "gpt-4o-mini")
+})
+
+test_that("global option macrox.llm.provider is respected by select_item formals", {
+  old <- options(macrox.llm.provider = "google_gemini", macrox.llm.model = NULL)
+  on.exit(options(old), add = TRUE)
+
+  fn_default_provider <- eval(formals(select_item)$provider)
+  expect_equal(fn_default_provider, "google_gemini")
+})
+
+test_that("explicit provider= overrides global option", {
+  skip_if_not_installed("ellmer")
+
+  old <- options(macrox.llm.provider = "openai", macrox.llm.model = "gpt-4o")
+  on.exit(options(old), add = TRUE)
+
+  # When chat= is supplied it wins over everything, including the global option
+  ch <- ellmer::chat_openai_compatible(base_url = "http://localhost:11434/v1", model = "llava")
+  resolved <- macrox:::.resolve_llm_chat(ch, "openai", "gpt-4o", NULL, NULL)
+  expect_equal(resolved$model, "llava")  # chat= wins over option
 })
