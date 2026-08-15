@@ -6,6 +6,8 @@ Description: Record interactive PDF table extraction steps as replayable macros.
     Supports table selection by page index, bounding box, or fuzzy label matching.
     Handles multi-row headers, column renaming, type casting, and row filtering.
     Macros are saved as YAML and can be replayed against any structurally similar PDF.
+URL: https://cathalbyrnegit.github.io/macrox, https://github.com/cathalbyrnegit/macrox
+BugReports: https://github.com/cathalbyrnegit/macrox/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
