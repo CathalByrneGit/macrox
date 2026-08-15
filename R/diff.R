@@ -24,10 +24,12 @@
 diff_replay <- function(file1, file2, macro, macro_path = ".",
                          params = list(), params2 = NULL) {
   params2 <- params2 %||% params
+  # Load once so that if macro is a file path it is read and logged only once.
+  steps <- if (is.character(macro)) load_macro(macro, path = macro_path) else macro
   cli::cli_inform(c("i" = "Replaying macro on {.file {basename(file1)}}..."))
-  t1 <- mx_replay(file1, macro, macro_path, params = params)
+  t1 <- mx_replay(file1, steps, params = params)
   cli::cli_inform(c("i" = "Replaying macro on {.file {basename(file2)}}..."))
-  t2 <- mx_replay(file2, macro, macro_path, params = params2)
+  t2 <- mx_replay(file2, steps, params = params2)
 
   all_labels <- union(names(t1), names(t2))
 

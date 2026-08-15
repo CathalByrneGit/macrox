@@ -179,10 +179,24 @@ mx_replay <- function(file, macro, macro_path = ".", params = list()) {
 
 .apply_params <- function(steps, params) {
   if (length(params) == 0L) return(steps)
-  replacements <- setNames(
-    vapply(params, as.character, character(1)),
-    paste0("$", names(params))
-  )
+
+  # Validate: each value must be a scalar (length 1)
+  bad <- names(params)[vapply(params, length, integer(1)) != 1L]
+  if (length(bad) > 0L) {
+    cli::cli_abort(c(
+      "Each macro param value must be a scalar (length 1).",
+      "x" = "Non-scalar param{?s}: {.val {bad}}",
+      "i" = "Pass a single value per name, e.g. {.code params = list(year = 2025L)}."
+    ))
+  }
+
+  values <- vapply(params, as.character, character(1))
+  # Sort longest key first to prevent a shorter key from matching inside a
+  # longer placeholder (e.g. $year must not replace inside $year_end).
+  keys         <- paste0("$", names(params))
+  ord          <- order(nchar(keys), decreasing = TRUE)
+  replacements <- setNames(values[ord], keys[ord])
+
   result <- lapply(steps, .substitute_params, replacements)
   attr(result, "params") <- attr(steps, "params")
   result

@@ -60,17 +60,33 @@ test_macro <- function(file         = NULL,
     tables <- mx_replay(file, macro, macro_path, params = params)
   }
 
-  # Derive snapshot name
-  snap_name <- name %||% {
-    if (is.character(macro)) sub("\\.yml$", "", basename(macro))
-    else "macro_snapshot"
+  # Derive snapshot name — require an explicit name when macro is not a string,
+  # because there is no safe default that avoids cross-test collisions.
+  snap_name <- if (!is.null(name)) {
+    name
+  } else if (is.character(macro)) {
+    sub("\\.yml$", "", basename(macro))
+  } else {
+    cli::cli_abort(c(
+      "Cannot derive a snapshot name automatically.",
+      "i" = "Provide {.arg name} when {.arg tables} is supplied without a",
+      " " = "character {.arg macro}: {.code test_macro(tables = ..., name = 'my_snap')}"
+    ))
   }
 
   snap_file   <- file.path(snapshot_dir, paste0(snap_name, ".snap.yml"))
   current_snap <- .build_macro_snapshot(tables, n_head)
 
   if (update || !file.exists(snap_file)) {
-    dir.create(snapshot_dir, recursive = TRUE, showWarnings = FALSE)
+    if (!dir.exists(snapshot_dir)) {
+      ok <- dir.create(snapshot_dir, recursive = TRUE, showWarnings = TRUE)
+      if (!ok) {
+        cli::cli_abort(c(
+          "Cannot create snapshot directory: {.path {snapshot_dir}}",
+          "i" = "Check that the parent directory exists and is writable."
+        ))
+      }
+    }
     yaml::write_yaml(current_snap, snap_file)
     if (file.exists(snap_file)) {
       cli::cli_inform(c(

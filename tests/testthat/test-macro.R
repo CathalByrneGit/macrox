@@ -561,3 +561,29 @@ test_that("test_macro() errors without file+macro or tables", {
     "either"
   )
 })
+
+test_that("test_macro() errors when tables supplied without name and macro is not a string", {
+  expect_error(
+    test_macro(tables = list(t = data.frame(x = 1L)),
+               snapshot_dir = tempdir()),
+    "Cannot derive a snapshot name"
+  )
+})
+
+test_that(".apply_params() substitutes longer keys before shorter prefix keys", {
+  steps <- list(
+    list(step = "add_column", table = "t", name = "a", expr = "$year"),
+    list(step = "add_column", table = "t", name = "b", expr = "$year_end")
+  )
+  result <- macrox:::.apply_params(steps, list(year = "2025", year_end = "December"))
+  expect_equal(result[[1]]$expr, "2025")
+  expect_equal(result[[2]]$expr, "December")
+})
+
+test_that(".apply_params() aborts with a clear message on non-scalar param", {
+  steps <- list(list(step = "add_column", table = "t", name = "a", expr = "$yr"))
+  expect_error(
+    macrox:::.apply_params(steps, list(yr = c(2024L, 2025L))),
+    "scalar"
+  )
+})
