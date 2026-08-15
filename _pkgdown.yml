@@ -1,0 +1,135 @@
+url: https://cathalbyrnegit.github.io/macrox
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+
+navbar:
+  structure:
+    left:  [intro, articles, reference]
+    right: [github]
+  components:
+    articles:
+      text: Articles
+      menu:
+        - text: Getting Started
+          href: articles/macrox.html
+        - text: Extraction Methods
+          href: articles/extraction-methods.html
+        - text: LLM Integration
+          href: articles/llm-integration.html
+        - text: Macros & Testing
+          href: articles/macros-and-testing.html
+    github:
+      icon: fab fa-github
+      href: https://github.com/cathalbyrnegit/macrox
+
+articles:
+  - title: Guides
+    navbar: ~
+    contents:
+      - macrox
+      - extraction-methods
+      - llm-integration
+      - macros-and-testing
+
+reference:
+  - title: Session
+    desc: Create and manage extraction sessions.
+    contents:
+      - mx_session
+      - show_steps
+      - remove_step
+
+  - title: Detection
+    desc: Scan a PDF for table locations.
+    contents:
+      - detect_tables
+      - locate_area
+
+  - title: Table extraction
+    desc: Pull tables out of PDF pages.
+    contents:
+      - select_table
+      - select_table_docling
+      - select_table_llm
+      - stack_pages
+
+  - title: Metadata extraction
+    desc: Extract individual fields and structured records.
+    contents:
+      - select_item
+      - select_items_batch
+      - select_struct
+      - struct_to_df
+      - show_items
+      - update_item
+      - update_llm_schema
+
+  - title: LLM configuration
+    desc: Configure the LLM provider at session or global level.
+    contents:
+      - mx_configure_llm
+
+  - title: Cleaning
+    desc: Rename, cast, filter, and reshape extracted tables.
+    contents:
+      - rename_columns
+      - cast_types
+      - filter_rows
+      - add_column
+      - mutate_column
+      - pivot_table
+
+  - title: Inspection
+    desc: Preview and visualise extracted data.
+    contents:
+      - preview
+      - preview_all
+      - view_in_pdf
+
+  - title: Macros
+    desc: Save, load, and replay extraction workflows.
+    contents:
+      - save_macro
+      - load_macro
+      - mx_replay
+      - mx_replay_batch
+      - validate_macro
+
+  - title: Comparison
+    desc: Diff macro outputs across two PDFs.
+    contents:
+      - diff_replay
+      - detail
+
+  - title: Validation
+    desc: Validate table structure and values.
+    contents:
+      - validate_table
+      - add_validation_rule
+
+  - title: Export
+    desc: Write extracted data to files.
+    contents:
+      - export_tables
+      - export_json
+
+  - title: Testing
+    desc: Snapshot-test macro outputs in CI.
+    contents:
+      - test_macro
+
+  - title: Shiny
+    desc: Embed macrox in a Shiny application.
+    contents:
+      - mx_app
+      - macrox_ui
+      - macrox_server
+
+  - title: Python backends
+    desc: Set up optional ML and NLP engines.
+    contents:
+      - setup_docling
+      - close_docling
+      - setup_gliner

@@ -1,8 +1,8 @@
 ---
-title: "macrox: PDF Table Extraction Workflows"
+title: "Getting Started with macrox"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{macrox: PDF Table Extraction Workflows}
+  %\VignetteIndexEntry{Getting Started with macrox}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

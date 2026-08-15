@@ -37,6 +37,7 @@ Suggests:
     purrr (>= 1.1.0),
     mirai (>= 2.0.0),
     knitr,
-    rmarkdown
+    rmarkdown,
+    pkgdown
 Config/testthat/edition: 3
 VignetteBuilder: knitr
