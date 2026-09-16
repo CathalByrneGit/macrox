@@ -63,10 +63,12 @@ mx_session <- function(path = NULL) {
     
     cli::cli_inform('No file given: Please choose a file')
     
-    if(rstudioapi::isAvailable()){
-      
-      path <- rstudioapi::selectFile(filter = '(*.pdf)')
-      
+    if(requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()){
+
+      path <- rstudioapi::selectFile(
+        filter = "PDF and image files (*.pdf *.png *.jpg *.jpeg *.tif *.tiff *.bmp *.gif *.webp)"
+      )
+
     }else{
       
       path <- file.choose()
@@ -100,20 +102,24 @@ mx_session <- function(path = NULL) {
       "!" = "Only {.fn select_table_llm} and {.fn select_table_docling} will work on this session.",
       " " = "{.fn select_table} requires a native PDF with a text/vector layer."
     ))
-    tmp_pdf <- tempfile(fileext = ".pdf")
+    tmp_pdf        <- tempfile(fileext = ".pdf")
     magick::image_write(magick::image_read(path), tmp_pdf, format = "pdf")
-    path       <- tmp_pdf
-    from_image <- TRUE
+    original_path  <- path
+    path           <- tmp_pdf
+    from_image     <- TRUE
   } else if (ext != "pdf") {
     cli::cli_abort(c(
       "Unsupported file type: {.val {ext}}",
       "i" = "Supported: {.val pdf} and images ({.val {paste(.image_exts, collapse = ', ')}})"
     ))
+  } else {
+    original_path <- path
   }
 
   sess <- new.env(parent = emptyenv())
-  sess$path       <- path
-  sess$from_image <- from_image
+  sess$path          <- path
+  sess$original_path <- original_path
+  sess$from_image    <- from_image
   sess$tables     <- list()
   sess$items      <- list()
   sess$structs    <- list()  # raw select_struct() output (records + confidence)

@@ -317,6 +317,14 @@ stack_pages <- function(sess, label, pages,
   method <- match.arg(method)
   mode   <- match.arg(mode)
   pages  <- as.integer(pages)
+
+  if (isTRUE(sess$from_image)) {
+    cli::cli_abort(c(
+      "{.fn stack_pages} does not support image-derived sessions.",
+      "i" = "An image is always a single page; use {.fn select_table_llm} with {.code page = 1} instead."
+    ))
+  }
+
   if (length(pages) < 2L) {
     cli::cli_abort("{.arg pages} must contain at least 2 page numbers.")
   }

@@ -37,7 +37,7 @@ save_macro <- function(sess, name, path = ".", overwrite = FALSE, params = NULL)
   hdr <- list(
     name    = name,
     created = format(Sys.time(), "%Y-%m-%d %H:%M"),
-    source  = basename(sess$path),
+    source  = basename(sess$original_path %||% sess$path),
     n_steps = length(clean_steps)
   )
   if (!is.null(params_norm)) hdr$params <- params_norm
