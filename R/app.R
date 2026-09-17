@@ -153,13 +153,16 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
           bslib::card_body(shiny::uiOutput("items_list_ui")),
           bslib::card_footer(
             shiny::div(
-              class = "d-flex gap-2",
+              class = "d-flex gap-2 flex-wrap",
               shiny::actionButton("open_extract_item", "Extract item",
                                   icon  = shiny::icon("plus"),
                                   class = "btn-warning btn-sm"),
               shiny::actionButton("open_batch_items", "Batch (GLiNER)",
                                   icon  = shiny::icon("layer-group"),
-                                  class = "btn-outline-warning btn-sm")
+                                  class = "btn-outline-warning btn-sm"),
+              shiny::downloadButton("dl_items_csv", "Download CSV",
+                                    icon  = shiny::icon("file-csv"),
+                                    class = "btn-success btn-sm")
             )
           )
         ),
@@ -181,17 +184,26 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
     bslib::nav_panel(
       title = "Steps",
       icon  = shiny::icon("list-check"),
-      bslib::card(
-        bslib::card_header(shiny::icon("list-check"), " Recorded steps"),
-        shiny::uiOutput("steps_panel"),
-        bslib::card_footer(
-          shiny::div(
-            class = "d-flex gap-2",
-            shiny::uiOutput("remove_step_ui"),
-            shiny::actionButton("clear_all_steps", "Clear all",
-                                class = "btn-outline-danger btn-sm",
-                                icon  = shiny::icon("trash"))
+      bslib::layout_column_wrap(
+        width = 1/2,
+        bslib::card(
+          bslib::card_header(shiny::icon("list-check"), " Recorded steps",
+            shiny::tags$small(class = "text-muted ms-2", "Click a step to inspect it")
+          ),
+          shiny::uiOutput("steps_panel"),
+          bslib::card_footer(
+            shiny::div(
+              class = "d-flex gap-2",
+              shiny::uiOutput("remove_step_ui"),
+              shiny::actionButton("clear_all_steps", "Clear all",
+                                  class = "btn-outline-danger btn-sm",
+                                  icon  = shiny::icon("trash"))
+            )
           )
+        ),
+        bslib::card(
+          bslib::card_header(shiny::icon("circle-info"), " Step detail"),
+          bslib::card_body(shiny::uiOutput("step_detail_panel"))
         )
       )
     ),
@@ -200,42 +212,96 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
     bslib::nav_panel(
       title = "Replay",
       icon  = shiny::icon("rotate"),
-      bslib::layout_column_wrap(
-        width = 1/2,
-        bslib::card(
-          bslib::card_header(shiny::icon("rotate"), " Replay a macro"),
-          bslib::card_body(
-            shiny::p(class = "text-muted small",
-              "Select a macro file and a PDF to replay it against. ",
-              "All extracted tables will appear in the Tables tab."),
-            shinyFiles::shinyFilesButton(
-              "replay_macro_file", label = "Choose macro (.yml)…",
-              title = "Select a YAML macro",
-              multiple = FALSE, filetype = list(YAML = c("yml", "yaml")),
-              icon = shiny::icon("code"),
-              class = "btn-outline-secondary w-100 mb-2"
+      shiny::tagList(
+        bslib::layout_column_wrap(
+          width = 1/2,
+          bslib::card(
+            bslib::card_header(shiny::icon("rotate"), " Replay a macro"),
+            bslib::card_body(
+              shiny::p(class = "text-muted small",
+                "Select a macro file and a PDF to replay it against. ",
+                "All extracted tables will appear in the Tables tab."),
+              shinyFiles::shinyFilesButton(
+                "replay_macro_file", label = "Choose macro (.yml)…",
+                title = "Select a YAML macro",
+                multiple = FALSE, filetype = list(YAML = c("yml", "yaml")),
+                icon = shiny::icon("code"),
+                class = "btn-outline-secondary w-100 mb-2"
+              ),
+              shiny::uiOutput("replay_macro_status"),
+              shiny::hr(),
+              shinyFiles::shinyFilesButton(
+                "replay_pdf_file", label = "Choose PDF…",
+                title = "Select a PDF to replay against",
+                multiple = FALSE, filetype = list(PDF = "pdf"),
+                icon = shiny::icon("file-pdf"),
+                class = "btn-outline-secondary w-100 mb-2"
+              ),
+              shiny::uiOutput("replay_pdf_status")
             ),
-            shiny::uiOutput("replay_macro_status"),
-            shiny::hr(),
-            shinyFiles::shinyFilesButton(
-              "replay_pdf_file", label = "Choose PDF…",
-              title = "Select a PDF to replay against",
-              multiple = FALSE, filetype = list(PDF = "pdf"),
-              icon = shiny::icon("file-pdf"),
-              class = "btn-outline-secondary w-100 mb-2"
-            ),
-            shiny::uiOutput("replay_pdf_status")
+            bslib::card_footer(
+              shiny::actionButton("do_replay", "Run Replay",
+                                  icon  = shiny::icon("play"),
+                                  class = "btn-warning w-100")
+            )
           ),
-          bslib::card_footer(
-            shiny::actionButton("do_replay", "Run Replay",
-                                icon  = shiny::icon("play"),
-                                class = "btn-warning w-100")
+          bslib::card(
+            bslib::card_header(shiny::icon("list"), " Replay log"),
+            bslib::card_body(
+              shiny::verbatimTextOutput("replay_log")
+            )
           )
         ),
+
+        # ── Diff ──────────────────────────────────────────────────────────
         bslib::card(
-          bslib::card_header(shiny::icon("list"), " Replay log"),
+          class = "mt-3",
+          bslib::card_header(shiny::icon("code-compare"), " Diff — compare macro output across two files"),
           bslib::card_body(
-            shiny::verbatimTextOutput("replay_log")
+            shiny::p(class = "text-muted small",
+              "Run the same macro against two PDFs and see a side-by-side comparison of row counts, ",
+              "added/removed tables, and cell-level changes."),
+            bslib::layout_column_wrap(
+              width = 1/3,
+              shiny::div(
+                shinyFiles::shinyFilesButton(
+                  "diff_macro_file", label = "Macro (.yml)…",
+                  title = "Select a YAML macro", multiple = FALSE,
+                  filetype = list(YAML = c("yml", "yaml")),
+                  icon = shiny::icon("code"),
+                  class = "btn-outline-secondary w-100 mb-1"
+                ),
+                shiny::uiOutput("diff_macro_status")
+              ),
+              shiny::div(
+                shinyFiles::shinyFilesButton(
+                  "diff_pdf1", label = "Reference PDF (A)…",
+                  title = "Select reference PDF", multiple = FALSE,
+                  filetype = list(PDF = "pdf"),
+                  icon = shiny::icon("file-pdf"),
+                  class = "btn-outline-secondary w-100 mb-1"
+                ),
+                shiny::uiOutput("diff_pdf1_status")
+              ),
+              shiny::div(
+                shinyFiles::shinyFilesButton(
+                  "diff_pdf2", label = "New PDF (B)…",
+                  title = "Select comparison PDF", multiple = FALSE,
+                  filetype = list(PDF = "pdf"),
+                  icon = shiny::icon("file-pdf"),
+                  class = "btn-outline-secondary w-100 mb-1"
+                ),
+                shiny::uiOutput("diff_pdf2_status")
+              )
+            )
+          ),
+          bslib::card_footer(
+            shiny::actionButton("do_diff", "Run Diff",
+                                icon  = shiny::icon("code-compare"),
+                                class = "btn-outline-primary")
+          ),
+          bslib::card_body(
+            shiny::uiOutput("diff_results_ui")
           )
         )
       )
@@ -454,12 +520,28 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
     )))
   )
 
+  # Keyboard shortcuts — ArrowLeft/Right try the Extract panel buttons first,
+  # then fall back to the sidebar page controls so they work from any tab.
   kb_js <- shiny::HTML(
     "document.addEventListener('keydown', function(e) {",
     "  var tag = document.activeElement.tagName;",
     "  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;",
-    "  if (e.key === 'ArrowRight') { var b = document.getElementById('ep_next'); if(b) b.click(); }",
-    "  if (e.key === 'ArrowLeft')  { var b = document.getElementById('ep_prev'); if(b) b.click(); }",
+    "  if (e.key === 'ArrowRight') {",
+    "    var b = document.getElementById('ep_next') || document.getElementById('next_pg');",
+    "    if (b) b.click();",
+    "  }",
+    "  if (e.key === 'ArrowLeft') {",
+    "    var b = document.getElementById('ep_prev') || document.getElementById('prev_pg');",
+    "    if (b) b.click();",
+    "  }",
+    "});"
+  )
+
+  # Restore dark-mode preference from localStorage on every page load.
+  dark_persist_js <- shiny::HTML(
+    "document.addEventListener('shiny:connected', function() {",
+    "  var dark = localStorage.getItem('macrox_dark') === 'true';",
+    "  Shiny.setInputValue('init_dark_mode', dark, {priority: 'event'});",
     "});"
   )
 
@@ -552,6 +634,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
     main,
     theme   = theme,
     shiny::tags$head(shiny::tags$script(kb_js)),
+    shiny::tags$head(shiny::tags$script(dark_persist_js)),
     shiny::tags$head(shiny::tags$script(extract_timer_js)),
     shiny::tags$head(shiny::tags$script(item_spinner_js)),
     pdfjs_head,
@@ -583,17 +666,31 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
     page_text       = NULL,
     validations     = list(), # stores validate_table() results keyed by label
     scan_results    = NULL,   # detect_tables_quietly() output for the Index Scan button
-    edit_item_label = NULL    # label of the item currently being edited
+    edit_item_label = NULL,   # label of the item currently being edited
+    undo_stacks     = list(), # per-label list of df snapshots (last 5 before transforms)
+    table_meta      = list(), # per-label list(page, area) stored at extraction time
+    step_detail_idx = NULL    # index of the step badge the user clicked
   )
 
   # ── Dark mode ─────────────────────────────────────────────────────────────
   rv_dark <- shiny::reactiveVal(FALSE)
+
+  shiny::observeEvent(input$init_dark_mode, {
+    if (isTRUE(input$init_dark_mode)) {
+      rv_dark(TRUE)
+      session$setCurrentTheme(.make_theme(TRUE))
+      shiny::updateActionButton(session, "theme_toggle", label = "\u2600 light")
+    }
+  }, once = TRUE, ignoreNULL = TRUE)
+
   shiny::observeEvent(input$theme_toggle, {
     dark <- !rv_dark()
     rv_dark(dark)
     session$setCurrentTheme(.make_theme(dark))
     shiny::updateActionButton(session, "theme_toggle",
       label = if (dark) "\u2600 light" else "\u263D dark")
+    shinyjs::runjs(sprintf("localStorage.setItem('macrox_dark', '%s');",
+                           if (dark) "true" else "false"))
   })
 
   # ── Debounced page reactive ────────────────────────────────────────────────
@@ -1216,6 +1313,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
       }
       rv$active_label <- label
       rv$active_area  <- area
+      rv$table_meta[[label]] <- list(page = page, area = area)
       shiny::updateNumericInput(session, "viewer_page", value = page)
       shiny::showNotification(
         paste0("Extracted '", label, "': ", nrow(df), " \u00d7 ", ncol(df)),
@@ -1334,7 +1432,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
           bslib::card_footer(
             shiny::div(
               class = "d-flex gap-2 flex-wrap",
-              shiny::actionButton(paste0("btn_rename_",   lbl), "Rename columns",
+              shiny::actionButton(paste0("btn_rename_",   lbl), "Rename",
                                   class = "btn-sm btn-outline-secondary",
                                   icon  = shiny::icon("pen")),
               shiny::actionButton(paste0("btn_cast_",     lbl), "Cast types",
@@ -1343,10 +1441,16 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
               shiny::actionButton(paste0("btn_filter_",   lbl), "Filter rows",
                                   class = "btn-sm btn-outline-danger",
                                   icon  = shiny::icon("filter")),
+              shiny::actionButton(paste0("btn_undo_",     lbl), "Undo",
+                                  class = "btn-sm btn-outline-warning",
+                                  icon  = shiny::icon("rotate-left")),
+              shiny::actionButton(paste0("btn_copy_",     lbl), "Copy",
+                                  class = "btn-sm btn-outline-secondary",
+                                  icon  = shiny::icon("clipboard")),
               shiny::actionButton(paste0("btn_validate_", lbl), "Validate",
                                   class = "btn-sm btn-outline-primary",
                                   icon  = shiny::icon("circle-check")),
-              shiny::actionButton(paste0("btn_stats_",    lbl), "Column stats",
+              shiny::actionButton(paste0("btn_stats_",    lbl), "Stats",
                                   class = "btn-sm btn-outline-secondary",
                                   icon  = shiny::icon("chart-simple"))
             )
@@ -1400,6 +1504,8 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
         }, ignoreInit = TRUE)
 
         shiny::observeEvent(input[[paste0("apply_rename_", l)]], {
+          stk <- rv$undo_stacks[[l]] %||% list()
+          rv$undo_stacks[[l]] <- tail(c(stk, list(rv$tables[[l]])), 5)
           df <- rv$tables[[l]]; cols <- names(df)
           mapping <- setNames(
             vapply(seq_along(cols), function(i) {
@@ -1444,6 +1550,8 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
         }, ignoreInit = TRUE)
 
         shiny::observeEvent(input[[paste0("apply_cast_", l)]], {
+          stk <- rv$undo_stacks[[l]] %||% list()
+          rv$undo_stacks[[l]] <- tail(c(stk, list(rv$tables[[l]])), 5)
           df <- rv$tables[[l]]; cols <- names(df)
           types <- setNames(
             vapply(seq_along(cols), function(i)
@@ -1511,6 +1619,8 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
         })
 
         shiny::observeEvent(input[[paste0("apply_filter_", l)]], {
+          stk <- rv$undo_stacks[[l]] %||% list()
+          rv$undo_stacks[[l]] <- tail(c(stk, list(rv$tables[[l]])), 5)
           col  <- input[[paste0("fcol_", l)]]; req(col)
           op   <- input[[paste0("fop_",  l)]] %||% "=="
           val  <- input[[paste0("fval_", l)]] %||% ""
@@ -1533,7 +1643,34 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
           shiny::removeModal()
         }, ignoreInit = TRUE)
 
-        # ── Column stats modal ─────────────────────────────────────────────
+                # ── Undo last transform ─────────────────────────────────────────────────────────
+        shiny::observeEvent(input[[paste0("btn_undo_", l)]], {
+          stk <- rv$undo_stacks[[l]]
+          if (length(stk) == 0) {
+            shiny::showNotification("Nothing to undo for this table.", type = "warning")
+            return()
+          }
+          rv$tables[[l]]       <- stk[[length(stk)]]
+          rv$undo_stacks[[l]]  <- stk[-length(stk)]
+          shiny::showNotification(paste0("Undo applied to '", l, "'"), type = "message")
+        }, ignoreInit = TRUE)
+
+        # ── Copy table to clipboard ──────────────────────────────────────────────────
+        shiny::observeEvent(input[[paste0("btn_copy_", l)]], {
+          df  <- rv$tables[[l]]
+          csv <- paste(
+            paste(names(df), collapse = "\t"),
+            paste(apply(df, 1, function(r) paste(r, collapse = "\t")), collapse = "\n"),
+            sep = "\n"
+          )
+          shinyjs::runjs(sprintf(
+            "var t='%s'; navigator.clipboard.writeText(t).catch(function(){});",
+            gsub("'", "\\'", gsub("\\", "\\\\", csv))
+          ))
+          shiny::showNotification(paste0("Table '", l, "' copied to clipboard."), type = "message")
+        }, ignoreInit = TRUE)
+
+# ── Column stats modal ─────────────────────────────────────────────
         shiny::observeEvent(input[[paste0("btn_stats_", l)]], {
           df   <- rv$tables[[l]]
           rows <- lapply(names(df), function(col) {
@@ -2164,16 +2301,24 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
 
   # ── Steps panel ───────────────────────────────────────────────────────────
   output$steps_panel <- shiny::renderUI({
-    n <- length(rv$steps)
-    if (n == 0) return(shiny::p("No steps recorded yet.", class = "text-muted p-3"))
-    badges <- lapply(seq_len(n), function(i) {
-      s    <- rv$steps[[i]]
+    steps <- rv$steps
+    if (length(steps) == 0) {
+      return(shiny::div(class = "text-center text-muted py-4",
+        shiny::icon("list-check", style = "font-size:2rem;opacity:0.3;"),
+        shiny::br(), shiny::br(), "No steps recorded yet."))
+    }
+    step_btns <- lapply(seq_along(steps), function(i) {
+      s    <- steps[[i]]
       flag <- isTRUE(s$.flagged)
-      cls  <- if (flag) "step-badge flagged" else "step-badge"
-      shiny::tags$span(class = cls,
-        paste0("[", i, "] ", s$step, " / ", s$label %||% s$table %||% "?"))
+      cls  <- paste0("btn btn-sm me-1 mb-1 ",
+                     if (flag) "btn-warning" else "btn-outline-secondary")
+      shiny::tags$button(
+        class   = cls,
+        onclick = sprintf("Shiny.setInputValue('step_clicked', %d, {priority: 'event'});", i),
+        paste0("[", i, "] ", s$step)
+      )
     })
-    shiny::div(class = "p-3", badges)
+    shiny::div(class = "p-3", step_btns)
   })
 
   output$remove_step_ui <- shiny::renderUI({
@@ -2484,11 +2629,28 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
 
   shiny::observeEvent(input$do_batch, {
     req(rv_batch$macro_path, rv_batch$pdf_paths)
-    shiny::showNotification(paste0("Batch: ", length(rv_batch$pdf_paths), " files..."), type="message")
+    files <- rv_batch$pdf_paths
+    n     <- length(files)
     tryCatch({
-      steps <- load_macro(rv_batch$macro_path)
-      rv_batch$results <- mx_replay_batch(rv_batch$pdf_paths, steps)
-      shiny::showNotification("Batch complete.", type="message")
+      steps   <- load_macro(rv_batch$macro_path)
+      results <- vector("list", n)
+      names(results) <- basename(files)
+      shiny::withProgress(message = paste0("Batch: 0 / ", n, " files"), value = 0, {
+        for (i in seq_len(n)) {
+          shiny::incProgress(1/n, detail = basename(files[[i]]),
+                             message = paste0("Batch: ", i, " / ", n, " files"))
+          results[[i]] <- tryCatch(
+            mx_replay(files[[i]], steps),
+            error = function(e) {
+              shiny::showNotification(paste0("Failed: ", basename(files[[i]]), " — ", e$message), type="warning")
+              NULL
+            }
+          )
+        }
+      })
+      rv_batch$results <- results
+      n_ok <- sum(!vapply(results, is.null, logical(1)))
+      shiny::showNotification(paste0("Batch complete: ", n_ok, "/", n, " succeeded."), type="message")
     }, error = function(e) shiny::showNotification(e$message, type="error"))
   })
 
@@ -2660,4 +2822,139 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
     steps <- .module_record(steps, new_step, session = NULL)
   }
   steps
+
+  # ── Items CSV download ────────────────────────────────────────────────────
+  output$dl_items_csv <- shiny::downloadHandler(
+    filename = function() paste0("items_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".csv"),
+    content  = function(file) {
+      items <- rv$items
+      req(length(items) > 0)
+      rows <- lapply(names(items), function(lbl) {
+        it  <- items[[lbl]]
+        val <- paste(as.character(it$value), collapse = "; ")
+        data.frame(label = lbl, value = val, cast = it$cast %||% NA,
+                   backend = it$backend %||% NA, stringsAsFactors = FALSE)
+      })
+      df <- do.call(rbind, rows)
+      utils::write.csv(df, file, row.names = FALSE)
+    }
+  )
+
+  # ── Diff replay server ────────────────────────────────────────────────────
+  rv_diff <- shiny::reactiveValues(
+    macro_path = NULL,
+    pdf1_path  = NULL,
+    pdf2_path  = NULL,
+    results    = NULL
+  )
+
+  shiny::observeEvent(input$diff_macro_file, {
+    i <- shinyFiles::parseFilePaths(.sf_roots_rb, input$diff_macro_file)
+    req(nrow(i) > 0)
+    rv_diff$macro_path <- normalizePath(as.character(i$datapath))
+    .close_sf_modal()
+  })
+  shiny::observeEvent(input$diff_pdf1, {
+    i <- shinyFiles::parseFilePaths(.sf_roots_rb, input$diff_pdf1)
+    req(nrow(i) > 0)
+    rv_diff$pdf1_path <- normalizePath(as.character(i$datapath))
+    .close_sf_modal()
+  })
+  shiny::observeEvent(input$diff_pdf2, {
+    i <- shinyFiles::parseFilePaths(.sf_roots_rb, input$diff_pdf2)
+    req(nrow(i) > 0)
+    rv_diff$pdf2_path <- normalizePath(as.character(i$datapath))
+    .close_sf_modal()
+  })
+
+  shiny::observeEvent(input$do_diff, {
+    req(rv_diff$macro_path, rv_diff$pdf1_path, rv_diff$pdf2_path)
+    tryCatch({
+      res <- diff_replay(rv_diff$pdf1_path, rv_diff$pdf2_path, rv_diff$macro_path)
+      rv_diff$results <- res
+    }, error = function(e) shiny::showNotification(paste("Diff failed:", e$message), type = "error"))
+  })
+
+  output$diff_results_ui <- shiny::renderUI({
+    res <- rv_diff$results; req(!is.null(res))
+    diffs <- res$diffs
+    if (length(diffs) == 0) return(shiny::div(class="text-muted", "No differences found."))
+    rows <- lapply(diffs, function(d) {
+      status_cls <- switch(d$status,
+        identical = "text-success", changed = "text-warning",
+        added = "text-info", removed = "text-danger", "text-muted")
+      status_icon <- switch(d$status,
+        identical = shiny::icon("equals"), changed = shiny::icon("arrows-left-right"),
+        added = shiny::icon("plus"), removed = shiny::icon("minus"), shiny::icon("question"))
+      detail <- if (d$status == "changed") {
+        n_changes <- length(d$cell_changes)
+        paste0(d$rows1, "×", d$cols1, " → ", d$rows2, "×", d$cols2,
+               if (n_changes > 0) paste0(", ", n_changes, " cell change(s)") else "")
+      } else {
+        paste0(d$rows1, " rows")
+      }
+      shiny::div(class = paste("d-flex align-items-center gap-2 mb-1", status_cls),
+        status_icon,
+        shiny::tags$b(d$table),
+        shiny::tags$small(d$status, " — ", detail)
+      )
+    })
+    shiny::div(rows)
+  })
+
+  output$diff_macro_status <- shiny::renderUI({
+    req(rv_diff$macro_path)
+    shiny::tags$small(class="text-success", shiny::icon("check"), " ", basename(rv_diff$macro_path))
+  })
+  output$diff_pdf1_status <- shiny::renderUI({
+    req(rv_diff$pdf1_path)
+    shiny::tags$small(class="text-success", shiny::icon("check"), " ", basename(rv_diff$pdf1_path))
+  })
+  output$diff_pdf2_status <- shiny::renderUI({
+    req(rv_diff$pdf2_path)
+    shiny::tags$small(class="text-success", shiny::icon("check"), " ", basename(rv_diff$pdf2_path))
+  })
+
+  # ── shinyFileChoose calls for diff pickers ────────────────────────────────
+  shinyFiles::shinyFileChoose(input, "diff_macro_file",
+    roots = .sf_roots_rb, filetypes = list(YAML = c("yml", "yaml")), session = session)
+  shinyFiles::shinyFileChoose(input, "diff_pdf1",
+    roots = .sf_roots_rb,
+    filetypes = list(PDF = "pdf", Image = c("png","jpg","jpeg","tif","tiff","bmp","gif","webp")),
+    session = session)
+  shinyFiles::shinyFileChoose(input, "diff_pdf2",
+    roots = .sf_roots_rb,
+    filetypes = list(PDF = "pdf", Image = c("png","jpg","jpeg","tif","tiff","bmp","gif","webp")),
+    session = session)
+
+  # ── Step detail server ────────────────────────────────────────────────────
+  shiny::observeEvent(input$step_clicked, {
+    idx <- as.integer(input$step_clicked)
+    if (!is.na(idx) && idx >= 1L && idx <= length(rv$steps)) {
+      rv$step_detail_idx <- idx
+    }
+  })
+
+  output$step_detail_panel <- shiny::renderUI({
+    idx <- rv$step_detail_idx; req(!is.null(idx))
+    steps <- rv$steps; req(idx <= length(steps))
+    s <- steps[[idx]]
+    clean <- s[!grepl("^\.", names(s))]
+    rows  <- lapply(names(clean), function(k) {
+      shiny::div(class = "d-flex gap-2 mb-1 small",
+        shiny::tags$b(k, ":", .noWS = "after"),
+        shiny::tags$code(paste(deparse(clean[[k]], width.cutoff = 60L), collapse = " "))
+      )
+    })
+    bslib::card_body(
+      shiny::h6(paste0("Step [", idx, "]: ", s$step), class = "fw-bold"),
+      if (isTRUE(s$.flagged))
+        shiny::div(class = "text-warning small mb-2",
+          shiny::icon("triangle-exclamation"), " FLAG: ", s$.flag %||% "flagged")
+      else NULL,
+      shiny::div(rows)
+    )
+  })
+
+
 }
