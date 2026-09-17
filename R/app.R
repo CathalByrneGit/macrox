@@ -569,20 +569,21 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
 .mx_app_server <- function(input, output, session) {
 
   rv <- shiny::reactiveValues(
-    pdf_path      = NULL,
-    pdf_serve_url = NULL,   # URL served via addResourcePath for iframe viewer
-    n_pages       = 1L,
-    tables        = list(),
-    items         = list(),
-    structs       = list(),
-    steps         = list(),
-    active_label  = NULL,
-    viewer_page   = 1L,
-    active_area   = NULL,
-    area_active    = FALSE,  # TRUE only after user clicks 'Use selection'
-    page_text     = NULL,
-    validations   = list(), # stores validate_table() results keyed by label
-    scan_results  = NULL    # detect_tables_quietly() output for the Index Scan button
+    pdf_path        = NULL,
+    pdf_serve_url   = NULL,   # URL served via addResourcePath for iframe viewer
+    n_pages         = 1L,
+    tables          = list(),
+    items           = list(),
+    structs         = list(),
+    steps           = list(),
+    active_label    = NULL,
+    viewer_page     = 1L,
+    active_area     = NULL,
+    area_active     = FALSE,  # TRUE only after user clicks 'Use selection'
+    page_text       = NULL,
+    validations     = list(), # stores validate_table() results keyed by label
+    scan_results    = NULL,   # detect_tables_quietly() output for the Index Scan button
+    edit_item_label = NULL    # label of the item currently being edited
   )
 
   # ── Dark mode ─────────────────────────────────────────────────────────────
@@ -617,7 +618,9 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
 
   shinyFiles::shinyFileChoose(input, "pdf_select",
     roots     = .sf_roots,
-    filetypes = c("pdf", "PDF"),
+    filetypes = c("pdf", "PDF", "png", "PNG", "jpg", "JPG",
+                  "jpeg", "JPEG", "tif", "TIF", "tiff", "TIFF",
+                  "bmp", "BMP", "gif", "GIF", "webp", "WEBP"),
     session   = session
   )
 
@@ -1753,6 +1756,45 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
     }
   })
 
+  # Observe edit buttons — open extract-item modal pre-filled with current values
+  shiny::observe({
+    for (lbl in names(rv$items)) {
+      local({
+        l <- lbl
+        shiny::observeEvent(input[[paste0("edit_item_", l)]], {
+          item <- rv$items[[l]]
+          # Find matching step for prompt / settings
+          step <- Filter(function(s)
+            isTRUE(s$step == "select_item") && identical(s$label, l), rv$steps)
+          step <- if (length(step) > 0L) step[[1L]] else list()
+
+          shiny::showModal(shiny::modalDialog(
+            title = paste0("Re-extract '", l, "'"),
+            shiny::p(class = "text-muted small",
+              "Edit the prompt or settings and click Re-run to update the value."),
+            shiny::textInput("edit_item_prompt", "Prompt",
+                             value = step$prompt %||% ""),
+            shiny::div(
+              class = "d-flex gap-2",
+              shiny::numericInput("edit_item_page", "Page",
+                                  value = step$page %||% 1L, min = 1L, width = "80px"),
+              shiny::selectInput("edit_item_cast", "Cast",
+                                 choices  = c("character","numeric","integer","date"),
+                                 selected = step$cast %||% "character",
+                                 width = "120px")
+            ),
+            footer = shiny::tagList(
+              shiny::modalButton("Cancel"),
+              shiny::actionButton("do_edit_item_confirm", "Re-run",
+                                  class = "btn-primary")
+            )
+          ))
+          rv$edit_item_label <- l
+        }, ignoreInit = TRUE)
+      })
+    }
+  })
+
   # Extract item modal
   shiny::observeEvent(input$open_extract_item, {
     # Pre-fill area from the current brush selection if one exists
@@ -1938,6 +1980,49 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
     }, error = function(e) {
       shinyjs::hide("item_spinner")
       shiny::showNotification(paste("Extraction failed:", e$message), type = "error")
+    })
+  })
+
+  # Confirm edit-item re-extraction
+  shiny::observeEvent(input$do_edit_item_confirm, {
+    l      <- rv$edit_item_label
+    req(!is.null(l), !is.null(rv$pdf_path))
+    prompt   <- trimws(input$edit_item_prompt %||% "")
+    cast_val <- input$edit_item_cast %||% "character"
+    page_val <- as.integer(input$edit_item_page %||% 1L)
+    if (nchar(prompt) == 0L) {
+      shiny::showNotification("Prompt is required.", type = "warning")
+      return()
+    }
+    # Reuse original step's backend/provider, falling back to llm/anthropic
+    orig_step <- Filter(function(s)
+      isTRUE(s$step == "select_item") && identical(s$label, l), rv$steps)
+    orig_step <- if (length(orig_step) > 0L) orig_step[[1L]] else list()
+    backend      <- orig_step$backend  %||% "llm"
+    provider_val <- orig_step$provider %||% "anthropic"
+
+    tryCatch({
+      tmp <- new.env(parent = emptyenv())
+      tmp$path   <- rv$pdf_path
+      tmp$tables <- list(); tmp$items <- list(); tmp$steps <- list()
+      tmp$.replaying <- TRUE; class(tmp) <- "macrox_session"
+      select_item(tmp, label = l, prompt = prompt,
+                  cast = cast_val, page = page_val,
+                  backend = backend, provider = provider_val, dpi = 120L)
+      rv$items[[l]] <- tmp$items[[l]]
+      # Update the matching step record
+      rv$steps <- lapply(rv$steps, function(s) {
+        if (isTRUE(s$step == "select_item") && identical(s$label, l)) {
+          s$prompt <- prompt; s$cast <- cast_val; s$page <- page_val
+        }
+        s
+      })
+      shiny::removeModal()
+      shiny::showNotification(
+        paste0("'", l, "' updated: ", as.character(tmp$items[[l]]$value)),
+        type = "message")
+    }, error = function(e) {
+      shiny::showNotification(paste("Re-extraction failed:", e$message), type = "error")
     })
   })
 
@@ -2318,12 +2403,19 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
 
   shinyFiles::shinyFileChoose(input, "replay_macro_file",
     roots = .sf_roots_rb, filetypes = list(YAML = c("yml", "yaml")), session = session)
+  .img_types <- c("png", "PNG", "jpg", "JPG", "jpeg", "JPEG",
+                   "tif", "TIF", "tiff", "TIFF", "bmp", "BMP",
+                   "gif", "GIF", "webp", "WEBP")
   shinyFiles::shinyFileChoose(input, "replay_pdf_file",
-    roots = .sf_roots_rb, filetypes = list(PDF = "pdf"), session = session)
+    roots = .sf_roots_rb,
+    filetypes = list(PDF = "pdf", Image = .img_types),
+    session = session)
   shinyFiles::shinyFileChoose(input, "batch_macro_file",
     roots = .sf_roots_rb, filetypes = list(YAML = c("yml", "yaml")), session = session)
   shinyFiles::shinyFileChoose(input, "batch_pdf_files",
-    roots = .sf_roots_rb, filetypes = list(PDF = "pdf"), session = session)
+    roots = .sf_roots_rb,
+    filetypes = list(PDF = "pdf", Image = .img_types),
+    session = session)
 
   rv_replay <- shiny::reactiveValues(macro_path=NULL, pdf_path=NULL, log="No replay run yet.")
   rv_batch  <- shiny::reactiveValues(macro_path=NULL, pdf_paths=NULL, results=NULL)
