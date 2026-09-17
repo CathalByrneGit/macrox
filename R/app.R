@@ -405,16 +405,23 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
             shiny::textInput("macro_dir_export",  "Directory",
                              value = ".",         width = "40%")
           ),
-          shinyAce::aceEditor(
-            outputId = "macro_yaml_editor",
-            mode     = "yaml",
-            theme    = "chrome",
-            height   = "300px",
-            fontSize = 12,
-            showLineNumbers = TRUE,
-            debounce = 1000,
-            value    = "# steps will appear here once you extract a table"
-          ),
+          if (requireNamespace("shinyAce", quietly = TRUE)) {
+            shinyAce::aceEditor(
+              outputId = "macro_yaml_editor",
+              mode     = "yaml",
+              theme    = "chrome",
+              height   = "300px",
+              fontSize = 12,
+              showLineNumbers = TRUE,
+              debounce = 1000,
+              value    = "# steps will appear here once you extract a table"
+            )
+          } else {
+            shiny::textAreaInput("macro_yaml_editor",
+              label = NULL, rows = 14,
+              value = "# steps will appear here once you extract a table",
+              width = "100%")
+          },
           bslib::card_footer(
             shiny::div(
               class = "d-flex gap-2",
@@ -2482,7 +2489,11 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
         steps = clean
       ))
     }
-    shinyAce::updateAceEditor(session, "macro_yaml_editor", value = txt)
+    if (requireNamespace("shinyAce", quietly = TRUE)) {
+      shinyAce::updateAceEditor(session, "macro_yaml_editor", value = txt)
+    } else {
+      shiny::updateTextAreaInput(session, "macro_yaml_editor", value = txt)
+    }
   })
 
   # "Apply edits" — parse editor YAML back into rv$steps
@@ -2939,7 +2950,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
     idx <- rv$step_detail_idx; req(!is.null(idx))
     steps <- rv$steps; req(idx <= length(steps))
     s <- steps[[idx]]
-    clean <- s[!grepl("^\.", names(s))]
+    clean <- s[!grepl("^\\.", names(s))]
     rows  <- lapply(names(clean), function(k) {
       shiny::div(class = "d-flex gap-2 mb-1 small",
         shiny::tags$b(k, ":", .noWS = "after"),
