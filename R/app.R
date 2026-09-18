@@ -1448,6 +1448,9 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
               shiny::actionButton(paste0("btn_filter_",   lbl), "Filter rows",
                                   class = "btn-sm btn-outline-danger",
                                   icon  = shiny::icon("filter")),
+              shiny::actionButton(paste0("btn_split_",    lbl), "Split col",
+                                  class = "btn-sm btn-outline-secondary",
+                                  icon  = shiny::icon("columns")),
               shiny::actionButton(paste0("btn_undo_",     lbl), "Undo",
                                   class = "btn-sm btn-outline-warning",
                                   icon  = shiny::icon("rotate-left")),
@@ -1650,7 +1653,112 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
           shiny::removeModal()
         }, ignoreInit = TRUE)
 
-                # ── Undo last transform ─────────────────────────────────────────────────────────
+        # ── Split column ────────────────────────────────────────────────────────
+        shiny::observeEvent(input[[paste0("btn_split_", l)]], {
+          cols <- names(rv$tables[[l]])
+          shiny::showModal(shiny::modalDialog(
+            title = paste("Split column:", l),
+            shiny::p(class = "text-muted small",
+              "Splits each cell on a separator and writes the pieces into new columns.",
+              "The original column is removed."),
+            shiny::fluidRow(
+              shiny::column(5,
+                shiny::selectInput(paste0("spcol_", l), "Column to split",
+                                   choices = cols)
+              ),
+              shiny::column(7,
+                shiny::textInput(paste0("spsep_", l), "Separator (regex)", value = "\\s+",
+                                 placeholder = "\\s+  or  ,  or  \\|")
+              )
+            ),
+            shiny::textInput(paste0("spinto_", l),
+              "New column names (comma-separated)",
+              placeholder = "male, female, total"),
+            shiny::div(
+              class = "mt-2 p-2 rounded",
+              style = "background:var(--bs-body-bg, #f8f9fa); font-size:12px;",
+              shiny::strong("Preview (first 3 values):"),
+              shiny::uiOutput(paste0("sppreview_", l))
+            ),
+            footer = shiny::tagList(
+              shiny::modalButton("Cancel"),
+              shiny::actionButton(paste0("apply_split_", l), "Apply",
+                                  class = "btn-warning", icon = shiny::icon("columns"))
+            )
+          ))
+        }, ignoreInit = TRUE)
+
+        output[[paste0("sppreview_", l)]] <- shiny::renderUI({
+          col  <- input[[paste0("spcol_",  l)]]; req(col, col %in% names(rv$tables[[l]]))
+          sep  <- input[[paste0("spsep_",  l)]] %||% "\\s+"
+          raw  <- input[[paste0("spinto_", l)]] %||% ""
+          into <- trimws(strsplit(raw, ",")[[1L]])
+          into <- into[nchar(into) > 0L]
+          vals <- as.character(rv$tables[[l]][[col]])
+          samp <- utils::head(vals[nchar(trimws(vals)) > 0L], 3L)
+          rows <- lapply(samp, function(v) {
+            parts <- strsplit(v, sep)[[1L]]
+            parts <- parts[nchar(trimws(parts)) > 0L]
+            tagged <- if (length(into) > 0L) {
+              paired <- mapply(function(nm, val) paste0(nm, "=", val),
+                               into[seq_len(min(length(into), length(parts)))],
+                               parts[seq_len(min(length(into), length(parts)))])
+              paste(paired, collapse = " | ")
+            } else {
+              paste(parts, collapse = " | ")
+            }
+            shiny::tags$code(class = "d-block mb-1",
+              paste0("“", v, "” → ", tagged))
+          })
+          do.call(shiny::tagList, rows)
+        })
+
+        shiny::observeEvent(input[[paste0("apply_split_", l)]], {
+          col      <- input[[paste0("spcol_",  l)]]; req(col)
+          sep      <- input[[paste0("spsep_",  l)]] %||% "\\s+"
+          raw      <- input[[paste0("spinto_", l)]] %||% ""
+          into     <- trimws(strsplit(raw, ",")[[1L]])
+          into     <- into[nchar(into) > 0L]
+          if (length(into) < 2L) {
+            shiny::showNotification("Enter at least 2 column names, separated by commas.",
+                                    type = "warning"); return()
+          }
+          stk <- rv$undo_stacks[[l]] %||% list()
+          rv$undo_stacks[[l]] <- tail(c(stk, list(rv$tables[[l]])), 5L)
+          result <- tryCatch({
+            df     <- rv$tables[[l]]
+            n      <- length(into)
+            pieces <- strsplit(as.character(df[[col]]), sep)
+            pieces <- lapply(pieces, function(x) {
+              x        <- x[nchar(trimws(x)) > 0L]
+              length(x) <- n
+              x
+            })
+            new_cols           <- as.data.frame(do.call(rbind, pieces),
+                                                stringsAsFactors = FALSE)
+            names(new_cols)    <- make.names(into, unique = TRUE)
+            rownames(new_cols) <- NULL
+            pos   <- match(col, names(df))
+            left  <- if (pos > 1L) df[, seq_len(pos - 1L), drop = FALSE] else NULL
+            right <- if (pos < ncol(df)) df[, seq(pos + 1L, ncol(df)), drop = FALSE] else NULL
+            df_new <- do.call(cbind, Filter(Negate(is.null), list(left, new_cols, right)))
+            rownames(df_new) <- NULL
+            df_new
+          }, error = function(e) {
+            shiny::showNotification(paste("Split failed:", e$message), type = "error"); NULL
+          })
+          req(!is.null(result))
+          rv$tables[[l]] <- result
+          rv$steps <- .module_record(rv$steps,
+            list(step = "split_column", table = l, col = col,
+                 into = as.list(into), sep = sep, keep = FALSE))
+          shiny::showNotification(
+            paste0("Split '", col, "' into ", length(into), " columns."),
+            type = "message")
+          shiny::removeModal()
+        }, ignoreInit = TRUE)
+
+        # ── Undo last transform ─────────────────────────────────────────────────────────
         shiny::observeEvent(input[[paste0("btn_undo_", l)]], {
           stk <- rv$undo_stacks[[l]]
           if (length(stk) == 0) {

@@ -363,6 +363,15 @@ mx_replay_batch <- function(files, macro, macro_path = ".", params = list(),
       table_index = step$table_index %||% 1L
     ),
 
+    split_column = split_column(
+      sess,
+      table = step$table,
+      col   = step$col,
+      into  = unlist(step$into),
+      sep   = step$sep  %||% "\\s+",
+      keep  = isTRUE(step$keep)
+    ),
+
     fill_down = fill_down(
       sess,
       table = step$table,

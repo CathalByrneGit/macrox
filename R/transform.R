@@ -460,6 +460,64 @@ clean_numbers <- function(sess, table, cols = NULL,
 
 
 # --------------------------------------------------------------------------- #
+#  split_column()                                                              #
+# --------------------------------------------------------------------------- #
+
+#' Split one column into several by a separator
+#'
+#' Splits each cell in `col` on `sep` (a regex) and stores the resulting
+#' pieces in new columns named by `into`.  The original column is removed
+#' unless `keep = TRUE`.  Cells with fewer pieces than `length(into)` are
+#' padded with `NA`; cells with more are truncated.
+#'
+#' @param sess A `macrox_session` object.
+#' @param table Character label of the target table.
+#' @param col Name of the column to split.
+#' @param into Character vector of names for the new columns.
+#' @param sep Regex separator (default `"\\s+"` — one or more whitespace chars).
+#' @param keep If `TRUE`, keep the original column alongside the new ones.
+#' @return `sess` invisibly (step is recorded).
+#' @export
+split_column <- function(sess, table, col, into, sep = "\\s+", keep = FALSE) {
+  df <- get_table(sess, table)
+  if (!(col %in% names(df)))
+    cli::cli_abort("Column {.val {col}} not found in table {.val {table}}.")
+  if (length(into) < 2L)
+    cli::cli_abort("{.arg into} must name at least 2 columns.")
+
+  n      <- length(into)
+  pieces <- strsplit(as.character(df[[col]]), sep)
+  pieces <- lapply(pieces, function(x) {
+    x        <- x[nchar(trimws(x)) > 0L]
+    length(x) <- n
+    x
+  })
+  new_cols           <- as.data.frame(do.call(rbind, pieces), stringsAsFactors = FALSE)
+  names(new_cols)    <- make.names(into, unique = TRUE)
+  rownames(new_cols) <- NULL
+
+  pos   <- match(col, names(df))
+  left  <- if (pos > 1L) df[, seq_len(pos - 1L), drop = FALSE] else NULL
+  orig  <- if (isTRUE(keep)) df[, col, drop = FALSE] else NULL
+  right <- if (pos < ncol(df)) df[, seq(pos + 1L, ncol(df)), drop = FALSE] else NULL
+  df_new <- do.call(cbind, Filter(Negate(is.null), list(left, orig, new_cols, right)))
+  rownames(df_new) <- NULL
+
+  set_table(sess, table, df_new)
+  record_step(sess, list(
+    step  = "split_column",
+    table = table,
+    col   = col,
+    into  = as.list(into),
+    sep   = sep,
+    keep  = isTRUE(keep)
+  ))
+  cli::cli_inform(c("v" = "Split {.val {col}} into {n} column{?s} in {.val {table}}"))
+  invisible(sess)
+}
+
+
+# --------------------------------------------------------------------------- #
 #  suggest_schema()                                                            #
 # --------------------------------------------------------------------------- #
 
