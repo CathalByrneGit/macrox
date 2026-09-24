@@ -171,6 +171,8 @@ Rename, cast, filter, and reshape extracted tables.
   : Remove rows matching an expression
 - [`add_column()`](https://cathalbyrnegit.github.io/macrox/reference/add_column.md)
   : Add a derived column to an extracted table
+- [`split_column()`](https://cathalbyrnegit.github.io/macrox/reference/split_column.md)
+  : Split one column into several by a separator
 - [`fill_down()`](https://cathalbyrnegit.github.io/macrox/reference/fill_down.md)
   : Forward-fill blank or NA cells in specified columns
 - [`clean_numbers()`](https://cathalbyrnegit.github.io/macrox/reference/clean_numbers.md)

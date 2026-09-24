@@ -64,7 +64,8 @@ select_table_llm(
   `"anthropic"` (default), `"openai"`, `"google_gemini"`,
   `"openrouter"`, `"groq"`, `"ollama"`, or `"openai_compatible"`. Any
   provider for which `ellmer` exports `chat_<provider>()` is supported.
-  Ignored when `chat` is supplied.
+  Note: `"github"` is no longer valid; GitHub Models was retired in
+  ellmer 0.5.0. Ignored when `chat` is supplied.
 
 - model:
 

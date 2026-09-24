@@ -112,14 +112,17 @@ when <code>chat</code> is supplied.</p></dd>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="va">sess</span> <span class="op">&lt;-</span> <span class="fu"><a href="mx_session.html">mx_session</a></span><span class="op">(</span><span class="st">"report.pdf"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Use Anthropic with a specific model — all subsequent LLM calls use it</span></span></span>
-<span class="r-in"><span><span class="va">sess</span> <span class="op">|&gt;</span> <span class="fu">mx_configure_llm</span><span class="op">(</span>provider <span class="op">=</span> <span class="st">"anthropic"</span>, model <span class="op">=</span> <span class="st">"claude-opus-4-8"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Use Anthropic with ellmer's default model (Claude Sonnet 5 in ellmer 0.5.0)</span></span></span>
+<span class="r-in"><span><span class="va">sess</span> <span class="op">|&gt;</span> <span class="fu">mx_configure_llm</span><span class="op">(</span>provider <span class="op">=</span> <span class="st">"anthropic"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sess</span> <span class="op">|&gt;</span> <span class="fu"><a href="select_table_llm.html">select_table_llm</a></span><span class="op">(</span><span class="st">"my_table"</span>, page <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sess</span> <span class="op">|&gt;</span> <span class="fu"><a href="select_item.html">select_item</a></span><span class="op">(</span><span class="st">"date"</span>, prompt <span class="op">=</span> <span class="st">"Publication date"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Or pin to a specific model for reproducibility</span></span></span>
+<span class="r-in"><span><span class="va">sess</span> <span class="op">|&gt;</span> <span class="fu">mx_configure_llm</span><span class="op">(</span>provider <span class="op">=</span> <span class="st">"anthropic"</span>, model <span class="op">=</span> <span class="st">"claude-opus-4-8"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Or pass a fully configured chat object for maximum control</span></span></span>
 <span class="r-in"><span><span class="va">chat</span> <span class="op">&lt;-</span> <span class="fu">ellmer</span><span class="fu">::</span><span class="fu"><a href="https://ellmer.tidyverse.org/reference/chat_anthropic.html" class="external-link">chat_anthropic</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  model  <span class="op">=</span> <span class="st">"claude-opus-4-8"</span>,</span></span>
+<span class="r-in"><span>  model  <span class="op">=</span> <span class="st">"claude-sonnet-5"</span>,</span></span>
 <span class="r-in"><span>  system <span class="op">=</span> <span class="st">"Extract data exactly as shown."</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sess</span> <span class="op">|&gt;</span> <span class="fu">mx_configure_llm</span><span class="op">(</span>chat <span class="op">=</span> <span class="va">chat</span><span class="op">)</span></span></span>
