@@ -83,6 +83,7 @@ reference:
       - cast_types
       - filter_rows
       - add_column
+      - split_column
       - fill_down
       - clean_numbers
 
