@@ -36,7 +36,9 @@ macrox_ui <- function(id, title = "PDF \u00b7 Table Extractor", height = "600px"
       sidebar = bslib::sidebar(
         width = 280,
 
-        shiny::fileInput(ns("pdf_upload"), "Upload PDF", accept = ".pdf"),
+        shiny::fileInput(ns("pdf_upload"), "Upload PDF or image",
+                         accept = c(".pdf", ".png", ".jpg", ".jpeg",
+                                    ".tif", ".tiff", ".bmp", ".gif", ".webp")),
         shiny::hr(),
 
         shiny::textInput(ns("tbl_label"), "Table label", placeholder = "e.g. calf_monthly"),
@@ -82,6 +84,28 @@ macrox_ui <- function(id, title = "PDF \u00b7 Table Extractor", height = "600px"
                              placeholder = "e.g. Mart Movements by Breed"),
             shiny::numericInput(ns("max_dist"), "Max distance", value = 0.2,
                                 min = 0, max = 1, step = 0.05)
+          ),
+
+          bslib::nav_panel("LLM",
+            shiny::numericInput(ns("llm_page"), "Page", value = 1, min = 1),
+            shiny::selectInput(ns("llm_provider"), "Provider",
+                               choices = c("anthropic", "openai", "google"),
+                               selected = "anthropic"),
+            shiny::textInput(ns("llm_model"),    "Model (blank = default)", placeholder = "claude-opus-4-8"),
+            shiny::textInput(ns("llm_base_url"), "Base URL (optional)",     placeholder = "https://..."),
+            shiny::textAreaInput(ns("llm_schema"),  "Schema (name: type, one per line)",
+                                 placeholder = "item\nquantity: integer\nprice: numeric",
+                                 rows = 3),
+            shiny::textAreaInput(ns("llm_prompt"),  "Custom prompt (optional)", rows = 2),
+            shiny::numericInput(ns("llm_header_rows"), "Header rows", value = 1, min = 1)
+          ),
+
+          bslib::nav_panel("Docling",
+            shiny::numericInput(ns("docling_page"),         "Page",         value = 1, min = 1),
+            shiny::numericInput(ns("docling_table_index"),  "Table index",  value = 1, min = 1),
+            shiny::tags$small(class = "text-muted",
+              "Requires reticulate + Python. Run ",
+              shiny::tags$code("macrox::setup_docling()"), " to install dependencies.")
           )
         ),
 
@@ -202,15 +226,16 @@ macrox_server <- function(id) {
     ns <- session$ns
 
     rv <- shiny::reactiveValues(
-      pdf_path     = NULL,
-      tables       = list(),
-      steps        = list(),
-      page_text    = NULL,
-      active_label = NULL,
-      active_page  = 1L,
-      active_area  = NULL,
-      n_pages      = 1L,
-      brush_area   = NULL
+      pdf_path      = NULL,
+      tables        = list(),
+      steps         = list(),
+      page_text     = NULL,
+      active_label  = NULL,
+      active_page   = 1L,
+      active_area   = NULL,
+      n_pages       = 1L,
+      brush_area    = NULL,
+      brush_version = 0L   # increment to force image re-render and reset brush
     )
 
     # ------------------------------------------------------------------ #
@@ -286,7 +311,8 @@ macrox_server <- function(id) {
         shiny::actionButton(ns("use_brush"), "Use selection",
                             class = "btn-sm btn-primary ms-2"),
         shiny::actionButton(ns("clear_brush"), "Clear",
-                            class = "btn-sm btn-outline-secondary ms-1")
+                            class = "btn-sm btn-outline-secondary ms-1",
+                            title = "Clear brush selection")
       )
     })
 
@@ -302,12 +328,19 @@ macrox_server <- function(id) {
       shiny::showNotification("Box tab pre-filled. Add a label and click Extract.", type = "message")
     })
 
+    shiny::observeEvent(input$clear_brush, {
+      # Incrementing brush_version causes renderImage to re-execute, which
+      # resets the brush because resetOnNew = TRUE is set on the imageOutput.
+      rv$brush_version <- rv$brush_version + 1L
+    })
+
     # ------------------------------------------------------------------ #
     #  PDF rendering                                                        #
     # ------------------------------------------------------------------ #
 
     output$pdf_img <- shiny::renderImage({
       req(rv$pdf_path)
+      rv$brush_version  # depend on version so Clear brush triggers a re-render
       page_raw <- tryCatch(
         pdftools::pdf_render_page(rv$pdf_path, page = rv$active_page,
                                    dpi = 150, numeric = FALSE),
@@ -360,6 +393,63 @@ macrox_server <- function(id) {
                            bottom = input$area_bottom,
                            right  = input$area_right)
           label_match <- NULL
+        } else if (tab == "LLM") {
+          if (!requireNamespace("ellmer", quietly = TRUE))
+            stop("Install the 'ellmer' package for LLM extraction.")
+          page        <- as.integer(input$llm_page)
+          header_rows <- as.integer(input$llm_header_rows %||% 1L)
+          schema_val  <- .parse_schema_text(input$llm_schema %||% "")
+          model_val   <- trimws(input$llm_model   %||% "")
+          prompt_val  <- trimws(input$llm_prompt  %||% "")
+          base_url_val <- trimws(input$llm_base_url %||% "")
+          tmp <- new.env(parent = emptyenv())
+          tmp$path <- rv$pdf_path; tmp$tables <- list(); tmp$steps <- list()
+          tmp$.replaying <- TRUE; class(tmp) <- "macrox_session"
+          select_table_llm(tmp, label = label, page = page,
+            provider = input$llm_provider %||% "anthropic",
+            model    = if (nchar(model_val)   > 0) model_val   else NULL,
+            base_url = if (nchar(base_url_val)> 0) base_url_val else NULL,
+            schema   = schema_val,
+            prompt   = if (nchar(prompt_val)  > 0) prompt_val  else NULL,
+            dpi = 150L, header_rows = header_rows)
+          df <- tmp$tables[[label]]
+          if (is.null(df) || nrow(df) == 0) stop("LLM returned no data.")
+          new_step_llm <- list(
+            step     = "select_table_llm", label = label, page = page,
+            provider = input$llm_provider %||% "anthropic",
+            model    = if (nchar(model_val)    > 0) model_val   else NULL,
+            base_url = if (nchar(base_url_val) > 0) base_url_val else NULL,
+            schema   = if (!is.null(schema_val)) as.list(schema_val) else NULL,
+            prompt   = if (nchar(prompt_val)   > 0) prompt_val  else NULL,
+            dpi = 150L, header_rows = header_rows)
+          rv$tables[[label]] <- df
+          rv$steps           <- .module_record(rv$steps, new_step_llm, session)
+          rv$active_label    <- label
+          rv$active_page     <- page
+          rv$active_area     <- NULL
+          shiny::updateNumericInput(session, "viewer_page", value = page)
+          return(invisible("ok"))
+        } else if (tab == "Docling") {
+          if (!requireNamespace("reticulate", quietly = TRUE))
+            stop("Install reticulate and run macrox::setup_docling() first.")
+          page    <- as.integer(input$docling_page %||% 1L)
+          tbl_idx <- as.integer(input$docling_table_index %||% 1L)
+          tmp <- new.env(parent = emptyenv())
+          tmp$path <- rv$pdf_path; tmp$tables <- list(); tmp$steps <- list()
+          tmp$.replaying <- TRUE; class(tmp) <- "macrox_session"
+          select_table_docling(tmp, label = label, page = page, table_index = tbl_idx)
+          df <- tmp$tables[[label]]
+          if (is.null(df) || nrow(df) == 0) stop("Docling returned no data.")
+          new_step_docling <- list(
+            step        = "select_table_docling", label = label,
+            page        = page, table_index = tbl_idx)
+          rv$tables[[label]] <- df
+          rv$steps           <- .module_record(rv$steps, new_step_docling, session)
+          rv$active_label    <- label
+          rv$active_page     <- page
+          rv$active_area     <- NULL
+          shiny::updateNumericInput(session, "viewer_page", value = page)
+          return(invisible("ok"))
         } else {
           # Fuzzy
           lm <- trimws(input$label_match)

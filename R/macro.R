@@ -37,7 +37,7 @@ save_macro <- function(sess, name, path = ".", overwrite = FALSE, params = NULL)
   hdr <- list(
     name    = name,
     created = format(Sys.time(), "%Y-%m-%d %H:%M"),
-    source  = basename(sess$path),
+    source  = basename(sess$original_path %||% sess$path),
     n_steps = length(clean_steps)
   )
   if (!is.null(params_norm)) hdr$params <- params_norm
@@ -361,6 +361,15 @@ mx_replay_batch <- function(files, macro, macro_path = ".", params = list(),
       label       = step$label,
       page        = step$page,
       table_index = step$table_index %||% 1L
+    ),
+
+    split_column = split_column(
+      sess,
+      table = step$table,
+      col   = step$col,
+      into  = unlist(step$into),
+      sep   = step$sep  %||% "\\s+",
+      keep  = isTRUE(step$keep)
     ),
 
     fill_down = fill_down(

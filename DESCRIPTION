@@ -13,13 +13,13 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Imports:
-    pdftools,
     stringdist,
     yaml,
     cli,
-    rlang,
-    validate
+    rlang
 Suggests:
+    pdftools,
+    validate,
     magick,
     shiny,
     bslib,

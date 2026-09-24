@@ -33,6 +33,7 @@
 #'   prefix, e.g. `"anthropic"` (default), `"openai"`, `"google_gemini"`,
 #'   `"openrouter"`, `"groq"`, `"ollama"`, or `"openai_compatible"`. Any
 #'   provider for which `ellmer` exports `chat_<provider>()` is supported.
+#'   Note: `"github"` is no longer valid; GitHub Models was retired in ellmer 0.5.0.
 #'   Ignored when `chat` is supplied.
 #' @param model Model name.  `NULL` uses a sensible default for `"anthropic"`,
 #'   `"openai"`, and `"google_gemini"`; other providers require `model` to be
@@ -97,9 +98,23 @@ select_table_llm <- function(sess, label,
       if (!is.null(prompt)) paste0(" ", prompt) else ""
     )
 
+    # Prefer sending a rendered image; fall back to extracted page text as a
+    # document (ellmer 0.5.0+ content_document_file) when magick is absent.
+    page_content <- if (requireNamespace("magick", quietly = TRUE)) {
+      ellmer::content_image_file(img_path)
+    } else if (!is.null(sess$text)) {
+      pg_text <- if (is.list(sess$text)) sess$text[[page]] else sess$text[page]
+      tmp_txt <- tempfile(fileext = ".txt")
+      writeLines(pg_text, tmp_txt)
+      on.exit(unlink(tmp_txt), add = TRUE)
+      ellmer::content_document_file(tmp_txt)
+    } else {
+      ellmer::content_image_file(img_path)
+    }
+
     cli::cli_inform(c("i" = "Calling LLM (page mode)..."))
     md <- tryCatch(
-      chat_obj$chat(ellmer::content_image_file(img_path), page_prompt),
+      chat_obj$chat(page_content, page_prompt),
       error = function(e) cli::cli_abort(
         "LLM page extraction failed: {conditionMessage(e)}"
       )
@@ -265,20 +280,19 @@ update_llm_schema <- function(sess, label, schema,
   }
 }
 
+# ellmer 0.5.0 updated defaults: anthropic→Claude Sonnet 5, openai→GPT 5.6 Terra,
+# google_gemini→Gemini 3.7 Flash. Returning NULL lets ellmer pick its own default
+# for these providers; others need an explicit model.
 .llm_default_model <- function(provider) {
-  default <- switch(provider,
-    anthropic     = "claude-opus-4-8",
-    openai        = "gpt-4o",
-    google_gemini = "gemini-2.0-flash",
-    NULL
+  has_ellmer_default <- provider %in% c(
+    "anthropic", "openai", "google_gemini", "google_vertex",
+    "aws_bedrock", "databricks", "snowflake", "openrouter"
   )
-  if (is.null(default)) {
-    cli::cli_abort(c(
-      "No default model for provider {.val {provider}}.",
-      "i" = "Specify {.arg model} explicitly."
-    ))
-  }
-  default
+  if (has_ellmer_default) return(NULL)   # let ellmer pick
+  cli::cli_abort(c(
+    "No default model for provider {.val {provider}}.",
+    "i" = "Specify {.arg model} explicitly."
+  ))
 }
 
 .llm_default_system_prompt <- function() {
@@ -318,7 +332,7 @@ update_llm_schema <- function(sess, label, schema,
     ))
   }
 
-  args <- list(model = model)
+  args <- if (is.null(model)) list() else list(model = model)
   if (!is.null(base_url)) args$base_url <- base_url
 
   # Inject system prompt when the constructor accepts it.
@@ -358,14 +372,17 @@ update_llm_schema <- function(sess, label, schema,
 #' \dontrun{
 #' sess <- mx_session("report.pdf")
 #'
-#' # Use Anthropic with a specific model — all subsequent LLM calls use it
-#' sess |> mx_configure_llm(provider = "anthropic", model = "claude-opus-4-8")
+#' # Use Anthropic with ellmer's default model (Claude Sonnet 5 in ellmer 0.5.0)
+#' sess |> mx_configure_llm(provider = "anthropic")
 #' sess |> select_table_llm("my_table", page = 5)
 #' sess |> select_item("date", prompt = "Publication date")
 #'
+#' # Or pin to a specific model for reproducibility
+#' sess |> mx_configure_llm(provider = "anthropic", model = "claude-opus-4-8")
+#'
 #' # Or pass a fully configured chat object for maximum control
 #' chat <- ellmer::chat_anthropic(
-#'   model  = "claude-opus-4-8",
+#'   model  = "claude-sonnet-5",
 #'   system = "Extract data exactly as shown."
 #' )
 #' sess |> mx_configure_llm(chat = chat)
@@ -416,7 +433,6 @@ mx_configure_llm <- function(sess,
   ProviderSnowflake        = "snowflake",
   ProviderPerplexity       = "perplexity",
   ProviderHuggingFace      = "huggingface",
-  ProviderGithub           = "github",
   ProviderPortkey          = "portkey",
   ProviderVLLM             = "vllm",
   ProviderCloudflare       = "cloudflare",
