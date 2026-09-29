@@ -4,7 +4,7 @@
 \alias{mx_replay}
 \title{Replay a macro against a new PDF file}
 \usage{
-mx_replay(file, macro, macro_path = ".")
+mx_replay(file, macro, macro_path = ".", params = list())
 }
 \arguments{
 \item{file}{Path to the PDF file.}
@@ -13,6 +13,10 @@ mx_replay(file, macro, macro_path = ".")
 by \code{\link[=load_macro]{load_macro()}}.}
 
 \item{macro_path}{Directory to look for the macro file (default \code{.}).}
+
+\item{params}{Named list of parameter values for parameterised macros, e.g.
+\code{list(year = 2025L, region = "Cork")}. Each \verb{$name} placeholder in step
+fields is replaced with the corresponding value.}
 }
 \value{
 Named list of extracted data frames.

@@ -12,7 +12,8 @@ load_macro(name, path = ".")
 \item{path}{Directory to look in when \code{name} has no extension (default \code{.}).}
 }
 \value{
-The list of step definitions.
+The list of step definitions. If the macro declares parameters, a
+\code{params} attribute is attached — inspect with \code{attr(steps, "params")}.
 }
 \description{
 Load a YAML macro

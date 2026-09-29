@@ -10,8 +10,8 @@ select_table_llm(
   page,
   area = NULL,
   chat = NULL,
-  provider = "anthropic",
-  model = NULL,
+  provider = getOption("macrox.llm.provider", "anthropic"),
+  model = getOption("macrox.llm.model", NULL),
   base_url = NULL,
   schema = NULL,
   prompt = NULL,
@@ -43,6 +43,7 @@ step can be replayed.}
 prefix, e.g. \code{"anthropic"} (default), \code{"openai"}, \code{"google_gemini"},
 \code{"openrouter"}, \code{"groq"}, \code{"ollama"}, or \code{"openai_compatible"}. Any
 provider for which \code{ellmer} exports \verb{chat_<provider>()} is supported.
+Note: \code{"github"} is no longer valid; GitHub Models was retired in ellmer 0.5.0.
 Ignored when \code{chat} is supplied.}
 
 \item{model}{Model name.  \code{NULL} uses a sensible default for \code{"anthropic"},

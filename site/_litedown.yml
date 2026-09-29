@@ -1,0 +1,9 @@
+site:
+
+output:
+  html:
+    meta:
+      css2: ["extra.css"]
+      include_after: "_footer.md"
+    options:
+      number_sections: true

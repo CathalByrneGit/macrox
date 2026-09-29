@@ -9,7 +9,16 @@ stack_pages(
   label,
   pages,
   area = NULL,
-  method = c("bbox", "lattice", "stream"),
+  method = c("bbox", "lattice", "stream", "llm"),
+  chat = NULL,
+  provider = getOption("macrox.llm.provider", "anthropic"),
+  model = getOption("macrox.llm.model", NULL),
+  base_url = NULL,
+  schema = NULL,
+  prompt = NULL,
+  dpi = 150L,
+  mode = c("structured", "page"),
+  table_index = 1L,
   header_rows = 1L,
   header_match = TRUE,
   row_tol = NULL,
@@ -26,28 +35,60 @@ stack_pages(
 \item{area}{Named \code{c(top, left, bottom, right)} in PDF points, or \code{NULL}
 for the full page. Applied identically to every page.}
 
-\item{method}{Extraction engine: \code{"bbox"} (default), \code{"lattice"}, or
-\code{"stream"}.}
+\item{method}{Extraction engine: \code{"bbox"} (default), \code{"lattice"}, \code{"stream"},
+or \code{"llm"}.}
 
-\item{header_rows}{Number of header rows (default 1). Applied to every page
-when \code{header_match = TRUE}, only to the first page when \code{FALSE}.}
+\item{chat}{An existing \code{ellmer} Chat object (LLM method only).  See
+\code{\link[=select_table_llm]{select_table_llm()}}.}
 
-\item{header_match}{Logical (default \code{TRUE}). When \code{TRUE} each page is
-extracted with \code{header_rows} so repeated headers are consumed into column
-names and dropped. Set \code{FALSE} when pages 2+ begin directly with data.}
+\item{provider}{LLM provider (LLM method only, default \code{"anthropic"}).
+Ignored when \code{chat} is supplied.  Reads \code{getOption("macrox.llm.provider")}
+when set.}
 
-\item{row_tol}{\code{bbox} method only — passed to \code{\link[=select_table]{select_table()}}.}
+\item{model}{Model name (LLM method only).  \code{NULL} uses the provider default.
+Ignored when \code{chat} is supplied.  Reads \code{getOption("macrox.llm.model")}
+when set.}
 
-\item{col_gap}{\code{bbox} method only — passed to \code{\link[=select_table]{select_table()}}.}
+\item{base_url}{Base URL for \code{"openai_compatible"} providers (LLM only).}
+
+\item{schema}{Named character vector of column types, e.g.
+\code{c(Month = "character", Total = "integer")} (LLM method only).
+\code{NULL} asks the model to auto-detect columns — a consistent schema is
+strongly recommended for multi-page stacking.}
+
+\item{prompt}{Extra instructions appended to the base prompt (LLM only).}
+
+\item{dpi}{Render resolution for page images (LLM only, default 150).}
+
+\item{mode}{LLM extraction mode: \code{"structured"} (default) or \code{"page"}.
+See \code{\link[=select_table_llm]{select_table_llm()}}.}
+
+\item{table_index}{Which table to pick when \code{mode = "page"} returns multiple
+tables (LLM only, default 1).}
+
+\item{header_rows}{Number of header rows (non-LLM methods, default 1).}
+
+\item{header_match}{Logical (non-LLM methods, default \code{TRUE}). When \code{TRUE}
+repeated headers are consumed as column names on every page.}
+
+\item{row_tol}{\code{bbox} method only.}
+
+\item{col_gap}{\code{bbox} method only.}
 }
 \value{
 \code{sess} invisibly (step is recorded).
 }
 \description{
 Extracts a table from each page in \code{pages} and row-binds them into a single
-data frame. Handles repeated header rows automatically: when
-\code{header_match = TRUE} (default), each page is extracted with the same
-\code{header_rows} setting so the repeated header is consumed as column names and
-dropped from the data automatically. Use \code{header_match = FALSE} when pages
-2+ start directly with data (no repeated header).
+data frame.  Supports all extraction engines including \code{"llm"}.
+}
+\details{
+For \code{"bbox"}, \code{"lattice"}, and \code{"stream"}: repeated header rows are handled
+automatically when \code{header_match = TRUE} (default) — the header is consumed
+as column names on each page and dropped from the data.  Set
+\code{header_match = FALSE} when pages 2+ start directly with data.
+
+For \code{"llm"}: the model returns schema-defined columns directly so there are
+no repeated headers to consume; \code{header_match} is ignored.  Supply \code{schema}
+for best accuracy and consistent column names across pages.
 }

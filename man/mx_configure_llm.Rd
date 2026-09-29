@@ -21,7 +21,7 @@ mx_configure_llm(
 \code{model}, \code{base_url}, and \code{system} are ignored.}
 
 \item{provider}{Provider name (default \code{"anthropic"}).  Any provider
-for which \code{ellmer} exports \verb{chat_<provider>()} is supported.
+for which \code{ellmer} exports \code{chat_<provider>()} is supported.
 Ignored when \code{chat} is supplied.}
 
 \item{model}{Model name.  \code{NULL} uses a sensible default for the
@@ -48,14 +48,17 @@ conversation history is never shared between calls.
 \dontrun{
 sess <- mx_session("report.pdf")
 
-# Use Anthropic with a specific model — all subsequent LLM calls use it
-sess |> mx_configure_llm(provider = "anthropic", model = "claude-opus-4-8")
+# Use Anthropic with ellmer's default model (Claude Sonnet 5 in ellmer 0.5.0)
+sess |> mx_configure_llm(provider = "anthropic")
 sess |> select_table_llm("my_table", page = 5)
 sess |> select_item("date", prompt = "Publication date")
 
+# Or pin to a specific model for reproducibility
+sess |> mx_configure_llm(provider = "anthropic", model = "claude-opus-4-8")
+
 # Or pass a fully configured chat object for maximum control
 chat <- ellmer::chat_anthropic(
-  model  = "claude-opus-4-8",
+  model  = "claude-sonnet-5",
   system = "Extract data exactly as shown."
 )
 sess |> mx_configure_llm(chat = chat)

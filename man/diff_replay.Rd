@@ -4,7 +4,14 @@
 \alias{diff_replay}
 \title{Compare macro outputs across two PDF files}
 \usage{
-diff_replay(file1, file2, macro, macro_path = ".")
+diff_replay(
+  file1,
+  file2,
+  macro,
+  macro_path = ".",
+  params = list(),
+  params2 = NULL
+)
 }
 \arguments{
 \item{file1}{Path to the reference PDF.}
@@ -14,6 +21,13 @@ diff_replay(file1, file2, macro, macro_path = ".")
 \item{macro}{Macro name, path to a \code{.yml}, or a step list.}
 
 \item{macro_path}{Directory for macro lookup (default \code{.}).}
+
+\item{params}{Named list of parameter values applied to both replays (e.g.
+\code{list(year = 2024L)}). Use \code{params2} to supply different values for the
+second file.}
+
+\item{params2}{Named list of parameter values for \code{file2} only. Defaults to
+\code{params} when \code{NULL}.}
 }
 \value{
 A \code{macrox_diff} object. Print gives a summary; \code{\link[=detail]{detail()}} drills

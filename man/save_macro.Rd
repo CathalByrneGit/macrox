@@ -4,7 +4,7 @@
 \alias{save_macro}
 \title{Save the session's recorded steps as a YAML macro}
 \usage{
-save_macro(sess, name, path = ".", overwrite = FALSE)
+save_macro(sess, name, path = ".", overwrite = FALSE, params = NULL)
 }
 \arguments{
 \item{sess}{A \code{macrox_session} object.}
@@ -14,6 +14,13 @@ save_macro(sess, name, path = ".", overwrite = FALSE)
 \item{path}{Directory to write the \code{.yml} file (default \code{.}).}
 
 \item{overwrite}{Logical; overwrite an existing file? (default FALSE)}
+
+\item{params}{Optional parameter declarations for parameterised macros.
+Accepts a named character vector \code{c(year = "integer", month = "character")}
+or a bare character vector of names \code{c("year", "month")}.
+Declared parameters can be referenced as \verb{$name} in any step field
+(e.g. \code{expr = "$year"}) and supplied at replay time via
+\code{mx_replay(..., params = list(year = 2025L))}.}
 }
 \value{
 The output file path, invisibly.

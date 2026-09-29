@@ -8,6 +8,7 @@ mx_replay_batch(
   files,
   macro,
   macro_path = ".",
+  params = list(),
   .progress = TRUE,
   .parallel = FALSE
 )
@@ -18,6 +19,10 @@ mx_replay_batch(
 \item{macro}{Macro name, path, or step list (see \code{\link[=mx_replay]{mx_replay()}}).}
 
 \item{macro_path}{Directory for macro lookup (default \code{.}).}
+
+\item{params}{Named list of parameter values passed to each \code{\link[=mx_replay]{mx_replay()}}
+call. Useful when all files share the same parameters. To vary parameters
+per file, call \code{\link[=mx_replay]{mx_replay()}} directly in a loop.}
 
 \item{.progress}{Show file-level progress messages (default TRUE).}
 

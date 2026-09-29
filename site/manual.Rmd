@@ -1,0 +1,58 @@
+---
+title: Help pages
+---
+
+```{css, echo = FALSE}
+h2 {
+  text-align: center;
+  margin-top: 2em;
+}
+```
+
+## Reference index {-}
+
+**Session** — Create and manage extraction sessions.  
+[mx_session()](#sec:man-mx_session), [mx_profile()](#sec:man-mx_profile), [show_steps()](#sec:man-show_steps), [remove_step()](#sec:man-remove_step)
+
+**Detection** — Scan a PDF for table locations.  
+[detect_tables()](#sec:man-detect_tables), [detect_tables_quietly()](#sec:man-detect_tables_quietly), [locate_area()](#sec:man-locate_area)
+
+**Table extraction** — Pull tables out of PDF pages.  
+[select_table()](#sec:man-select_table), [select_table_docling()](#sec:man-select_table_docling), [select_table_llm()](#sec:man-select_table_llm), [stack_pages()](#sec:man-stack_pages), [stack_tables()](#sec:man-stack_tables), [merge_tables()](#sec:man-merge_tables)
+
+**Metadata extraction** — Extract individual fields and structured records.  
+[select_item()](#sec:man-select_item), [select_items_batch()](#sec:man-select_items_batch), [select_struct()](#sec:man-select_struct), [struct_to_df()](#sec:man-struct_to_df), [show_items()](#sec:man-show_items), [update_item()](#sec:man-update_item), [update_llm_schema()](#sec:man-update_llm_schema), [suggest_schema()](#sec:man-suggest_schema)
+
+**LLM configuration** — Configure the LLM provider at session or global level.  
+[mx_configure_llm()](#sec:man-mx_configure_llm)
+
+**Cleaning** — Rename, cast, filter, and reshape extracted tables.  
+[rename_columns()](#sec:man-rename_columns), [cast_types()](#sec:man-cast_types), [filter_rows()](#sec:man-filter_rows), [add_column()](#sec:man-add_column), [split_column()](#sec:man-split_column), [fill_down()](#sec:man-fill_down), [clean_numbers()](#sec:man-clean_numbers)
+
+**Inspection** — Preview and visualise extracted data.  
+[preview()](#sec:man-preview), [preview_all()](#sec:man-preview_all), [view_in_pdf()](#sec:man-view_in_pdf)
+
+**Macros** — Save, load, and replay extraction workflows.  
+[save_macro()](#sec:man-save_macro), [load_macro()](#sec:man-load_macro), [mx_replay()](#sec:man-mx_replay), [mx_replay_batch()](#sec:man-mx_replay_batch), [validate_macro()](#sec:man-validate_macro)
+
+**Comparison** — Diff macro outputs across two PDFs.  
+[diff_replay()](#sec:man-diff_replay), [detail()](#sec:man-detail)
+
+**Validation** — Validate table structure and values.  
+[validate_table()](#sec:man-validate_table), [show_validations()](#sec:man-show_validations)
+
+**Export** — Write extracted data to files.  
+[export_csv()](#sec:man-export_csv), [export_excel()](#sec:man-export_excel), [export_json()](#sec:man-export_json)
+
+**Testing** — Snapshot-test macro outputs in CI.  
+[test_macro()](#sec:man-test_macro), [test_extraction()](#sec:man-test_extraction), [expect_table_snapshot()](#sec:man-expect_table_snapshot)
+
+**Shiny** — Embed macrox in a Shiny application.  
+[mx_app()](#sec:man-mx_app), [macrox_ui()](#sec:man-macrox_ui), [macrox_server()](#sec:man-macrox_server)
+
+**Python backends** — Set up optional ML and NLP engines.  
+[setup_docling()](#sec:man-setup_docling), [close_docling()](#sec:man-close_docling), [setup_gliner()](#sec:man-setup_gliner), [close_gliner()](#sec:man-close_gliner)
+
+## Full manual {-}
+
+`{r} litedown::pkg_manual()`
