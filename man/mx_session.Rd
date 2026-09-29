@@ -7,7 +7,10 @@
 mx_session(path = NULL)
 }
 \arguments{
-\item{path}{Path to a PDF file.}
+\item{path}{Path to a PDF file, or an image file (PNG, JPG, TIFF, BMP, GIF,
+WEBP). Image files are automatically converted to PDF; only
+\code{\link[=select_table_llm]{select_table_llm()}} and \code{\link[=select_table_docling]{select_table_docling()}} work on the resulting
+session.}
 }
 \value{
 An invisible \code{macrox_session} environment.

@@ -8,8 +8,8 @@ clean_numbers(
   sess,
   table,
   cols = NULL,
-  currency = c("£", "$", "€", "¥"),
-  na_strings = c("-", "—", "n/a", "na", ""),
+  currency = c("<U+00A3>", "$", "<U+20AC>", "<U+00A5>"),
+  na_strings = c("-", "<U+2014>", "n/a", "na", ""),
   negative_parens = TRUE,
   convert = TRUE
 )

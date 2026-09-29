@@ -4,7 +4,7 @@
 \alias{macrox_ui}
 \title{Shiny module UI for PDF table extraction}
 \usage{
-macrox_ui(id, title = "PDF · Table Extractor", height = "600px")
+macrox_ui(id, title = "PDF <U+00B7> Table Extractor", height = "600px")
 }
 \arguments{
 \item{id}{Module namespace ID.}
