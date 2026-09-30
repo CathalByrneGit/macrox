@@ -2,6 +2,8 @@
 
 > Record and replay PDF table extraction workflows — like an Excel macro for PDFs.
 
+**Documentation:** <https://cathalbyrnegit.github.io/macrox/>
+
 You open a PDF, pull out the tables you need, clean them up — and the package silently records every step. Save the recording as a YAML macro. Next time the same report lands, one line replays everything and hands you clean data frames.
 
 Works with any domain: government statistics, financial reports, health data, planning documents. No domain logic is baked in.
@@ -74,9 +76,9 @@ mx_replay("report_2025.pdf", macro = "my_report")
 
 | Vignette | Topics covered |
 |---|---|
-| [Getting Started](https://cathalbyrnegit.github.io/macrox/articles/macrox.html) | Full script workflow: extract → clean → validate → save → replay |
-| [Extraction Methods](https://cathalbyrnegit.github.io/macrox/articles/extraction-methods.html) | bbox tuning, lattice/stream, Docling, multi-page tables, method selection guide |
-| [LLM Integration](https://cathalbyrnegit.github.io/macrox/articles/llm-integration.html) | Provider setup, schemas, global config, items, GLiNER2 |
-| [Macros & Testing](https://cathalbyrnegit.github.io/macrox/articles/macros-and-testing.html) | Parameterised macros, batch replay, diff, CI snapshot testing |
+| [Getting Started](https://cathalbyrnegit.github.io/macrox/doc/macrox.html) | Full script workflow: extract → clean → validate → save → replay |
+| [Extraction Methods](https://cathalbyrnegit.github.io/macrox/doc/extraction-methods.html) | bbox tuning, lattice/stream, Docling, multi-page tables, method selection guide |
+| [LLM Integration](https://cathalbyrnegit.github.io/macrox/doc/llm-integration.html) | Provider setup, schemas, global config, items, GLiNER2 |
+| [Macros & Testing](https://cathalbyrnegit.github.io/macrox/doc/macros-and-testing.html) | Parameterised macros, batch replay, diff, CI snapshot testing |
 
-[**Full function reference →**](https://cathalbyrnegit.github.io/macrox/reference/)
+[**Full function reference →**](https://cathalbyrnegit.github.io/macrox/manual.html)
