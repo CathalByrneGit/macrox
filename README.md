@@ -81,4 +81,3 @@ mx_replay("report_2025.pdf", macro = "my_report")
 | [LLM Integration](https://cathalbyrnegit.github.io/macrox/doc/llm-integration.html) | Provider setup, schemas, global config, items, GLiNER2 |
 | [Macros & Testing](https://cathalbyrnegit.github.io/macrox/doc/macros-and-testing.html) | Parameterised macros, batch replay, diff, CI snapshot testing |
 
-[**Full function reference →**](https://cathalbyrnegit.github.io/macrox/manual.html)
