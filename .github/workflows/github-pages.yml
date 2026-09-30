@@ -27,6 +27,8 @@ jobs:
         with:
           extra-packages: litedown xfun .
           r-universe: yihui
+          system-packages: pandoc
+          apt-packages: libpoppler-cpp-dev libmagick++-dev
       - uses: yihui/actions/litedown-site@HEAD
         with:
           site-dir: 'site'
