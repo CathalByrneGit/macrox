@@ -16,7 +16,8 @@ Imports:
     stringdist,
     yaml,
     cli,
-    rlang
+    rlang,
+    zip
 Suggests:
     pdftools,
     validate,
@@ -32,14 +33,11 @@ Suggests:
     shinyFiles,
     shinyAce,
     shinyjs,
-    shinycssloaders,
     writexl,
-    zip,
     testthat (>= 3.0.0),
     purrr (>= 1.1.0),
     mirai (>= 2.0.0),
     knitr,
-    rmarkdown,
-    pkgdown
+    rmarkdown
 Config/testthat/edition: 3
 VignetteBuilder: knitr
