@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Getting Started with macrox</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Getting Started with macrox</h1>
+
+
+
+<p>macrox records every step of a PDF table extraction workflow as a
+YAML macro and replays it automatically on new files. Think of it as
+Power Query for PDFs — interactive exploration that compiles into a
+reproducible pipeline.</p>
+<hr />
+<div id="installation" class="section level2">
+<h2>Installation</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;cathalbyrnegit/macrox&quot;</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co"># Optional but recommended</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  <span class="st">&quot;magick&quot;</span>,      <span class="co"># page annotation and image cropping</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>  <span class="st">&quot;ellmer&quot;</span>,      <span class="co"># LLM extraction</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>  <span class="st">&quot;validate&quot;</span>,    <span class="co"># data quality rules</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>  <span class="st">&quot;shinyAce&quot;</span>,    <span class="co"># YAML editor in app</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>  <span class="st">&quot;shinyFiles&quot;</span>,  <span class="co"># filesystem browser in app</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>  <span class="st">&quot;shinyjs&quot;</span>,     <span class="co"># JS helpers in app</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>  <span class="st">&quot;writexl&quot;</span>,     <span class="co"># Excel export</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>  <span class="st">&quot;jsonlite&quot;</span>     <span class="co"># JSON export</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>))</span></code></pre></div>
+<hr />
+</div>
+<div id="quick-start" class="section level2">
+<h2>Quick start</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(macrox)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co"># Open a session</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>sess <span class="ot">&lt;-</span> <span class="fu">mx_session</span>(<span class="st">&quot;report_2024.pdf&quot;</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co"># Scan for tables</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">detect_tables</span>(<span class="at">pages =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co"># Draw an area, extract, clean</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>area <span class="ot">&lt;-</span> sess <span class="sc">|&gt;</span> <span class="fu">locate_area</span>(<span class="at">page =</span> <span class="dv">8</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table</span>(<span class="st">&quot;monthly&quot;</span>, <span class="at">page =</span> <span class="dv">8</span>, <span class="at">area =</span> area, <span class="at">method =</span> <span class="st">&quot;bbox&quot;</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">rename_columns</span>(<span class="st">&quot;monthly&quot;</span>, <span class="fu">c</span>(<span class="at">Month =</span> <span class="st">&quot;month&quot;</span>, <span class="at">Total =</span> <span class="st">&quot;total&quot;</span>))</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">cast_types</span>(<span class="st">&quot;monthly&quot;</span>, <span class="fu">c</span>(<span class="at">total =</span> <span class="st">&quot;integer&quot;</span>))</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">filter_rows</span>(<span class="st">&quot;monthly&quot;</span>, <span class="at">exclude_where =</span> <span class="st">&quot;month == &#39;Total&#39;&quot;</span>)</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co"># Save the macro</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">save_macro</span>(<span class="st">&quot;my_report&quot;</span>)</span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co"># Replay next year</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="fu">mx_replay</span>(<span class="st">&quot;report_2025.pdf&quot;</span>, <span class="at">macro =</span> <span class="st">&quot;my_report&quot;</span>)</span></code></pre></div>
+<hr />
+</div>
+<div id="standalone-app" class="section level2">
+<h2>Standalone app</h2>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">mx_app</span>()           <span class="co"># system browser</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">mx_app</span>(<span class="st">&quot;dialog&quot;</span>)   <span class="co"># RStudio dialog</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">mx_app</span>(<span class="st">&quot;pane&quot;</span>)     <span class="co"># Viewer pane</span></span></code></pre></div>
+<p>The app provides a full extraction workflow without writing any R
+code. Select a PDF with the filesystem browser, draw a bounding box on
+the page image, configure the extraction method, and hit
+<strong>Extract</strong>. All steps are recorded and can be exported as
+a YAML macro or downloaded as CSV / Excel.</p>
+<p><strong>Tabs:</strong></p>
+<table>
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Tab</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Extract</strong></td>
+<td>Full PDF viewer, draw-to-select area, method picker (bbox / lattice
+/ stream / docling / llm), live preview. <code>←</code> / <code>→</code>
+navigate pages.</td>
+</tr>
+<tr class="even">
+<td><strong>Tables</strong></td>
+<td>One tab per extracted table. Rename, cast types, filter rows (GUI),
+validate rules, column stats.</td>
+</tr>
+<tr class="odd">
+<td><strong>Items</strong></td>
+<td>Extract single metadata fields (invoice numbers, dates, totals) via
+LLM or GLiNER2.</td>
+</tr>
+<tr class="even">
+<td><strong>Struct</strong></td>
+<td>Extract structured records (multiple fields, multiple rows) via
+GLiNER2.</td>
+</tr>
+<tr class="odd">
+<td><strong>Steps</strong></td>
+<td>Recorded step badges. Remove steps, edit the YAML macro directly
+with syntax highlighting.</td>
+</tr>
+<tr class="even">
+<td><strong>Replay</strong></td>
+<td>Run a saved macro against a new PDF. Results load into Tables.</td>
+</tr>
+<tr class="odd">
+<td><strong>Batch</strong></td>
+<td>Run one macro across multiple PDFs. Download as Excel or zip of
+CSVs.</td>
+</tr>
+<tr class="even">
+<td><strong>Export</strong></td>
+<td>Download CSV, Excel, JSON, or the YAML macro.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+</div>
+<div id="extraction-methods" class="section level2">
+<h2>Extraction methods</h2>
+<p>macrox ships five extraction engines. They can be mixed freely within
+the same session and macro.</p>
+<div id="bbox-word-position-engine-recommended-default" class="section level3">
+<h3>bbox — word-position engine (recommended default)</h3>
+<p>Uses <code>pdftools::pdf_data()</code> word-level bounding boxes. No
+Java required. Best for PDFs with charts on the same page, missing grid
+lines, or numbers running together.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>area <span class="ot">&lt;-</span> sess <span class="sc">|&gt;</span> <span class="fu">locate_area</span>(<span class="at">page =</span> <span class="dv">16</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table</span>(<span class="st">&quot;breed_sire&quot;</span>, <span class="at">page =</span> <span class="dv">16</span>, <span class="at">area =</span> area, <span class="at">method =</span> <span class="st">&quot;bbox&quot;</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co"># Tune when columns merge or split</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table</span>(<span class="st">&quot;monthly&quot;</span>, <span class="at">page =</span> <span class="dv">27</span>, <span class="at">method =</span> <span class="st">&quot;bbox&quot;</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">area    =</span> <span class="fu">c</span>(<span class="at">top =</span> <span class="dv">80</span>, <span class="at">left =</span> <span class="dv">30</span>, <span class="at">bottom =</span> <span class="dv">500</span>, <span class="at">right =</span> <span class="dv">750</span>),</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="at">col_gap =</span> <span class="dv">20</span>,    <span class="co"># minimum horizontal gap (pts) between columns</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>  <span class="at">row_tol =</span> <span class="dv">3</span>)     <span class="co"># vertical tolerance for grouping words into rows</span></span></code></pre></div>
+</div>
+<div id="lattice-stream-tabulapdf-engines" class="section level3">
+<h3>lattice / stream — tabulapdf engines</h3>
+<p>For clean PDFs with visible grid lines (<code>lattice</code>) or
+whitespace-aligned columns (<code>stream</code>). Requires Java and the
+<code>tabulapdf</code> package (listed in Suggests — not required for
+other methods).</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table</span>(<span class="st">&quot;calf_monthly&quot;</span>, <span class="at">page =</span> <span class="dv">8</span>, <span class="at">method =</span> <span class="st">&quot;lattice&quot;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table</span>(<span class="st">&quot;calf_stream&quot;</span>,  <span class="at">page =</span> <span class="dv">9</span>, <span class="at">method =</span> <span class="st">&quot;stream&quot;</span>)</span></code></pre></div>
+</div>
+<div id="docling-ml-layout-engine-ibm-research" class="section level3">
+<h3>docling — ML layout engine (IBM Research)</h3>
+<p>Uses Docling’s deep learning layout models to detect and extract
+tables. Converts scanned PDFs and handles complex multi-column layouts
+where positional methods fail. Runs fully offline after a one-time model
+download (~2-3 GB). No API key required.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># One-time setup — installs docling into a Python virtualenv</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">setup_docling</span>()</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co"># Restart R before first use</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Scan for tables using Docling&#39;s ML detection (single-pass, cached)</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">detect_tables</span>(<span class="at">pages =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>, <span class="at">method =</span> <span class="st">&quot;docling&quot;</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co"># Extract a specific table</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table_docling</span>(<span class="st">&quot;financials&quot;</span>, <span class="at">page =</span> <span class="dv">10</span>, <span class="at">table_index =</span> <span class="dv">1</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co"># Release the document cache when done</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="fu">close_docling</span>()</span></code></pre></div>
+<p>Docling caches converted pages in memory, so repeated calls for
+different tables on the same page are fast. Use
+<code>close_docling()</code> to release the cache.</p>
+</div>
+<div id="llm-llm-engine-via-ellmer" class="section level3">
+<h3>llm — LLM engine via ellmer</h3>
+<p>Sends a rendered page image to a large language model. Best for
+multi-level spanning headers, scanned PDFs, and any layout where
+positional extraction fails. Requires the <code>ellmer</code> package
+and a provider API key in <code>.Renviron</code>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Pass any ellmer chat object directly</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>chat <span class="ot">&lt;-</span> ellmer<span class="sc">::</span><span class="fu">chat_anthropic</span>()</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table_llm</span>(<span class="st">&quot;stillborn&quot;</span>, <span class="at">page =</span> <span class="dv">40</span>, <span class="at">area =</span> area, <span class="at">chat =</span> chat)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co"># Or specify provider/model inline (chat object created automatically)</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table_llm</span>(<span class="st">&quot;stillborn&quot;</span>, <span class="at">page =</span> <span class="dv">40</span>, <span class="at">area =</span> area,</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>                          <span class="at">provider =</span> <span class="st">&quot;anthropic&quot;</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co"># Predefined schema — more accurate and consistent across replays</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table_llm</span>(<span class="st">&quot;breed_sire&quot;</span>, <span class="at">page =</span> <span class="dv">16</span>, <span class="at">area =</span> area,</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  <span class="at">chat     =</span> chat,</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>  <span class="at">schema   =</span> <span class="fu">c</span>(<span class="at">Breed =</span> <span class="st">&quot;character&quot;</span>, <span class="at">Male =</span> <span class="st">&quot;integer&quot;</span>,</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>               <span class="at">Female =</span> <span class="st">&quot;integer&quot;</span>, <span class="at">Total =</span> <span class="st">&quot;integer&quot;</span>),</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>  <span class="at">prompt   =</span> <span class="st">&quot;Flatten the two-row header with _ separators.&quot;</span>)</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co"># Refine schema without re-drawing the area</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">update_llm_schema</span>(<span class="st">&quot;breed_sire&quot;</span>,</span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a>  <span class="at">schema =</span> <span class="fu">c</span>(<span class="at">Breed =</span> <span class="st">&quot;character&quot;</span>, <span class="at">Male =</span> <span class="st">&quot;integer&quot;</span>, <span class="at">Total =</span> <span class="st">&quot;integer&quot;</span>))</span></code></pre></div>
+<p><strong>Using <code>chat =</code></strong> — pass any <a href="https://ellmer.tidyverse.org/">ellmer</a> chat object for full
+control over model parameters, system prompts, and provider
+configuration:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>chat <span class="ot">&lt;-</span> ellmer<span class="sc">::</span><span class="fu">chat_openai</span>(<span class="at">model =</span> <span class="st">&quot;gpt-4o&quot;</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>chat <span class="ot">&lt;-</span> ellmer<span class="sc">::</span><span class="fu">chat_google_gemini</span>(<span class="at">model =</span> <span class="st">&quot;gemini-2.0-flash&quot;</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>chat <span class="ot">&lt;-</span> ellmer<span class="sc">::</span><span class="fu">chat_ollama</span>(<span class="at">model =</span> <span class="st">&quot;llava&quot;</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co"># Same chat object works for tables and items</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table_llm</span>(<span class="st">&quot;tbl&quot;</span>, <span class="at">page =</span> <span class="dv">1</span>, <span class="at">chat =</span> chat)</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_item</span>(<span class="st">&quot;ref&quot;</span>, <span class="at">prompt =</span> <span class="st">&quot;Reference number&quot;</span>, <span class="at">chat =</span> chat)</span></code></pre></div>
+<p><strong>Using <code>provider =</code></strong> — shorthand when
+defaults are fine. <code>provider</code> can be the name of any ellmer
+chat constructor without the <code>chat_</code> prefix — e.g.
+<code>&quot;anthropic&quot;</code>, <code>&quot;openai&quot;</code>,
+<code>&quot;google_gemini&quot;</code>, <code>&quot;openrouter&quot;</code>,
+<code>&quot;groq&quot;</code>, <code>&quot;mistral&quot;</code>, <code>&quot;deepseek&quot;</code>,
+<code>&quot;ollama&quot;</code>, or <code>&quot;openai_compatible&quot;</code>.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table_llm</span>(<span class="st">&quot;tbl&quot;</span>, <span class="at">page =</span> <span class="dv">5</span>,</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="at">provider =</span> <span class="st">&quot;openai_compatible&quot;</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">model    =</span> <span class="st">&quot;llama3.2-vision&quot;</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">base_url =</span> <span class="st">&quot;http://localhost:1234/v1&quot;</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table_llm</span>(<span class="st">&quot;tbl&quot;</span>, <span class="at">page =</span> <span class="dv">5</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  <span class="at">provider =</span> <span class="st">&quot;openrouter&quot;</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>  <span class="at">model    =</span> <span class="st">&quot;anthropic/claude-opus-4.5&quot;</span>)</span></code></pre></div>
+<p><strong>API keys</strong> — set in <code>.Renviron</code>, using
+whatever environment variable the chosen
+<code>ellmer::chat_&lt;provider&gt;()</code> expects:</p>
+<pre><code>ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+GEMINI_API_KEY=AI...
+OPENROUTER_API_KEY=sk-or-...</code></pre>
+<hr />
+</div>
+</div>
+<div id="multi-page-tables" class="section level2">
+<h2>Multi-page tables</h2>
+<p>When the same table spans several consecutive PDF pages,
+<code>stack_pages()</code> extracts from each page and row-binds the
+results. Repeated headers are consumed automatically.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">stack_pages</span>(<span class="st">&quot;breed_all&quot;</span>, <span class="at">pages =</span> <span class="dv">10</span><span class="sc">:</span><span class="dv">14</span>,</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="at">area   =</span> <span class="fu">c</span>(<span class="at">top =</span> <span class="dv">80</span>, <span class="at">left =</span> <span class="dv">30</span>, <span class="at">bottom =</span> <span class="dv">700</span>, <span class="at">right =</span> <span class="dv">550</span>),</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">&quot;bbox&quot;</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co"># When pages 2+ don&#39;t repeat the header row:</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">stack_pages</span>(<span class="st">&quot;breed_all&quot;</span>, <span class="at">pages =</span> <span class="dv">10</span><span class="sc">:</span><span class="dv">14</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>  <span class="at">method       =</span> <span class="st">&quot;bbox&quot;</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>  <span class="at">header_match =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<hr />
+</div>
+<div id="extracting-metadata-items" class="section level2">
+<h2>Extracting metadata items</h2>
+<p><code>select_item()</code> extracts a single field from the document
+— invoice numbers, dates, totals, report titles — anything that isn’t a
+table row. Results sit alongside tables in <code>sess$items</code> and
+are included in <code>export_json()</code>.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Text-based (default): sends all page text to the LLM — fast and cheap</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_item</span>(<span class="st">&quot;invoice_number&quot;</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="at">prompt =</span> <span class="st">&quot;Extract the invoice ID or reference number.&quot;</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_item</span>(<span class="st">&quot;invoice_date&quot;</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>  <span class="at">prompt =</span> <span class="st">&quot;The billing issue date.&quot;</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  <span class="at">cast   =</span> <span class="st">&quot;date:%d/%m/%Y&quot;</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_item</span>(<span class="st">&quot;total_amount&quot;</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>  <span class="at">prompt =</span> <span class="st">&quot;The grand total payable.&quot;</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>  <span class="at">cast   =</span> <span class="st">&quot;numeric&quot;</span>)</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co"># Image-based: render a specific page (better for scanned or visual PDFs)</span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_item</span>(<span class="st">&quot;stamp_ref&quot;</span>, <span class="at">page =</span> <span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>  <span class="at">prompt =</span> <span class="st">&quot;The approval stamp reference in the top-right corner.&quot;</span>,</span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>  <span class="at">area   =</span> <span class="fu">c</span>(<span class="at">top =</span> <span class="dv">20</span>, <span class="at">left =</span> <span class="dv">500</span>, <span class="at">bottom =</span> <span class="dv">100</span>, <span class="at">right =</span> <span class="dv">780</span>))</span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co"># Review all items</span></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">show_items</span>()</span></code></pre></div>
+<div id="gliner2-backend-local-no-api-key" class="section level3">
+<h3>GLiNER2 backend — local, no API key</h3>
+<p>The GLiNER2 backend extracts fields using a local NLP model. Runs on
+CPU, no API key needed.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># One-time setup</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="fu">setup_gliner</span>()</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="co"># Single field</span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_item</span>(<span class="st">&quot;invoice_number&quot;</span>,</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>  <span class="at">prompt  =</span> <span class="st">&quot;Invoice ID or reference number&quot;</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>  <span class="at">backend =</span> <span class="st">&quot;gliner&quot;</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="co"># Batch extraction — multiple fields in one model pass (much faster)</span></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_items_batch</span>(<span class="fu">c</span>(</span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>  <span class="at">invoice_no =</span> <span class="st">&quot;Invoice ID or reference number&quot;</span>,</span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>  <span class="at">total      =</span> <span class="st">&quot;Grand total amount payable&quot;</span>,</span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>  <span class="at">due_date   =</span> <span class="st">&quot;Payment due date&quot;</span></span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>), <span class="at">cast =</span> <span class="fu">c</span>(<span class="at">total =</span> <span class="st">&quot;numeric&quot;</span>, <span class="at">due_date =</span> <span class="st">&quot;date:%d/%m/%Y&quot;</span>))</span></code></pre></div>
+</div>
+<div id="structured-record-extraction" class="section level3">
+<h3>Structured record extraction</h3>
+<p><code>select_struct()</code> extracts multiple structured records —
+like a table, but from unstructured text using GLiNER2.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_struct</span>(<span class="st">&quot;line_items&quot;</span>,</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>  <span class="at">entity =</span> <span class="st">&quot;LineItem&quot;</span>,</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="at">fields =</span> <span class="fu">c</span>(</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>    <span class="at">description =</span> <span class="st">&quot;Product or service description&quot;</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>    <span class="at">quantity    =</span> <span class="st">&quot;Number of units&quot;</span>,</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>    <span class="at">unit_price  =</span> <span class="st">&quot;Price per unit&quot;</span></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>  ),</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>  <span class="at">list_fields =</span> <span class="fu">character</span>(<span class="dv">0</span>),</span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>  <span class="at">page =</span> <span class="dv">1</span><span class="dt">L</span>)</span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co"># Convert to a data frame (with optional confidence filtering)</span></span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">struct_to_df</span>(<span class="st">&quot;line_items&quot;</span>, <span class="at">min_confidence =</span> <span class="fl">0.5</span>)</span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a></span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a><span class="co"># The result is now in sess$tables$line_items — clean, rename, export as usual</span></span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">preview</span>(<span class="st">&quot;line_items&quot;</span>)</span></code></pre></div>
+<hr />
+</div>
+</div>
+<div id="cleaning-tables" class="section level2">
+<h2>Cleaning tables</h2>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">rename_columns</span>(<span class="st">&quot;monthly&quot;</span>, <span class="fu">c</span>(</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>  <span class="at">Month =</span> <span class="st">&quot;month&quot;</span>, <span class="at">Male =</span> <span class="st">&quot;male_count&quot;</span>, <span class="at">Female =</span> <span class="st">&quot;female_count&quot;</span>, <span class="at">Total =</span> <span class="st">&quot;total&quot;</span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>))</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">cast_types</span>(<span class="st">&quot;monthly&quot;</span>, <span class="fu">c</span>(</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>  <span class="at">male_count   =</span> <span class="st">&quot;integer&quot;</span>,</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>  <span class="at">female_count =</span> <span class="st">&quot;integer&quot;</span>,</span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>  <span class="at">total        =</span> <span class="st">&quot;integer&quot;</span></span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a>  <span class="co"># also: &quot;numeric&quot;, &quot;character&quot;, &quot;date:%d/%m/%Y&quot;, &quot;date:%Y-%m-%d&quot;</span></span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a>))</span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a></span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">filter_rows</span>(<span class="st">&quot;monthly&quot;</span>, <span class="at">exclude_where =</span> <span class="st">&quot;month == &#39;Total&#39;&quot;</span>)</span></code></pre></div>
+<div id="forward-fill-and-number-cleaning" class="section level3">
+<h3>Forward-fill and number cleaning</h3>
+<p>Government PDFs often have merged header cells that leave blanks in
+rows below. <code>fill_down()</code> propagates the last non-blank value
+downward.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="co"># Forward-fill blank cells in specific columns</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">fill_down</span>(<span class="st">&quot;monthly&quot;</span>, <span class="at">cols =</span> <span class="st">&quot;region&quot;</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a><span class="co"># Forward-fill all columns</span></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">fill_down</span>(<span class="st">&quot;monthly&quot;</span>)</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="co"># Strip currency symbols, thousands separators, parenthetical negatives</span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">clean_numbers</span>(<span class="st">&quot;monthly&quot;</span>, <span class="at">cols =</span> <span class="fu">c</span>(<span class="st">&quot;male_count&quot;</span>, <span class="st">&quot;female_count&quot;</span>))</span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a></span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a><span class="co"># clean_numbers() with cols = NULL targets all non-numeric columns</span></span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">clean_numbers</span>(<span class="st">&quot;monthly&quot;</span>)</span></code></pre></div>
+</div>
+<div id="suggesting-column-types" class="section level3">
+<h3>Suggesting column types</h3>
+<p><code>suggest_schema()</code> inspects values and proposes a
+<code>cast_types()</code> call:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">suggest_schema</span>(<span class="st">&quot;monthly&quot;</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="co">#&gt; Suggested schema for &#39;monthly&#39;</span></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="co">#&gt;   month         -&gt;  character</span></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="co">#&gt;   male_count    -&gt;  integer</span></span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a><span class="co">#&gt;   female_count  -&gt;  integer</span></span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a><span class="co">#&gt;   total         -&gt;  integer</span></span></code></pre></div>
+<hr />
+</div>
+</div>
+<div id="deriving-and-combining-tables" class="section level2">
+<h2>Deriving and combining tables</h2>
+<p>These steps are all recorded in the macro and replay
+automatically.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="co"># Add a derived column (expression evaluated against the data frame)</span></span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">add_column</span>(<span class="st">&quot;monthly&quot;</span>, <span class="st">&quot;year&quot;</span>,  <span class="at">expr =</span> <span class="st">&quot;2024L&quot;</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">add_column</span>(<span class="st">&quot;monthly&quot;</span>, <span class="st">&quot;ratio&quot;</span>, <span class="at">expr =</span> <span class="st">&quot;male_count / total&quot;</span>)</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a><span class="co"># Row-bind tables with the same schema</span></span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">stack_tables</span>(<span class="st">&quot;all_years&quot;</span>,</span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>  <span class="at">tables =</span> <span class="fu">c</span>(<span class="st">&quot;calves_2022&quot;</span>, <span class="st">&quot;calves_2023&quot;</span>, <span class="st">&quot;calves_2024&quot;</span>))</span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a></span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a><span class="co"># Optional: pad missing columns with NA when schemas differ slightly</span></span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">stack_tables</span>(<span class="st">&quot;all_years&quot;</span>,</span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a>  <span class="at">tables =</span> <span class="fu">c</span>(<span class="st">&quot;calves_2022&quot;</span>, <span class="st">&quot;calves_2023&quot;</span>),</span>
+<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a>  <span class="at">.fill  =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a></span>
+<span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a><span class="co"># Join two tables</span></span>
+<span id="cb19-15"><a href="#cb19-15" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">merge_tables</span>(<span class="st">&quot;combined&quot;</span>,</span>
+<span id="cb19-16"><a href="#cb19-16" tabindex="-1"></a>  <span class="at">left  =</span> <span class="st">&quot;monthly&quot;</span>,</span>
+<span id="cb19-17"><a href="#cb19-17" tabindex="-1"></a>  <span class="at">right =</span> <span class="st">&quot;county_totals&quot;</span>,</span>
+<span id="cb19-18"><a href="#cb19-18" tabindex="-1"></a>  <span class="at">by    =</span> <span class="st">&quot;month&quot;</span>)</span></code></pre></div>
+<hr />
+</div>
+<div id="data-validation" class="section level2">
+<h2>Data validation</h2>
+<p><code>validate_table()</code> uses the <code>validate</code> package
+DSL. Rules are stored in the macro and re-run automatically on every
+replay — catching data drift silently.</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">validate_table</span>(<span class="st">&quot;monthly&quot;</span>, <span class="at">rules =</span> <span class="fu">c</span>(</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>  <span class="at">twelve_rows    =</span> <span class="st">&quot;nrow(.) == 12&quot;</span>,</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>  <span class="at">no_na_month    =</span> <span class="st">&quot;!any(is.na(month))&quot;</span>,</span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>  <span class="at">positive_males =</span> <span class="st">&quot;all(male_count &gt; 0, na.rm = TRUE)&quot;</span>,</span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a>  <span class="at">totals_sum     =</span> <span class="st">&quot;all(abs(male_count + female_count - total) &lt; 2, na.rm = TRUE)&quot;</span></span>
+<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a>))</span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a><span class="co"># ✔ All 4 validation rules passed for &#39;monthly&#39;</span></span>
+<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a><span class="co"># Review all validation results</span></span>
+<span id="cb20-10"><a href="#cb20-10" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">show_validations</span>()</span>
+<span id="cb20-11"><a href="#cb20-11" tabindex="-1"></a></span>
+<span id="cb20-12"><a href="#cb20-12" tabindex="-1"></a><span class="co"># Strict mode — abort replay on failure (good for production pipelines)</span></span>
+<span id="cb20-13"><a href="#cb20-13" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">validate_table</span>(<span class="st">&quot;monthly&quot;</span>, <span class="at">rules =</span> <span class="fu">c</span>(...), <span class="at">strict =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<hr />
+</div>
+<div id="reviewing-and-editing-steps" class="section level2">
+<h2>Reviewing and editing steps</h2>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">show_steps</span>()</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="co"># * [1]  select_table   → monthly       | page 8 [bbox]</span></span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a><span class="co"># * [2]  rename_columns → monthly       | 4 renames</span></span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a><span class="co"># * [3]  cast_types     → monthly       | 4 casts</span></span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a><span class="co"># * [4]  filter_rows    → monthly       | exclude: month == &#39;Total&#39;</span></span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a><span class="co"># * [5]  add_column     → monthly       | year = 2024L</span></span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a><span class="co"># * [6]  validate_table → monthly       | 4 rules</span></span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a><span class="co"># * [7]  select_item    → invoice_date  | cast: date</span></span>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a></span>
+<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">remove_step</span>(<span class="dv">3</span>)           <span class="co"># remove by index; clears table if extraction step</span></span>
+<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">preview_all</span>()            <span class="co"># inspect all tables before saving</span></span></code></pre></div>
+<hr />
+</div>
+<div id="saving-and-replaying" class="section level2">
+<h2>Saving and replaying</h2>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="co"># Save macro to disk</span></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">save_macro</span>(<span class="st">&quot;my_report&quot;</span>, <span class="at">path =</span> <span class="st">&quot;inst/macros/&quot;</span>)</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a><span class="co"># Replay against a new file — returns named list of data frames</span></span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a>tables <span class="ot">&lt;-</span> <span class="fu">mx_replay</span>(<span class="st">&quot;report_2025.pdf&quot;</span>, <span class="at">macro =</span> <span class="st">&quot;my_report&quot;</span>)</span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a><span class="co"># Batch replay across multiple files</span></span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a>files   <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="st">&quot;reports/&quot;</span>, <span class="at">pattern =</span> <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.pdf$&quot;</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">mx_replay_batch</span>(files, <span class="at">macro =</span> <span class="st">&quot;my_report&quot;</span>)</span></code></pre></div>
+<hr />
+</div>
+<div id="comparing-runs" class="section level2">
+<h2>Comparing runs</h2>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>diff <span class="ot">&lt;-</span> <span class="fu">diff_replay</span>(</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>  <span class="st">&quot;report_2024.pdf&quot;</span>,</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>  <span class="st">&quot;report_2025.pdf&quot;</span>,</span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a>  <span class="at">macro =</span> <span class="st">&quot;my_report&quot;</span></span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a>)</span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a><span class="fu">print</span>(diff)</span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a><span class="co"># macrox diff</span></span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a><span class="co">#   Reference: report_2024.pdf</span></span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a><span class="co">#   New:       report_2025.pdf</span></span>
+<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb23-11"><a href="#cb23-11" tabindex="-1"></a><span class="co"># ✔ monthly        [unchanged]</span></span>
+<span id="cb23-12"><a href="#cb23-12" tabindex="-1"></a><span class="co"># ~ breed_by_sire  [changed] (rows: 17→18, +cols: HE, 2 cell changes)</span></span>
+<span id="cb23-13"><a href="#cb23-13" tabindex="-1"></a><span class="co"># ✔ calf_monthly   [unchanged]</span></span></code></pre></div>
+<hr />
+</div>
+<div id="exporting-data" class="section level2">
+<h2>Exporting data</h2>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="co"># CSV files — one per table</span></span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">export_csv</span>(<span class="at">dir =</span> <span class="st">&quot;output/&quot;</span>)</span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a></span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a><span class="co"># Single Excel workbook — one sheet per table</span></span>
+<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">export_excel</span>(<span class="st">&quot;output/report_tables.xlsx&quot;</span>)</span>
+<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a></span>
+<span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a><span class="co"># JSON — items (metadata) + tables (row arrays) in one payload</span></span>
+<span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a>json <span class="ot">&lt;-</span> sess <span class="sc">|&gt;</span> <span class="fu">export_json</span>()                       <span class="co"># returns string</span></span>
+<span id="cb24-9"><a href="#cb24-9" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">export_json</span>(<span class="at">path =</span> <span class="st">&quot;output/report.json&quot;</span>)    <span class="co"># writes file</span></span>
+<span id="cb24-10"><a href="#cb24-10" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">export_json</span>(<span class="at">include_steps =</span> <span class="cn">TRUE</span>)           <span class="co"># include macro steps</span></span></code></pre></div>
+<p>The JSON output structure:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a>  <span class="dt">&quot;source&quot;</span><span class="fu">:</span> <span class="st">&quot;report_2024.pdf&quot;</span><span class="fu">,</span></span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a>  <span class="dt">&quot;extracted&quot;</span><span class="fu">:</span> <span class="st">&quot;2026-05-01T14:32:00&quot;</span><span class="fu">,</span></span>
+<span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a>  <span class="dt">&quot;items&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb25-5"><a href="#cb25-5" tabindex="-1"></a>    <span class="dt">&quot;invoice_number&quot;</span><span class="fu">:</span> <span class="st">&quot;INV-9821&quot;</span><span class="fu">,</span></span>
+<span id="cb25-6"><a href="#cb25-6" tabindex="-1"></a>    <span class="dt">&quot;total_amount&quot;</span><span class="fu">:</span> <span class="fl">1234.56</span></span>
+<span id="cb25-7"><a href="#cb25-7" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb25-8"><a href="#cb25-8" tabindex="-1"></a>  <span class="dt">&quot;tables&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb25-9"><a href="#cb25-9" tabindex="-1"></a>    <span class="dt">&quot;monthly&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb25-10"><a href="#cb25-10" tabindex="-1"></a>      <span class="fu">{</span> <span class="dt">&quot;month&quot;</span><span class="fu">:</span> <span class="st">&quot;January&quot;</span><span class="fu">,</span> <span class="dt">&quot;total&quot;</span><span class="fu">:</span> <span class="dv">4700</span> <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb25-11"><a href="#cb25-11" tabindex="-1"></a>      <span class="fu">{</span> <span class="dt">&quot;month&quot;</span><span class="fu">:</span> <span class="st">&quot;February&quot;</span><span class="fu">,</span> <span class="dt">&quot;total&quot;</span><span class="fu">:</span> <span class="dv">11270</span> <span class="fu">}</span></span>
+<span id="cb25-12"><a href="#cb25-12" tabindex="-1"></a>    <span class="ot">]</span></span>
+<span id="cb25-13"><a href="#cb25-13" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb25-14"><a href="#cb25-14" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<hr />
+</div>
+<div id="agent-integration" class="section level2">
+<h2>Agent integration</h2>
+<p><code>test_extraction()</code> is the <strong>R-Core Judge</strong>
+for agentic workflows. It runs one extraction pass and returns a
+structured evaluation report — enabling an MCP agent to self-correct its
+parameters in a feedback loop.</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="co"># Single test pass — no session needed</span></span>
+<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a>report <span class="ot">&lt;-</span> <span class="fu">test_extraction</span>(</span>
+<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a>  <span class="at">file        =</span> <span class="st">&quot;invoice.pdf&quot;</span>,</span>
+<span id="cb26-4"><a href="#cb26-4" tabindex="-1"></a>  <span class="at">page        =</span> <span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb26-5"><a href="#cb26-5" tabindex="-1"></a>  <span class="at">area        =</span> <span class="fu">c</span>(<span class="at">top =</span> <span class="dv">200</span>, <span class="at">left =</span> <span class="dv">30</span>, <span class="at">bottom =</span> <span class="dv">600</span>, <span class="at">right =</span> <span class="dv">780</span>),</span>
+<span id="cb26-6"><a href="#cb26-6" tabindex="-1"></a>  <span class="at">method      =</span> <span class="st">&quot;bbox&quot;</span>,</span>
+<span id="cb26-7"><a href="#cb26-7" tabindex="-1"></a>  <span class="at">header_rows =</span> <span class="dv">1</span><span class="dt">L</span></span>
+<span id="cb26-8"><a href="#cb26-8" tabindex="-1"></a>)</span>
+<span id="cb26-9"><a href="#cb26-9" tabindex="-1"></a></span>
+<span id="cb26-10"><a href="#cb26-10" tabindex="-1"></a>report<span class="sc">$</span>status</span>
+<span id="cb26-11"><a href="#cb26-11" tabindex="-1"></a><span class="co">#&gt; [1] &quot;needs_alignment&quot;</span></span>
+<span id="cb26-12"><a href="#cb26-12" tabindex="-1"></a></span>
+<span id="cb26-13"><a href="#cb26-13" tabindex="-1"></a>report<span class="sc">$</span>metrics</span>
+<span id="cb26-14"><a href="#cb26-14" tabindex="-1"></a><span class="co">#&gt; $rows_extracted      [1] 12</span></span>
+<span id="cb26-15"><a href="#cb26-15" tabindex="-1"></a><span class="co">#&gt; $unnamed_headers     [1] &quot;V1&quot; &quot;V2&quot;</span></span>
+<span id="cb26-16"><a href="#cb26-16" tabindex="-1"></a><span class="co">#&gt; $header_spill        [1] TRUE</span></span>
+<span id="cb26-17"><a href="#cb26-17" tabindex="-1"></a><span class="co">#&gt; $empty_columns       list()</span></span>
+<span id="cb26-18"><a href="#cb26-18" tabindex="-1"></a></span>
+<span id="cb26-19"><a href="#cb26-19" tabindex="-1"></a>report<span class="sc">$</span>guidance</span>
+<span id="cb26-20"><a href="#cb26-20" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Header text detected in data rows — increase header_rows by 1. |</span></span>
+<span id="cb26-21"><a href="#cb26-21" tabindex="-1"></a><span class="co">#&gt;       Unnamed columns (V1, V2) — adjust area coords or increase header_rows.&quot;</span></span></code></pre></div>
+<p>The return value serialises directly to JSON via
+<code>jsonlite::toJSON()</code>, making it straightforward to wire into
+an MCP <code>test_parameters</code> tool. The agent loop runs
+<code>test_extraction()</code> repeatedly — adjusting <code>area</code>,
+<code>header_rows</code>, and <code>method</code> based on
+<code>$guidance</code> — until <code>status == &quot;success&quot;</code>, then
+calls <code>save_macro()</code> to lock the verified parameters.</p>
+<p>Pre-flight validation before replay:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="co"># Validate a macro file without running it</span></span>
+<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">validate_macro</span>(<span class="st">&quot;report_2025.pdf&quot;</span>, <span class="at">macro =</span> <span class="st">&quot;my_report&quot;</span>)</span>
+<span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a><span class="fu">print</span>(result)</span>
+<span id="cb27-4"><a href="#cb27-4" tabindex="-1"></a><span class="co"># ✔ Macro valid</span></span>
+<span id="cb27-5"><a href="#cb27-5" tabindex="-1"></a><span class="co">#   ✔ [1] select_table / monthly</span></span>
+<span id="cb27-6"><a href="#cb27-6" tabindex="-1"></a><span class="co">#   ✔ [2] rename_columns / monthly</span></span></code></pre></div>
+<hr />
+</div>
+<div id="the-yaml-macro" class="section level2">
+<h2>The YAML macro</h2>
+<p>All step types serialise cleanly. The full extraction parameters are
+stored so replay is exact.</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a><span class="fu">macro</span><span class="kw">:</span></span>
+<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> my_report</span></span>
+<span id="cb28-3"><a href="#cb28-3" tabindex="-1"></a><span class="at">  </span><span class="fu">created</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;2026-05-01 14:32&#39;</span></span>
+<span id="cb28-4"><a href="#cb28-4" tabindex="-1"></a><span class="at">  </span><span class="fu">source</span><span class="kw">:</span><span class="at"> report_2024.pdf</span></span>
+<span id="cb28-5"><a href="#cb28-5" tabindex="-1"></a><span class="at">  </span><span class="fu">n_steps</span><span class="kw">:</span><span class="at"> </span><span class="dv">10</span></span>
+<span id="cb28-6"><a href="#cb28-6" tabindex="-1"></a></span>
+<span id="cb28-7"><a href="#cb28-7" tabindex="-1"></a><span class="fu">steps</span><span class="kw">:</span></span>
+<span id="cb28-8"><a href="#cb28-8" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">step</span><span class="kw">:</span><span class="at"> select_table</span></span>
+<span id="cb28-9"><a href="#cb28-9" tabindex="-1"></a><span class="at">    </span><span class="fu">label</span><span class="kw">:</span><span class="at"> monthly</span></span>
+<span id="cb28-10"><a href="#cb28-10" tabindex="-1"></a><span class="at">    </span><span class="fu">page</span><span class="kw">:</span><span class="at"> </span><span class="dv">8</span></span>
+<span id="cb28-11"><a href="#cb28-11" tabindex="-1"></a><span class="at">    </span><span class="fu">method</span><span class="kw">:</span><span class="at"> bbox</span></span>
+<span id="cb28-12"><a href="#cb28-12" tabindex="-1"></a><span class="at">    </span><span class="fu">area</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="dv">80</span><span class="kw">,</span><span class="at"> </span><span class="dv">30</span><span class="kw">,</span><span class="at"> </span><span class="dv">500</span><span class="kw">,</span><span class="at"> </span><span class="dv">750</span><span class="kw">]</span></span>
+<span id="cb28-13"><a href="#cb28-13" tabindex="-1"></a><span class="at">    </span><span class="fu">header_rows</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb28-14"><a href="#cb28-14" tabindex="-1"></a></span>
+<span id="cb28-15"><a href="#cb28-15" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">step</span><span class="kw">:</span><span class="at"> select_table_docling</span></span>
+<span id="cb28-16"><a href="#cb28-16" tabindex="-1"></a><span class="at">    </span><span class="fu">label</span><span class="kw">:</span><span class="at"> financials</span></span>
+<span id="cb28-17"><a href="#cb28-17" tabindex="-1"></a><span class="at">    </span><span class="fu">page</span><span class="kw">:</span><span class="at"> </span><span class="dv">10</span></span>
+<span id="cb28-18"><a href="#cb28-18" tabindex="-1"></a><span class="at">    </span><span class="fu">table_index</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb28-19"><a href="#cb28-19" tabindex="-1"></a></span>
+<span id="cb28-20"><a href="#cb28-20" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">step</span><span class="kw">:</span><span class="at"> select_table_llm</span></span>
+<span id="cb28-21"><a href="#cb28-21" tabindex="-1"></a><span class="at">    </span><span class="fu">label</span><span class="kw">:</span><span class="at"> breed_sire</span></span>
+<span id="cb28-22"><a href="#cb28-22" tabindex="-1"></a><span class="at">    </span><span class="fu">page</span><span class="kw">:</span><span class="at"> </span><span class="dv">16</span></span>
+<span id="cb28-23"><a href="#cb28-23" tabindex="-1"></a><span class="at">    </span><span class="fu">area</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="dv">60</span><span class="kw">,</span><span class="at"> </span><span class="dv">25</span><span class="kw">,</span><span class="at"> </span><span class="dv">620</span><span class="kw">,</span><span class="at"> </span><span class="dv">790</span><span class="kw">]</span></span>
+<span id="cb28-24"><a href="#cb28-24" tabindex="-1"></a><span class="at">    </span><span class="fu">provider</span><span class="kw">:</span><span class="at"> anthropic</span></span>
+<span id="cb28-25"><a href="#cb28-25" tabindex="-1"></a><span class="at">    </span><span class="fu">model</span><span class="kw">:</span><span class="at"> claude-opus-4-8</span></span>
+<span id="cb28-26"><a href="#cb28-26" tabindex="-1"></a><span class="at">    </span><span class="fu">schema</span><span class="kw">:</span></span>
+<span id="cb28-27"><a href="#cb28-27" tabindex="-1"></a><span class="at">      </span><span class="fu">Breed</span><span class="kw">:</span><span class="at"> character</span></span>
+<span id="cb28-28"><a href="#cb28-28" tabindex="-1"></a><span class="at">      </span><span class="fu">Male</span><span class="kw">:</span><span class="at"> integer</span></span>
+<span id="cb28-29"><a href="#cb28-29" tabindex="-1"></a><span class="at">      </span><span class="fu">Total</span><span class="kw">:</span><span class="at"> integer</span></span>
+<span id="cb28-30"><a href="#cb28-30" tabindex="-1"></a><span class="at">    </span><span class="fu">prompt</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;Flatten the two-row header.&quot;</span></span>
+<span id="cb28-31"><a href="#cb28-31" tabindex="-1"></a></span>
+<span id="cb28-32"><a href="#cb28-32" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">step</span><span class="kw">:</span><span class="at"> select_item</span></span>
+<span id="cb28-33"><a href="#cb28-33" tabindex="-1"></a><span class="at">    </span><span class="fu">label</span><span class="kw">:</span><span class="at"> report_date</span></span>
+<span id="cb28-34"><a href="#cb28-34" tabindex="-1"></a><span class="at">    </span><span class="fu">prompt</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;The publication date of this report.&quot;</span></span>
+<span id="cb28-35"><a href="#cb28-35" tabindex="-1"></a><span class="at">    </span><span class="fu">cast</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;date:%B %Y&quot;</span></span>
+<span id="cb28-36"><a href="#cb28-36" tabindex="-1"></a><span class="at">    </span><span class="fu">backend</span><span class="kw">:</span><span class="at"> llm</span></span>
+<span id="cb28-37"><a href="#cb28-37" tabindex="-1"></a><span class="at">    </span><span class="fu">provider</span><span class="kw">:</span><span class="at"> anthropic</span></span>
+<span id="cb28-38"><a href="#cb28-38" tabindex="-1"></a></span>
+<span id="cb28-39"><a href="#cb28-39" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">step</span><span class="kw">:</span><span class="at"> select_struct</span></span>
+<span id="cb28-40"><a href="#cb28-40" tabindex="-1"></a><span class="at">    </span><span class="fu">label</span><span class="kw">:</span><span class="at"> line_items</span></span>
+<span id="cb28-41"><a href="#cb28-41" tabindex="-1"></a><span class="at">    </span><span class="fu">entity</span><span class="kw">:</span><span class="at"> LineItem</span></span>
+<span id="cb28-42"><a href="#cb28-42" tabindex="-1"></a><span class="at">    </span><span class="fu">fields</span><span class="kw">:</span></span>
+<span id="cb28-43"><a href="#cb28-43" tabindex="-1"></a><span class="at">      </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;Product or service description&quot;</span></span>
+<span id="cb28-44"><a href="#cb28-44" tabindex="-1"></a><span class="at">      </span><span class="fu">quantity</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;Number of units&quot;</span></span>
+<span id="cb28-45"><a href="#cb28-45" tabindex="-1"></a><span class="at">    </span><span class="fu">page</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb28-46"><a href="#cb28-46" tabindex="-1"></a></span>
+<span id="cb28-47"><a href="#cb28-47" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">step</span><span class="kw">:</span><span class="at"> rename_columns</span></span>
+<span id="cb28-48"><a href="#cb28-48" tabindex="-1"></a><span class="at">    </span><span class="fu">table</span><span class="kw">:</span><span class="at"> monthly</span></span>
+<span id="cb28-49"><a href="#cb28-49" tabindex="-1"></a><span class="at">    </span><span class="fu">mapping</span><span class="kw">:</span></span>
+<span id="cb28-50"><a href="#cb28-50" tabindex="-1"></a><span class="at">      </span><span class="fu">Month</span><span class="kw">:</span><span class="at"> month</span></span>
+<span id="cb28-51"><a href="#cb28-51" tabindex="-1"></a><span class="at">      </span><span class="fu">Total</span><span class="kw">:</span><span class="at"> total</span></span>
+<span id="cb28-52"><a href="#cb28-52" tabindex="-1"></a></span>
+<span id="cb28-53"><a href="#cb28-53" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">step</span><span class="kw">:</span><span class="at"> cast_types</span></span>
+<span id="cb28-54"><a href="#cb28-54" tabindex="-1"></a><span class="at">    </span><span class="fu">table</span><span class="kw">:</span><span class="at"> monthly</span></span>
+<span id="cb28-55"><a href="#cb28-55" tabindex="-1"></a><span class="at">    </span><span class="fu">types</span><span class="kw">:</span></span>
+<span id="cb28-56"><a href="#cb28-56" tabindex="-1"></a><span class="at">      </span><span class="fu">total</span><span class="kw">:</span><span class="at"> integer</span></span>
+<span id="cb28-57"><a href="#cb28-57" tabindex="-1"></a></span>
+<span id="cb28-58"><a href="#cb28-58" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">step</span><span class="kw">:</span><span class="at"> fill_down</span></span>
+<span id="cb28-59"><a href="#cb28-59" tabindex="-1"></a><span class="at">    </span><span class="fu">table</span><span class="kw">:</span><span class="at"> monthly</span></span>
+<span id="cb28-60"><a href="#cb28-60" tabindex="-1"></a><span class="at">    </span><span class="fu">cols</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">region</span><span class="kw">]</span></span>
+<span id="cb28-61"><a href="#cb28-61" tabindex="-1"></a></span>
+<span id="cb28-62"><a href="#cb28-62" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">step</span><span class="kw">:</span><span class="at"> clean_numbers</span></span>
+<span id="cb28-63"><a href="#cb28-63" tabindex="-1"></a><span class="at">    </span><span class="fu">table</span><span class="kw">:</span><span class="at"> monthly</span></span>
+<span id="cb28-64"><a href="#cb28-64" tabindex="-1"></a><span class="at">    </span><span class="fu">cols</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">total</span><span class="kw">]</span></span>
+<span id="cb28-65"><a href="#cb28-65" tabindex="-1"></a></span>
+<span id="cb28-66"><a href="#cb28-66" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">step</span><span class="kw">:</span><span class="at"> validate_table</span></span>
+<span id="cb28-67"><a href="#cb28-67" tabindex="-1"></a><span class="at">    </span><span class="fu">table</span><span class="kw">:</span><span class="at"> monthly</span></span>
+<span id="cb28-68"><a href="#cb28-68" tabindex="-1"></a><span class="at">    </span><span class="fu">strict</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb28-69"><a href="#cb28-69" tabindex="-1"></a><span class="at">    </span><span class="fu">rules</span><span class="kw">:</span></span>
+<span id="cb28-70"><a href="#cb28-70" tabindex="-1"></a><span class="at">      </span><span class="fu">twelve_rows</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;nrow(.) == 12&quot;</span></span>
+<span id="cb28-71"><a href="#cb28-71" tabindex="-1"></a><span class="at">      </span><span class="fu">no_na</span><span class="kw">:</span><span class="at">       </span><span class="st">&quot;!any(is.na(month))&quot;</span></span></code></pre></div>
+<hr />
+</div>
+<div id="shiny-module" class="section level2">
+<h2>Shiny module</h2>
+<p>Embed macrox in an existing Shiny app:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a><span class="co"># UI</span></span>
+<span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a>bslib<span class="sc">::</span><span class="fu">accordion_panel</span>(</span>
+<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a>  <span class="st">&quot;PDF Import&quot;</span>,</span>
+<span id="cb29-4"><a href="#cb29-4" tabindex="-1"></a>  <span class="at">icon =</span> shiny<span class="sc">::</span><span class="fu">icon</span>(<span class="st">&quot;file-pdf&quot;</span>),</span>
+<span id="cb29-5"><a href="#cb29-5" tabindex="-1"></a>  macrox<span class="sc">::</span><span class="fu">macrox_ui</span>(<span class="fu">ns</span>(<span class="st">&quot;pdf_import&quot;</span>))</span>
+<span id="cb29-6"><a href="#cb29-6" tabindex="-1"></a>)</span>
+<span id="cb29-7"><a href="#cb29-7" tabindex="-1"></a></span>
+<span id="cb29-8"><a href="#cb29-8" tabindex="-1"></a><span class="co"># Server</span></span>
+<span id="cb29-9"><a href="#cb29-9" tabindex="-1"></a>pdf_result <span class="ot">&lt;-</span> macrox<span class="sc">::</span><span class="fu">macrox_server</span>(<span class="st">&quot;pdf_import&quot;</span>)</span>
+<span id="cb29-10"><a href="#cb29-10" tabindex="-1"></a></span>
+<span id="cb29-11"><a href="#cb29-11" tabindex="-1"></a><span class="fu">observe</span>({</span>
+<span id="cb29-12"><a href="#cb29-12" tabindex="-1"></a>  tables <span class="ot">&lt;-</span> pdf_result<span class="sc">$</span><span class="fu">tables</span>()</span>
+<span id="cb29-13"><a href="#cb29-13" tabindex="-1"></a>  <span class="fu">req</span>(<span class="fu">length</span>(tables) <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb29-14"><a href="#cb29-14" tabindex="-1"></a>  <span class="cf">for</span> (nm <span class="cf">in</span> <span class="fu">names</span>(tables)) <span class="fu">your_upload_fn</span>(tables[[nm]], <span class="at">target =</span> nm)</span>
+<span id="cb29-15"><a href="#cb29-15" tabindex="-1"></a>})</span></code></pre></div>
+<hr />
+</div>
+<div id="choosing-an-extraction-method" class="section level2">
+<h2>Choosing an extraction method</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Situation</th>
+<th>Recommended</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Clean PDF with visible grid lines</td>
+<td><code>lattice</code></td>
+</tr>
+<tr class="even">
+<td>Whitespace-aligned columns, no grid</td>
+<td><code>stream</code></td>
+</tr>
+<tr class="odd">
+<td>Charts and tables on the same page</td>
+<td><code>bbox</code> + <code>area =</code></td>
+</tr>
+<tr class="even">
+<td>Numbers running together</td>
+<td><code>bbox</code> + <code>col_gap =</code></td>
+</tr>
+<tr class="odd">
+<td>Scanned PDF, no selectable text</td>
+<td><code>docling</code> or <code>llm</code></td>
+</tr>
+<tr class="even">
+<td>Complex layout, offline</td>
+<td><code>docling</code></td>
+</tr>
+<tr class="odd">
+<td>Multi-level / spanning headers</td>
+<td><code>llm</code> with <code>schema =</code></td>
+</tr>
+<tr class="even">
+<td>Complex irregular layout</td>
+<td><code>llm</code></td>
+</tr>
+<tr class="odd">
+<td>No API key / offline</td>
+<td><code>bbox</code>, tabulapdf, or <code>docling</code></td>
+</tr>
+<tr class="even">
+<td>Single metadata fields</td>
+<td><code>select_item()</code> with <code>llm</code> or
+<code>gliner</code></td>
+</tr>
+<tr class="odd">
+<td>Structured records from text</td>
+<td><code>select_struct()</code> with GLiNER2</td>
+</tr>
+</tbody>
+</table>
+<hr />
+</div>
+<div id="dependencies" class="section level2">
+<h2>Dependencies</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Package</th>
+<th>Role</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>pdftools</code></td>
+<td>Word positions (<code>bbox</code>), page text, rendering</td>
+<td>Yes</td>
+</tr>
+<tr class="even">
+<td><code>stringdist</code></td>
+<td>Fuzzy caption matching</td>
+<td>Yes</td>
+</tr>
+<tr class="odd">
+<td><code>yaml</code></td>
+<td>Macro read/write</td>
+<td>Yes</td>
+</tr>
+<tr class="even">
+<td><code>cli</code></td>
+<td>Console output</td>
+<td>Yes</td>
+</tr>
+<tr class="odd">
+<td><code>rlang</code></td>
+<td><code>%\|\|%</code> operator</td>
+<td>Yes</td>
+</tr>
+<tr class="even">
+<td><code>tabulapdf</code></td>
+<td><code>lattice</code> / <code>stream</code> (needs Java)</td>
+<td>Suggests</td>
+</tr>
+<tr class="odd">
+<td><code>reticulate</code></td>
+<td>Python bridge for Docling and GLiNER2</td>
+<td>Suggests</td>
+</tr>
+<tr class="even">
+<td><code>magick</code></td>
+<td>Page annotation; image cropping for LLM</td>
+<td>Suggests</td>
+</tr>
+<tr class="odd">
+<td><code>ellmer</code></td>
+<td>LLM extraction</td>
+<td>Suggests</td>
+</tr>
+<tr class="even">
+<td><code>validate</code></td>
+<td>Data quality rules</td>
+<td>Suggests</td>
+</tr>
+<tr class="odd">
+<td><code>jsonlite</code></td>
+<td>JSON export</td>
+<td>Suggests</td>
+</tr>
+<tr class="even">
+<td><code>shiny</code> + <code>bslib</code> + <code>DT</code></td>
+<td>Standalone app and module</td>
+<td>Suggests</td>
+</tr>
+<tr class="odd">
+<td><code>shinyFiles</code></td>
+<td>Filesystem browser in app</td>
+<td>Suggests</td>
+</tr>
+<tr class="even">
+<td><code>shinyAce</code></td>
+<td>YAML editor with syntax highlighting</td>
+<td>Suggests</td>
+</tr>
+<tr class="odd">
+<td><code>shinyjs</code></td>
+<td>JS helpers in app</td>
+<td>Suggests</td>
+</tr>
+<tr class="even">
+<td><code>writexl</code></td>
+<td>Excel export</td>
+<td>Suggests</td>
+</tr>
+<tr class="odd">
+<td><code>zip</code></td>
+<td>Zip-of-CSVs export</td>
+<td>Suggests</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

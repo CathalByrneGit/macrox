@@ -1,0 +1,332 @@
+---
+title: "Macros & Testing"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Macros & Testing}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
+```
+
+Macros turn an interactive session into a replayable YAML recipe. This vignette covers the full macro lifecycle: save, load, replay, parameterise, batch-process, diff, and snapshot-test.
+
+---
+
+## Save and replay
+
+Every step you run on a session is silently recorded. Call `save_macro()` when you are done:
+
+```{r save}
+library(macrox)
+
+sess <- mx_session("report_2024.pdf")
+
+sess |> select_table("monthly", page = 8, method = "bbox")
+sess |> rename_columns("monthly", c(Month = "month", Total = "total"))
+sess |> cast_types("monthly", c(total = "integer"))
+sess |> filter_rows("monthly", exclude_where = "month == 'Total'")
+
+sess |> save_macro("my_report")
+# Writes my_report.yml to the working directory
+```
+
+Next year — one call replays every step:
+
+```{r replay}
+tables <- mx_replay("report_2025.pdf", macro = "my_report")
+
+tables$monthly   # clean data frame, ready to use
+```
+
+### Inspect and manage steps
+
+```{r inspect}
+sess |> show_steps()          # numbered list of recorded steps
+sess |> remove_step(3)        # drop a step by index
+sess |> preview("monthly")    # head(6) with column names
+sess |> preview_all()         # all tables: column stats, row totals
+```
+
+### The YAML format
+
+`my_report.yml` looks like this:
+
+```yaml
+macro:
+  name: my_report
+  created: '2024-11-01 14:22'
+  source: report_2024.pdf
+  n_steps: 4
+steps:
+  - step: select_table
+    label: monthly
+    page: 8
+    method: bbox
+  - step: rename_columns
+    label: monthly
+    mapping:
+      Month: month
+      Total: total
+  - step: cast_types
+    label: monthly
+    cols:
+      total: integer
+  - step: filter_rows
+    label: monthly
+    exclude_where: month == 'Total'
+```
+
+The YAML is plain text — commit it to version control, review diffs, and edit it by hand when needed.
+
+---
+
+## Parameterised macros
+
+When the same macro needs to adapt to a value that changes each year — a page number, a year filter, a sheet name — use `$parameter` placeholders instead of hard-coding the value.
+
+### Saving with parameters
+
+```{r save-params}
+sess |> select_table("annual",
+  page         = 8,
+  method       = "bbox",
+  filter_value = "$year"   # placeholder
+)
+sess |> filter_rows("annual", exclude_where = "year_col != '$year'")
+
+sess |> save_macro("annual_report",
+  params = c(year = "integer")   # declare with optional type annotation
+  # or just: params = "year"     # bare name, no type
+)
+```
+
+The macro YAML gains a `params:` header:
+
+```yaml
+macro:
+  name: annual_report
+  params:
+    year:
+      type: integer
+steps:
+  - step: filter_rows
+    label: annual
+    exclude_where: year_col != '$year'
+```
+
+### Replaying with parameter values
+
+Supply values at replay time — macrox substitutes every `$year` occurrence before dispatching any steps:
+
+```{r replay-params}
+tables <- mx_replay("report_2025.pdf",
+  macro  = "annual_report",
+  params = list(year = 2025L)
+)
+```
+
+Multiple parameters work the same way:
+
+```{r replay-multi-params}
+tables <- mx_replay("report_2025.pdf",
+  macro  = "quarterly_report",
+  params = list(year = 2025L, quarter = "Q1")
+)
+```
+
+### Rules
+
+- Placeholder names must start with `$` in step fields.
+- Each value must be a scalar (length 1).
+- Longer names take precedence over shorter ones — `$year_end` is substituted before `$year` so there are no prefix collisions.
+- Undeclared params that appear in step fields are kept as literal `$name` strings and a warning is issued at replay.
+
+---
+
+## Batch replay
+
+Process a folder of reports in one call:
+
+```{r batch}
+files <- list.files("reports/", pattern = "\\.pdf$", full.names = TRUE)
+
+results <- mx_replay_batch(files, macro = "my_report")
+# results is a named list: one table list per file
+```
+
+Show a progress bar and run in parallel (requires `mirai`):
+
+```{r batch-parallel}
+results <- mx_replay_batch(files,
+  macro     = "my_report",
+  .progress = TRUE,
+  .parallel = TRUE   # uses mirai for parallel execution
+)
+```
+
+Parameterised macros work in batch too — pass a named list:
+
+```{r batch-params}
+results <- mx_replay_batch(files,
+  macro  = "annual_report",
+  params = list(year = 2025L)
+)
+```
+
+---
+
+## Comparing outputs with diff_replay()
+
+`diff_replay()` replays the same macro against two files and returns a structured diff:
+
+```{r diff}
+d <- diff_replay(
+  file1 = "report_2024.pdf",
+  file2 = "report_2025.pdf",
+  macro = "my_report"
+)
+
+print(d)
+# ~ monthly [changed] (rows: 12→13, 4 cell changes)
+#     total   Δ mean=123.4    max=210.0    sum=1234.5   (4 rows)
+```
+
+Drill into a specific table's cell-level changes:
+
+```{r diff-detail}
+detail(d, "monthly")
+#   row   col   ref    new    delta
+#   3     total 1200   1410   210
+#   7     total 980    1001   21
+```
+
+### Year-over-year comparison with parameters
+
+```{r diff-params}
+d <- diff_replay(
+  file1   = "report_2024.pdf",
+  file2   = "report_2025.pdf",
+  macro   = "annual_report",
+  params  = list(year = 2024L),   # applied to file1
+  params2 = list(year = 2025L)    # applied to file2
+)
+```
+
+---
+
+## Snapshot testing with test_macro()
+
+`test_macro()` is designed for use inside `testthat` blocks. On the first call it writes a YAML snapshot; subsequent calls compare against it and fail descriptively if output drifts.
+
+### Workflow
+
+1. Run `test_macro()` locally with your reference PDF. The snapshot is written to `tests/testthat/macro-snapshots/`.
+2. Commit the snapshot alongside your package.
+3. In CI, either replay with the same PDF or supply pre-replayed `tables`. `test_macro()` compares and fails on any drift.
+
+### Basic usage
+
+```{r snapshot-basic}
+# tests/testthat/test-my-report.R
+test_that("my_report extracts correctly", {
+  test_macro("report_2024.pdf", macro = "my_report")
+})
+```
+
+The snapshot file `tests/testthat/macro-snapshots/my_report.snap.yml` records row counts, column names, and the first 5 rows of each table.
+
+### Supplying pre-replayed tables
+
+Useful in CI when you don't want to keep a PDF in the repository:
+
+```{r snapshot-tables}
+test_that("monthly table matches snapshot", {
+  tables <- mx_replay("report_2024.pdf", macro = "my_report")
+
+  test_macro(
+    tables = tables,
+    name   = "my_report"   # explicit name required when tables is supplied
+  )
+})
+```
+
+### With parameterised macros
+
+```{r snapshot-params}
+test_that("annual_report with year=2024 matches snapshot", {
+  test_macro("report_2024.pdf",
+    macro  = "annual_report",
+    params = list(year = 2024L),
+    name   = "annual_report_2024"
+  )
+})
+```
+
+Use a unique `name` per parameter set so snapshots don't overwrite each other.
+
+### Accepting updated output
+
+When the report genuinely changes and you want to update the snapshot:
+
+```{r snapshot-update}
+# From R console or in a one-off script
+test_macro("report_2025.pdf",
+  macro  = "my_report",
+  update = TRUE
+)
+
+# Or set the environment variable (testthat::snapshot_accept() sets this)
+Sys.setenv(TESTTHAT_SNAPSHOT_UPDATE = "true")
+```
+
+### What is captured
+
+The snapshot YAML records per table:
+
+| Field | Description |
+|---|---|
+| `nrow` | Total row count |
+| `ncol` | Column count |
+| `cols` | Column names |
+| `head` | First `n_head` rows (default 5), stored as character strings |
+
+```yaml
+tables:
+  monthly:
+    nrow: 12
+    ncol: 3
+    cols:
+      - Month
+      - Male
+      - Total
+    head:
+      - Month: January
+        Male: '1234'
+        Total: '2500'
+      - Month: February
+        Male: '1190'
+        Total: '2410'
+```
+
+### CI configuration
+
+In `.github/workflows/R-CMD-check.yaml`, no extra steps are needed — `test_macro()` reads snapshots committed to the repo. If you use a local PDF that shouldn't be checked in, supply pre-replayed `tables` instead.
+
+To regenerate snapshots from CI, add a step that sets `TESTTHAT_SNAPSHOT_UPDATE=true` and commits the result, or use `testthat::snapshot_accept()` locally after reviewing the diff.
+
+---
+
+## validate_macro()
+
+`validate_macro()` checks that a macro YAML is well-formed and that all referenced step types are known before attempting a replay:
+
+```{r validate}
+validate_macro("my_report")
+# v my_report.yml: 4 steps, valid
+# x quarterly_report.yml: unknown step 'slect_table' at position 1
+```
+
+Use this in pre-commit hooks or CI to catch typos in hand-edited macros before they reach production.

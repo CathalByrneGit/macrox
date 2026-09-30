@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>LLM Integration</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">LLM Integration</h1>
+
+
+
+<p>LLM extraction is optional — macrox works fully offline without it.
+Enable it when positional methods fail: multi-level headers, irregular
+bounding boxes, or scanned PDFs where Docling is not available.</p>
+<p>Everything here requires the <code>ellmer</code> package and at least
+one provider API key.</p>
+<hr />
+<div id="provider-setup" class="section level2">
+<h2>Provider setup</h2>
+<p>Install ellmer once:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;ellmer&quot;</span>)</span></code></pre></div>
+<p>Set your API key as an environment variable. The easiest place is
+<code>.Renviron</code> (one key per provider — add only the one you
+use):</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="va">ANTHROPIC_API_KEY</span><span class="op">=</span>sk-ant-...</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="va">OPENAI_API_KEY</span><span class="op">=</span>sk-...</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="va">GEMINI_API_KEY</span><span class="op">=</span>AI...</span></code></pre></div>
+<p>Edit <code>.Renviron</code> from R:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>usethis<span class="sc">::</span><span class="fu">edit_r_environ</span>()   <span class="co"># requires usethis; restart R after saving</span></span></code></pre></div>
+<div id="setting-global-defaults" class="section level3">
+<h3>Setting global defaults</h3>
+<p>Add these lines to <code>.Rprofile</code> so you never have to
+specify <code>provider</code> or <code>model</code> on each call:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">options</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="at">macrox.llm.provider =</span> <span class="st">&quot;anthropic&quot;</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">macrox.llm.model    =</span> <span class="st">&quot;claude-opus-4-8&quot;</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>)</span></code></pre></div>
+<p>Supported providers: <code>&quot;anthropic&quot;</code>, <code>&quot;openai&quot;</code>,
+<code>&quot;google_gemini&quot;</code>, <code>&quot;openrouter&quot;</code>,
+<code>&quot;groq&quot;</code>, <code>&quot;ollama&quot;</code>,
+<code>&quot;openai_compatible&quot;</code>, and any other provider for which
+<code>ellmer</code> exports a <code>chat_&lt;provider&gt;()</code>
+constructor.</p>
+<hr />
+</div>
+</div>
+<div id="session-level-configuration" class="section level2">
+<h2>Session-level configuration</h2>
+<p>Call <code>mx_configure_llm()</code> once per session to avoid
+repeating provider/model on every extraction call:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">library</span>(macrox)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>sess <span class="ot">&lt;-</span> <span class="fu">mx_session</span>(<span class="st">&quot;report.pdf&quot;</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co"># Option 1: provider + model (uses global options as defaults)</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">mx_configure_llm</span>(<span class="at">provider =</span> <span class="st">&quot;anthropic&quot;</span>, <span class="at">model =</span> <span class="st">&quot;claude-opus-4-8&quot;</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co"># Option 2: pass a fully-configured ellmer Chat object for maximum control</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>chat <span class="ot">&lt;-</span> ellmer<span class="sc">::</span><span class="fu">chat_anthropic</span>(</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  <span class="at">model  =</span> <span class="st">&quot;claude-opus-4-8&quot;</span>,</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  <span class="at">system =</span> <span class="st">&quot;Extract data exactly as shown in the document.&quot;</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>)</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">mx_configure_llm</span>(<span class="at">chat =</span> chat)</span></code></pre></div>
+<p>Once configured, all subsequent <code>select_table_llm()</code> and
+<code>select_item()</code> calls on the session use that provider
+without further arguments.</p>
+<div id="local-models-via-ollama" class="section level3">
+<h3>Local models via Ollama</h3>
+<p>Run models locally — no API key needed:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">mx_configure_llm</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">provider =</span> <span class="st">&quot;ollama&quot;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">model    =</span> <span class="st">&quot;llama3.2-vision:11b&quot;</span>   <span class="co"># any Ollama vision model</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="openai-compatible-endpoints" class="section level3">
+<h3>OpenAI-compatible endpoints</h3>
+<p>Works with LM Studio, vLLM, and any server that speaks the OpenAI
+API:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">mx_configure_llm</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="at">provider =</span> <span class="st">&quot;openai_compatible&quot;</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">model    =</span> <span class="st">&quot;mistral-nemo&quot;</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">base_url =</span> <span class="st">&quot;http://localhost:1234/v1&quot;</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>)</span></code></pre></div>
+<hr />
+</div>
+</div>
+<div id="extracting-tables-with-select_table_llm" class="section level2">
+<h2>Extracting tables with select_table_llm()</h2>
+<p>Two extraction modes:</p>
+<table>
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Mode</th>
+<th>When to use</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>&quot;structured&quot;</code> (default)</td>
+<td>You know the columns; supply a <code>schema</code> for typed
+output</td>
+</tr>
+<tr class="even">
+<td><code>&quot;page&quot;</code></td>
+<td>Unknown layout; LLM converts the full page to markdown</td>
+</tr>
+</tbody>
+</table>
+<div id="structured-mode" class="section level3">
+<h3>Structured mode</h3>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>area <span class="ot">&lt;-</span> sess <span class="sc">|&gt;</span> <span class="fu">locate_area</span>(<span class="at">page =</span> <span class="dv">5</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table_llm</span>(<span class="st">&quot;livestock&quot;</span>,</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">page   =</span> <span class="dv">5</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="at">area   =</span> area,</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  <span class="at">schema =</span> <span class="fu">c</span>(</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>    <span class="at">Breed   =</span> <span class="st">&quot;character&quot;</span>,</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>    <span class="at">Male    =</span> <span class="st">&quot;integer&quot;</span>,</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>    <span class="at">Female  =</span> <span class="st">&quot;integer&quot;</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>    <span class="at">Total   =</span> <span class="st">&quot;integer&quot;</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  )</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>)</span></code></pre></div>
+<p><code>schema</code> is a named character vector: names become column
+names, values are R types (<code>&quot;character&quot;</code>,
+<code>&quot;integer&quot;</code>, <code>&quot;numeric&quot;</code>). The LLM receives the
+column names as guidance; macrox converts the returned strings to the
+declared types.</p>
+</div>
+<div id="page-mode" class="section level3">
+<h3>Page mode</h3>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># No area or schema needed — the LLM finds and parses all tables</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table_llm</span>(<span class="st">&quot;summary&quot;</span>,</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">page =</span> <span class="dv">3</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">mode =</span> <span class="st">&quot;page&quot;</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>)</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co"># Multiple tables on one page — pick by index</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table_llm</span>(<span class="st">&quot;appendix&quot;</span>,</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  <span class="at">page        =</span> <span class="dv">3</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="at">mode        =</span> <span class="st">&quot;page&quot;</span>,</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>  <span class="at">table_index =</span> <span class="dv">2</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="extra-instructions" class="section level3">
+<h3>Extra instructions</h3>
+<p>Use <code>prompt</code> to add free-text guidance after the base
+prompt:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table_llm</span>(<span class="st">&quot;financials&quot;</span>,</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="at">page   =</span> <span class="dv">12</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">schema =</span> <span class="fu">c</span>(<span class="at">Quarter =</span> <span class="st">&quot;character&quot;</span>, <span class="at">Revenue =</span> <span class="st">&quot;numeric&quot;</span>, <span class="at">Cost =</span> <span class="st">&quot;numeric&quot;</span>),</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">prompt =</span> <span class="st">&quot;Ignore the &#39;YTD&#39; row at the bottom. Revenue and Cost are in thousands.&quot;</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="multi-level-headers" class="section level3">
+<h3>Multi-level headers</h3>
+<p>Government tables often have two header rows.
+<code>header_rows = 2</code> tells the LLM to flatten them with
+<code>_</code> separators:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_table_llm</span>(<span class="st">&quot;breed_sire&quot;</span>,</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="at">page        =</span> <span class="dv">16</span>,</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">area        =</span> area,</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="at">header_rows =</span> <span class="dv">2</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="at">schema      =</span> <span class="fu">c</span>(</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>    <span class="at">Group_A.Jan =</span> <span class="st">&quot;integer&quot;</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>    <span class="at">Group_A.Feb =</span> <span class="st">&quot;integer&quot;</span>,</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>    <span class="at">Group_B.Sub1 =</span> <span class="st">&quot;integer&quot;</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  )</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="updating-a-schema-after-extraction" class="section level3">
+<h3>Updating a schema after extraction</h3>
+<p>If the auto-detected columns need adjusting, use
+<code>update_llm_schema()</code> to revise without re-browsing:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># After initial extraction, refine column names and types</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">update_llm_schema</span>(<span class="st">&quot;livestock&quot;</span>,</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">schema =</span> <span class="fu">c</span>(</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>    <span class="at">Breed    =</span> <span class="st">&quot;character&quot;</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>    <span class="at">Bulls    =</span> <span class="st">&quot;integer&quot;</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>    <span class="at">Cows     =</span> <span class="st">&quot;integer&quot;</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>    <span class="at">Heifers  =</span> <span class="st">&quot;integer&quot;</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>    <span class="at">Total    =</span> <span class="st">&quot;integer&quot;</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>  )</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>)</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co"># Revise the prompt too</span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">update_llm_schema</span>(<span class="st">&quot;livestock&quot;</span>,</span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a>  <span class="at">schema =</span> <span class="fu">c</span>(<span class="at">Breed =</span> <span class="st">&quot;character&quot;</span>, <span class="at">Total =</span> <span class="st">&quot;integer&quot;</span>),</span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a>  <span class="at">prompt =</span> <span class="st">&quot;Only extract the Breed and Total columns.&quot;</span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a>)</span></code></pre></div>
+<hr />
+</div>
+</div>
+<div id="extracting-metadata-fields-with-select_item" class="section level2">
+<h2>Extracting metadata fields with select_item()</h2>
+<p><code>select_item()</code> extracts a single value that sits outside
+any table — a publication date, an invoice number, a report title.
+Results accumulate in <code>sess$items</code> alongside
+<code>sess$tables</code>.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Extract from all-pages text (no page rendering needed)</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_item</span>(<span class="st">&quot;pub_date&quot;</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="at">prompt =</span> <span class="st">&quot;Publication or report date in the header or footer.&quot;</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>)</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co"># Cast the result directly</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_item</span>(<span class="st">&quot;pub_date&quot;</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>  <span class="at">prompt =</span> <span class="st">&quot;Publication date.&quot;</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>  <span class="at">cast   =</span> <span class="st">&quot;date:%d/%m/%Y&quot;</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>)</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co"># Extract from a specific page image for better accuracy</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_item</span>(<span class="st">&quot;issue_number&quot;</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>  <span class="at">prompt =</span> <span class="st">&quot;Issue or reference number shown on the cover page.&quot;</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>  <span class="at">page   =</span> <span class="dv">1</span><span class="dt">L</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>)</span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co"># View all extracted items</span></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">show_items</span>()</span></code></pre></div>
+<p>Supported <code>cast</code> values: <code>&quot;character&quot;</code>
+(default), <code>&quot;numeric&quot;</code>, <code>&quot;integer&quot;</code>,
+<code>&quot;date:&lt;strptime_format&gt;&quot;</code>.</p>
+<div id="revising-an-item-extraction" class="section level3">
+<h3>Revising an item extraction</h3>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">update_item</span>(<span class="st">&quot;pub_date&quot;</span>,</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>  <span class="at">prompt =</span> <span class="st">&quot;Date shown at the top of page 1 in DD/MM/YYYY format.&quot;</span>,</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="at">cast   =</span> <span class="st">&quot;date:%d/%m/%Y&quot;</span></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>)</span></code></pre></div>
+<hr />
+</div>
+</div>
+<div id="gliner2-local-metadata-extraction" class="section level2">
+<h2>GLiNER2 — local metadata extraction</h2>
+<p>GLiNER2 is a local NLP model (~205 MB) that extracts named entities
+from text without any API key. It runs fully offline after a one-time
+model download.</p>
+<div id="setup" class="section level3">
+<h3>Setup</h3>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">setup_gliner</span>()   <span class="co"># downloads the model into a managed virtualenv (~500 MB)</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="co"># Restart R before first use</span></span></code></pre></div>
+</div>
+<div id="single-fields" class="section level3">
+<h3>Single fields</h3>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_item</span>(<span class="st">&quot;invoice_number&quot;</span>,</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>  <span class="at">prompt  =</span> <span class="st">&quot;Invoice ID or reference number&quot;</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>  <span class="at">backend =</span> <span class="st">&quot;gliner&quot;</span></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>)</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_item</span>(<span class="st">&quot;total_amount&quot;</span>,</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>  <span class="at">prompt  =</span> <span class="st">&quot;Grand total amount payable&quot;</span>,</span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>  <span class="at">page    =</span> <span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a>  <span class="at">cast    =</span> <span class="st">&quot;numeric&quot;</span>,</span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a>  <span class="at">backend =</span> <span class="st">&quot;gliner&quot;</span></span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a>)</span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a></span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a><span class="co"># Retrieve all occurrences (e.g. all dates mentioned)</span></span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_item</span>(<span class="st">&quot;dates_mentioned&quot;</span>,</span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a>  <span class="at">prompt      =</span> <span class="st">&quot;Date or dates mentioned in the document&quot;</span>,</span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a>  <span class="at">backend     =</span> <span class="st">&quot;gliner&quot;</span>,</span>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a>  <span class="at">all_matches =</span> <span class="cn">TRUE</span></span>
+<span id="cb16-18"><a href="#cb16-18" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="batch-extraction-faster-for-many-fields" class="section level3">
+<h3>Batch extraction (faster for many fields)</h3>
+<p>GLiNER runs one inference pass for all fields — much faster than
+calling <code>select_item()</code> in a loop:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_items_batch</span>(</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>  <span class="at">items =</span> <span class="fu">c</span>(</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>    <span class="at">invoice_number =</span> <span class="st">&quot;Invoice ID or reference number&quot;</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>    <span class="at">vendor_name    =</span> <span class="st">&quot;Supplier or vendor name&quot;</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>    <span class="at">total_amount   =</span> <span class="st">&quot;Grand total amount payable&quot;</span>,</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>    <span class="at">due_date       =</span> <span class="st">&quot;Payment due date&quot;</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>  ),</span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a>  <span class="at">cast =</span> <span class="fu">c</span>(</span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>    <span class="at">total_amount =</span> <span class="st">&quot;numeric&quot;</span>,</span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a>    <span class="at">due_date     =</span> <span class="st">&quot;date:%d/%m/%Y&quot;</span></span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a>  )</span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="structured-records-with-select_struct" class="section level3">
+<h3>Structured records with select_struct()</h3>
+<p><code>select_struct()</code> uses GLiNER2’s <code>extract_json</code>
+to pull multiple records with a defined schema — useful for line-item
+tables that GLiNER handles better than tabulapdf:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">select_struct</span>(<span class="st">&quot;line_items&quot;</span>,</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>  <span class="at">fields =</span> <span class="fu">c</span>(</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>    <span class="at">description =</span> <span class="st">&quot;Item description or product name&quot;</span>,</span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>    <span class="at">qty         =</span> <span class="st">&quot;Quantity ordered&quot;</span>,</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>    <span class="at">unit_price  =</span> <span class="st">&quot;Unit price per item&quot;</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>    <span class="at">total       =</span> <span class="st">&quot;Line total amount&quot;</span></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>  ),</span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a>  <span class="at">list_fields  =</span> <span class="fu">character</span>(<span class="dv">0</span>),             <span class="co"># none in this case</span></span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a>  <span class="at">page         =</span> <span class="dv">2</span><span class="dt">L</span>,</span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a>  <span class="at">gliner_model =</span> <span class="st">&quot;fastino/gliner2-base-v1&quot;</span> <span class="co"># or &quot;-large-v1&quot; for better accuracy</span></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a>)</span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a></span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a><span class="co"># Convert raw records to a data frame (includes per-field confidence scores)</span></span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">struct_to_df</span>(<span class="st">&quot;line_items&quot;</span>,</span>
+<span id="cb18-15"><a href="#cb18-15" tabindex="-1"></a>  <span class="at">min_confidence =</span> <span class="fl">0.6</span>   <span class="co"># drop low-confidence records; NULL keeps all</span></span>
+<span id="cb18-16"><a href="#cb18-16" tabindex="-1"></a>)</span>
+<span id="cb18-17"><a href="#cb18-17" tabindex="-1"></a></span>
+<span id="cb18-18"><a href="#cb18-18" tabindex="-1"></a><span class="co"># Now available as sess$tables[[&quot;line_items&quot;]] for downstream steps</span></span></code></pre></div>
+<p>The resulting table has value columns plus
+<code>&lt;field&gt;_conf</code> columns for per-field GLiNER confidence
+scores. Use <code>min_confidence</code> to filter out uncertain
+extractions.</p>
+<hr />
+</div>
+</div>
+<div id="multi-page-tables-with-llm" class="section level2">
+<h2>Multi-page tables with LLM</h2>
+<p>When a table spans several pages and has an irregular or multi-level
+header, combine <code>stack_pages()</code> with
+<code>method = &quot;llm&quot;</code>:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">stack_pages</span>(<span class="st">&quot;breed_all&quot;</span>,</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>  <span class="at">pages  =</span> <span class="dv">10</span><span class="sc">:</span><span class="dv">14</span>,</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">&quot;llm&quot;</span>,</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>  <span class="at">schema =</span> <span class="fu">c</span>(</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>    <span class="at">Breed  =</span> <span class="st">&quot;character&quot;</span>,</span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>    <span class="at">Month  =</span> <span class="st">&quot;character&quot;</span>,</span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>    <span class="at">Male   =</span> <span class="st">&quot;integer&quot;</span>,</span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a>    <span class="at">Female =</span> <span class="st">&quot;integer&quot;</span></span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>  )</span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a>)</span></code></pre></div>
+<p><code>stack_pages()</code> extracts from each page independently and
+row-binds the results. The <code>header_match = TRUE</code> default
+discards repeated header rows on pages 2+.</p>
+<hr />
+</div>
+<div id="exporting-items-and-tables-as-json" class="section level2">
+<h2>Exporting items and tables as JSON</h2>
+<p><code>export_json()</code> combines items and tables into a single
+structured payload suitable for APIs, databases, or RAG pipelines:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">export_json</span>(<span class="st">&quot;output.json&quot;</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a></span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a><span class="co"># Include the recorded steps for auditability</span></span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>sess <span class="sc">|&gt;</span> <span class="fu">export_json</span>(<span class="st">&quot;output_with_steps.json&quot;</span>, <span class="at">include_steps =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a><span class="co"># Return the JSON string without writing to disk</span></span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a>json <span class="ot">&lt;-</span> sess <span class="sc">|&gt;</span> <span class="fu">export_json</span>()</span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

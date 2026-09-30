@@ -1,0 +1,4 @@
+/* Light touches carried over from the previous flatly-themed pkgdown site */
+a { color: #18bc9c; }
+a:hover { color: #128f76; }
+code, pre { border-radius: 4px; }
