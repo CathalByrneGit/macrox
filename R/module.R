@@ -10,11 +10,7 @@
 #' @return A `bslib` card UI element.
 #' @export
 macrox_ui <- function(id, title = "PDF \u00b7 Table Extractor", height = "600px") {
-  if (!requireNamespace("shiny", quietly = TRUE) ||
-      !requireNamespace("bslib", quietly = TRUE) ||
-      !requireNamespace("DT",    quietly = TRUE)) {
-    stop("Packages shiny, bslib, and DT are required for the Shiny module.")
-  }
+  .require_app_pkgs("macrox_ui")
 
   ns <- shiny::NS(id)
 
@@ -220,7 +216,7 @@ macrox_ui <- function(id, title = "PDF \u00b7 Table Extractor", height = "600px"
 #'   `steps` (list of step definitions).
 #' @export
 macrox_server <- function(id) {
-  if (!requireNamespace("shiny", quietly = TRUE)) stop("shiny required")
+  .require_app_pkgs("macrox_server")
 
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns

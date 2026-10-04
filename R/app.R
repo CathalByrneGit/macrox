@@ -2,6 +2,21 @@
 #  mx_app() — launch the standalone macrox Shiny application               #
 # --------------------------------------------------------------------------- #
 
+# Packages the Shiny app needs. They are Suggests so the core package installs
+# without the Shiny stack.
+.app_pkgs <- c("shiny", "bslib", "DT", "shinyjs", "shinyFiles", "pdftools")
+
+.require_app_pkgs <- function(what) {
+  missing <- .app_pkgs[!vapply(.app_pkgs, requireNamespace, logical(1), quietly = TRUE)]
+  if (length(missing) > 0L) {
+    cli::cli_abort(c(
+      "{.fn {what}} needs {cli::qty(length(missing))}package{?s} that {?is/are} not installed: {.pkg {missing}}.",
+      "i" = "Install with {.code install.packages({deparse(missing)})}."
+    ), call = NULL)
+  }
+  invisible(TRUE)
+}
+
 #' Launch the macrox standalone app
 #'
 #' Opens a full Shiny application for interactive PDF table extraction,
@@ -17,9 +32,7 @@
 mx_app <- function(viewer = c("browser", "dialog", "pane")) {
   viewer <- match.arg(viewer)
 
-  if (!requireNamespace("shiny",   quietly = TRUE)) stop("shiny required")
-  if (!requireNamespace("bslib",   quietly = TRUE)) stop("bslib required")
-  if (!requireNamespace("DT",      quietly = TRUE)) stop("DT required")
+  .require_app_pkgs("mx_app")
 
   ui     <- .mx_app_ui()
   server <- .mx_app_server
