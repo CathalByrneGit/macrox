@@ -187,6 +187,7 @@ test_that(".dispatch_step() handles select_item with gliner backend", {
 })
 
 test_that(".dispatch_step() handles select_item via mocked LLM", {
+  skip_if_not_installed("ellmer")
   sess <- .make_dispatch_sess()
   testthat::local_mocked_bindings(
     pdf_text      = function(...) list("Ref: ABC-001"),

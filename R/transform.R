@@ -395,8 +395,8 @@ fill_down <- function(sess, table, cols = NULL) {
 #' @return `sess` invisibly (step is recorded).
 #' @export
 clean_numbers <- function(sess, table, cols = NULL,
-                           currency        = c("£", "$", "€", "¥"),
-                           na_strings      = c("-", "—", "n/a", "na", ""),
+                           currency        = c("\u00a3", "$", "\u20ac", "\u00a5"),
+                           na_strings      = c("-", "\u2014", "n/a", "na", ""),
                            negative_parens = TRUE,
                            convert         = TRUE) {
   df <- get_table(sess, table)

@@ -15,6 +15,7 @@ make_item_sess <- function() {
 # --------------------------------------------------------------------------- #
 
 test_that("select_item() stores result in sess$items", {
+  skip_if_not_installed("ellmer")
   sess <- make_item_sess()
   # Mock: text-based path — mock pdf_text and LLM chat
   testthat::local_mocked_bindings(
@@ -37,6 +38,7 @@ test_that("select_item() stores result in sess$items", {
 })
 
 test_that("select_item() records the step", {
+  skip_if_not_installed("ellmer")
   sess <- make_item_sess()
   testthat::local_mocked_bindings(
     pdf_text = function(...) list("Total: 1234.56"),
@@ -57,6 +59,7 @@ test_that("select_item() records the step", {
 })
 
 test_that("select_item() applies cast to the returned value", {
+  skip_if_not_installed("ellmer")
   sess <- make_item_sess()
   testthat::local_mocked_bindings(
     pdf_text = function(...) list("Count: 42"),
@@ -73,6 +76,7 @@ test_that("select_item() applies cast to the returned value", {
 })
 
 test_that("select_item() stores raw value alongside cast value", {
+  skip_if_not_installed("ellmer")
   sess <- make_item_sess()
   testthat::local_mocked_bindings(
     pdf_text = function(...) list("Amount: 99.9"),
@@ -173,6 +177,7 @@ test_that("select_item() gliner returns empty string when model finds nothing", 
 })
 
 test_that("select_item() llm records backend = 'llm' in step", {
+  skip_if_not_installed("ellmer")
   sess <- make_item_sess()
   testthat::local_mocked_bindings(
     pdf_text = function(...) list("Total: 100"),

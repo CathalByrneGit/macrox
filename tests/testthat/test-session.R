@@ -158,6 +158,7 @@ test_that("mx_session() initialises sess$items as an empty list", {
 })
 
 test_that("select_item() initialises items if NULL on session", {
+  skip_if_not_installed("ellmer")
   # guard against older sessions without the items field
   sess <- new.env(parent = emptyenv())
   sess$path   <- "dummy.pdf"
