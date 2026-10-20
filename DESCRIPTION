@@ -34,6 +34,7 @@ Suggests:
     shinyAce,
     shinyjs,
     writexl,
+    openxlsx,
     testthat (>= 3.0.0),
     purrr (>= 1.1.0),
     mirai (>= 2.0.0),

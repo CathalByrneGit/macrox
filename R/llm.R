@@ -38,6 +38,8 @@
 #' @param model Model name.  `NULL` uses a sensible default for `"anthropic"`,
 #'   `"openai"`, and `"google_gemini"`; other providers require `model` to be
 #'   set explicitly.  Ignored when `chat` is supplied.
+#' @param base_url Base URL for `"openai_compatible"` providers. Ignored when
+#'   `chat` is supplied.
 #' @param schema Named character vector mapping column names to R types:
 #'   `c(Month = "character", Male = "integer", Total = "integer")`.
 #'   Supported types: `"character"`, `"integer"`, `"numeric"`.
@@ -94,7 +96,7 @@ select_table_llm <- function(sess, label,
         paste0("The table of interest has columns: ",
                paste(names(schema), collapse = ", "), ". ")
       else "",
-      "Return only the markdown — no preamble, no commentary.",
+      "Return only the markdown \u2014 no preamble, no commentary.",
       if (!is.null(prompt)) paste0(" ", prompt) else ""
     )
 
@@ -146,7 +148,7 @@ select_table_llm <- function(sess, label,
       "Include every data row exactly as shown. Do not add or omit rows. ",
       if (header_rows > 1L)
         paste0("The table has ", header_rows,
-               " header rows — combine them into a single column name joined by an underscore. ")
+               " header rows \u2014 combine them into a single column name joined by an underscore. ")
       else "",
       if (!is.null(schema))
         paste0("Columns: ", paste(names(schema), collapse = ", "), ". ")
@@ -195,7 +197,7 @@ select_table_llm <- function(sess, label,
   ))
 
   cli::cli_inform(c(
-    "v" = "Table {.val {label}} extracted via LLM [{provider}, {mode}]: {nrow(df)} × {ncol(df)}"
+    "v" = "Table {.val {label}} extracted via LLM [{provider}, {mode}]: {nrow(df)} \u00d7 {ncol(df)}"
   ))
   invisible(sess)
 }
@@ -298,7 +300,7 @@ update_llm_schema <- function(sess, label, schema,
 .llm_default_system_prompt <- function() {
   paste0(
     "You are a precise data extraction assistant specialising in PDF document analysis. ",
-    "Extract data exactly as it appears in the source — do not infer, estimate, or add ",
+    "Extract data exactly as it appears in the source \u2014 do not infer, estimate, or add ",
     "information not visible in the document. Return only the requested structured data; ",
     "no preamble or commentary."
   )
@@ -474,7 +476,7 @@ mx_configure_llm <- function(sess,
   # 2. Session-level configured chat (set via mx_configure_llm()).
   if (!is.null(sess_chat)) {
     if (!inherits(sess_chat, "Chat")) {
-      cli::cli_warn("Session LLM config is not a valid Chat object — ignoring.")
+      cli::cli_warn("Session LLM config is not a valid Chat object \u2014 ignoring.")
     } else {
       info <- .chat_provider_info(sess_chat)
       return(list(

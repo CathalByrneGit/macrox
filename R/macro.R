@@ -230,7 +230,7 @@ mx_replay_batch <- function(files, macro, macro_path = ".", params = list(),
     tryCatch(
       mx_replay(f, steps, params = params),
       error = function(e) {
-        cli::cli_warn("Failed: {.file {basename(f)}} — {conditionMessage(e)}")
+        cli::cli_warn("Failed: {.file {basename(f)}} \u2014 {conditionMessage(e)}")
         NULL
       }
     )

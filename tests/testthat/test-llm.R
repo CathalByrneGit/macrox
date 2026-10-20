@@ -241,7 +241,7 @@ test_that(".resolve_llm_chat() builds a chat from provider/model/base_url when c
 
   resolved <- macrox:::.resolve_llm_chat(NULL, "anthropic", NULL, NULL)
   expect_equal(resolved$provider, "anthropic")
-  expect_equal(resolved$model, "claude-opus-4-8")
+  expect_null(resolved$model)
   expect_s3_class(resolved$chat, "Chat")
 })
 

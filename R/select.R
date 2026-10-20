@@ -51,7 +51,7 @@ select_table <- function(sess, label,
     found       <- .fuzzy_find_page(sess, label_match, fuzzy_method, max_dist)
     page        <- found$page
     table_index <- found$table_index
-    cli::cli_inform(c("i" = "Fuzzy match: page {page}, dist={round(found$dist, 3)} — '{found$line}'"))
+    cli::cli_inform(c("i" = "Fuzzy match: page {page}, dist={round(found$dist, 3)} \u2014 '{found$line}'"))
   }
 
   if (is.null(page)) {
@@ -62,7 +62,7 @@ select_table <- function(sess, label,
   if (method == "bbox") {
     if (is.null(area)) {
       cli::cli_inform(c(
-        "i" = "No {.arg area} supplied for bbox extraction — scanning full page {page}.",
+        "i" = "No {.arg area} supplied for bbox extraction \u2014 scanning full page {page}.",
         "i" = "Use {.fn locate_area} or draw a box in the Shiny module to isolate the table."
       ))
     }
@@ -86,7 +86,7 @@ select_table <- function(sess, label,
       cli::cli_abort(c(
         "Package {.pkg tabulapdf} is required for {.val {method}} extraction.",
         "i" = "Install with: {.code install.packages('tabulapdf')}",
-        "i" = "Java is also required — see {.url https://www.java.com/download/}."
+        "i" = "Java is also required \u2014 see {.url https://www.java.com/download/}."
       ))
     }
     extract_args <- list(
@@ -389,7 +389,7 @@ stack_pages <- function(sess, label, pages,
 
     n_ok <- length(pages) - n_skip
     cli::cli_inform(c(
-      "v" = "Table {.val {label}} stacked from {n_ok}/{length(pages)} page{?s} [llm]: {nrow(df)} × {ncol(df)}"
+      "v" = "Table {.val {label}} stacked from {n_ok}/{length(pages)} page{?s} [llm]: {nrow(df)} \u00d7 {ncol(df)}"
     ))
 
     set_table(sess, label, df)
@@ -468,7 +468,7 @@ stack_pages <- function(sess, label, pages,
 
   n_ok <- length(pages) - n_skip
   cli::cli_inform(c(
-    "v" = "Table {.val {label}} stacked from {n_ok}/{length(pages)} page{?s}: {nrow(df)} × {ncol(df)}"
+    "v" = "Table {.val {label}} stacked from {n_ok}/{length(pages)} page{?s}: {nrow(df)} \u00d7 {ncol(df)}"
   ))
 
   set_table(sess, label, df)

@@ -375,7 +375,7 @@ macrox_server <- function(id) {
           label_match <- NULL
           if (method == "bbox") {
             shiny::showNotification(
-              "bbox with no area will scan the full page — charts may interfere. Draw a box on the PDF and use the Box tab for best results.",
+              "bbox with no area will scan the full page \u2014 charts may interfere. Draw a box on the PDF and use the Box tab for best results.",
               type     = "warning",
               duration = 8
             )

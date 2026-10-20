@@ -29,7 +29,7 @@ setup_gliner <- function(model       = "fastino/gliner2-base-v1",
       "i" = "Install with: {.code install.packages('reticulate')}"
     ))
   }
-  cli::cli_inform(c("i" = "Installing GLiNER2 — this downloads ~500MB on first run..."))
+  cli::cli_inform(c("i" = "Installing GLiNER2 \u2014 this downloads ~500MB on first run..."))
   reticulate::py_install(
     "gliner2[local]",
     envname     = envname,
@@ -73,7 +73,7 @@ close_gliner <- function() {
   if (is.null(.macrox_gliner_env$py)) {
     py_file <- system.file("python", "gliner_helpers.py", package = "macrox")
     if (!nzchar(py_file)) {
-      cli::cli_abort("GLiNER helper not found — try reinstalling macrox.")
+      cli::cli_abort("GLiNER helper not found \u2014 try reinstalling macrox.")
     }
     reticulate::source_python(py_file)
     .macrox_gliner_env$py <- reticulate::import_main()

@@ -9,9 +9,8 @@ detail(x, ...)
 \arguments{
 \item{x}{A \code{macrox_diff} object returned by \code{\link[=diff_replay]{diff_replay()}}.}
 
-\item{...}{Unused.}
-
-\item{table}{Character name of the table to inspect.}
+\item{...}{Passed to methods. For \code{macrox_diff} objects, \code{table} names the
+table to inspect.}
 }
 \value{
 A data frame with one row per changed cell.
