@@ -1,4 +1,4 @@
-/* ── pdfmacro app theme ──────────────────────────────────────────────────── */
+/* ── macrox app theme ──────────────────────────────────────────────────── */
 
 :root {
   --amber:       #c47c00;
@@ -115,4 +115,12 @@
   padding: 1px 6px;
   cursor: pointer;
   color: var(--ink-mid);
+}
+
+/* Keep long column names inside selectize pickers (e.g. the Split column dialog) */
+.selectize-input .item {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
