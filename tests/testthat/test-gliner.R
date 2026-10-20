@@ -23,6 +23,7 @@ test_that("select_items_batch() validates items argument", {
 })
 
 test_that("select_items_batch() extracts fields and records steps", {
+  skip_if_not_installed("reticulate")
   sess <- new.env(parent = emptyenv())
   sess$path   <- "dummy.pdf"
   sess$tables <- list()
@@ -65,6 +66,7 @@ test_that("select_items_batch() extracts fields and records steps", {
 })
 
 test_that("select_struct() stores raw records in sess$structs", {
+  skip_if_not_installed("reticulate")
   sess <- new.env(parent = emptyenv())
   sess$path    <- "dummy.pdf"
   sess$tables  <- list()
