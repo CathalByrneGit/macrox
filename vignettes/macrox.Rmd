@@ -74,20 +74,19 @@ mx_app("dialog")   # RStudio dialog
 mx_app("pane")     # Viewer pane
 ```
 
-The app provides a full extraction workflow without writing any R code.  Select a PDF with the filesystem browser, draw a bounding box on the page image, configure the extraction method, and hit **Extract**.  All steps are recorded and can be exported as a YAML macro or downloaded as CSV / Excel.
+The app provides a full extraction workflow without writing any R code.  Select a PDF with the filesystem browser, draw a bounding box on the page image, configure the extraction method, and hit **Extract**.  All steps are recorded and can be exported as a YAML macro or downloaded as CSV / Excel.  For a walkthrough with screenshots, see `vignette("shiny-app")`.
 
 **Tabs:**
 
 | Tab | Purpose |
 |---|---|
-| **Extract** | Full PDF viewer, draw-to-select area, method picker (bbox / lattice / stream / docling / llm), live preview. `←` / `→` navigate pages. |
-| **Tables** | One tab per extracted table. Rename, cast types, filter rows (GUI), validate rules, column stats. |
+| **Extract** | Full PDF viewer, draw-to-select area, method picker (bbox / lattice / stream / docling / llm), live preview. `←` / `→` navigate pages. Its **Struct** sub-tab extracts structured records (several fields, many rows) via GLiNER2. |
+| **Tables** | One tab per extracted table. Rename, cast types, filter rows, split columns, undo, validate rules, column stats. |
 | **Items** | Extract single metadata fields (invoice numbers, dates, totals) via LLM or GLiNER2. |
-| **Struct** | Extract structured records (multiple fields, multiple rows) via GLiNER2. |
-| **Steps** | Recorded step badges. Remove steps, edit the YAML macro directly with syntax highlighting. |
+| **Steps** | Recorded step badges. Click one to inspect its parameters, or remove it. |
 | **Replay** | Run a saved macro against a new PDF. Results load into Tables. |
 | **Batch** | Run one macro across multiple PDFs. Download as Excel or zip of CSVs. |
-| **Export** | Download CSV, Excel, JSON, or the YAML macro. |
+| **Export** | Download CSV or Excel, or edit and download the YAML macro. |
 
 ---
 

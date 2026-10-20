@@ -1,0 +1,203 @@
+---
+title: "The macrox Shiny App"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{The macrox Shiny App}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE, out.width = "100%")
+shot <- function(file) knitr::include_graphics(file.path("images", file))
+```
+
+`mx_app()` opens a point-and-click version of macrox. You pick a PDF, draw a box around a table, clean the result up, and download it, without writing any R code. Everything you do is recorded as a macro, so the same workflow can be replayed on next year's report.
+
+This article walks through one realistic example from start to finish: pulling the *Calf Births by County, Gender and Sire Type* table out of the Department of Agriculture's AIM Bovine Statistics Report, fixing a column where three numbers were merged into one cell, and saving the recipe.
+
+---
+
+## Launch the app
+
+The app uses packages that are only needed for the interface, so they are optional dependencies of macrox. Install them once:
+
+```{r install}
+install.packages(c("shiny", "bslib", "DT", "shinyjs", "shinyFiles", "pdftools"))
+```
+
+Then start it:
+
+```{r launch}
+library(macrox)
+
+mx_app()           # your system browser
+mx_app("dialog")   # a floating RStudio dialog
+mx_app("pane")     # the RStudio Viewer pane
+```
+
+If any of those packages is missing, `mx_app()` stops straight away and lists exactly which ones to install.
+
+```{r shot-start, echo = FALSE, eval = TRUE, fig.alt = "The macrox app on first launch: a sidebar with a Choose PDF button, and tabs for Extract, Tables, Items, Steps, Replay, Batch, Export and Help."}
+shot("app-start.png")
+```
+
+The sidebar on the left stays visible on every tab:
+
+- **PDF File** opens a file browser. Once a PDF is loaded, its name and page count appear underneath.
+- **Extract Tables** jumps to the Extract tab.
+- **Macro** loads a saved macro (`.yml`) into the current session.
+- **Page Preview** is a thumbnail of the current page, with **Browse all pages** for scrolling through the whole document. The page browser loads PDF.js from a CDN, so it needs an internet connection.
+
+---
+
+## Extract a table
+
+Choose a PDF and open the **Extract** tab. The page you are looking at is on the left and the extraction controls are on the right.
+
+```{r shot-setup, echo = FALSE, eval = TRUE, fig.alt = "The Extract tab showing page 9 of the PDF on the left, and on the right a label of calf_county, the Box tab, and the Page and Header rows fields set to 9 and 4."}
+shot("app-extract-setup.png")
+```
+
+1. Step through the PDF with the `<` and `>` buttons (or the left and right arrow keys) until you reach the page with your table.
+2. Give the table a **label**. This is the name it will have in the Tables tab, in exports and in the macro.
+3. Set the **page** and the number of **header rows**. Tables with a two-level header need `2` or more, and macrox joins the header cells into single column names.
+4. Optionally, **draw a box** around the table on the page image and click **Use selection**. This fills in the Top, Left, Bottom and Right fields. Without a box, the whole page is scanned.
+5. Pick a **method** and click **Extract**.
+
+The four tabs above the form are different ways of telling macrox *where* the table is:
+
+| Tab | Use it when |
+|---|---|
+| **Box** | You know the page and can draw (or type) the area. The most reliable option. |
+| **Index** | You know the page and that it is, say, the second table on it. |
+| **Fuzzy** | The page number changes between reports, but the table's caption stays similar. |
+| **Struct** | You want records (several fields, one row per entity found) rather than a grid. Needs GLiNER2, set up with `setup_gliner()`. |
+
+The **method** controls *how* the table is read:
+
+| Method | Best for |
+|---|---|
+| `bbox` | A word-position engine. Good when a page has charts, missing grid lines, or numbers that run together. Pair it with a drawn area. |
+| `lattice` | Clean tables with visible grid lines (needs Java, through tabulapdf). |
+| `stream` | Tables aligned with spaces rather than lines (tabulapdf). |
+| `llm` | Complex or scanned layouts, using an LLM that reads an image of the page. Needs an API key. |
+| `docling` | An offline ML layout model for scanned or complex pages. Run `setup_docling()` once first. |
+
+For this page, `bbox` with four header rows works well. A notification confirms what was read, and a preview appears under the **Extract** button.
+
+```{r shot-extracted, echo = FALSE, eval = TRUE, fig.alt = "After extraction, a notification says Extracted calf_county: 28 by 8, and the PDF page shows the Calf Births by County, Gender and Sire Type table."}
+shot("app-extracted.png")
+```
+
+---
+
+## Clean it up
+
+Each extracted table gets its own sub-tab in the **Tables** tab, with its size (here 28 rows by 8 columns) and a row of buttons underneath.
+
+```{r shot-tables, echo = FALSE, eval = TRUE, fig.alt = "The Tables tab showing the calf_county table. The Calf.Births column contains three numbers per cell, for example 10,443 21,997 3,753."}
+shot("app-tables.png")
+```
+
+| Button | What it does |
+|---|---|
+| **Rename** | Rename columns. |
+| **Cast types** | Convert columns to numeric, integer, date and so on. |
+| **Filter rows** | Drop rows by a condition, for example the `Totals` row. |
+| **Split col** | Split one column into several (see below). |
+| **Undo** | Step back through the last few changes to this table. |
+| **Copy** | Copy the table to the clipboard as tab-separated text. |
+| **Validate** | Check the table against rules you write, one per line, as `rule_name: expression`. |
+| **Stats** | Summarise each column: type, range or number of unique values, and missing values. |
+
+### Split merged cells
+
+This table shows a common problem with PDFs. The second *Calf.Births* column holds `10,443 21,997 3,753` in a single cell, because the PDF's three sub-columns (male, female, total) ran together. **Split col** fixes this.
+
+```{r shot-split-dialog, echo = FALSE, eval = TRUE, out.width = "76%", fig.align = "center", fig.alt = "The Split column dialog: the column to split is Calf.Births, the separator is the regular expression backslash s plus, the new column names are male, female, total, and a preview shows 10,443 21,997 3,753 becoming male 10,443, female 21,997, total 3,753."}
+shot("app-split-dialog.png")
+```
+
+Pick the column, give a separator (a regular expression, `\s+` meaning "any whitespace" by default) and the names of the new columns. The dialog previews the first three values before you commit. Click **Apply** and the single column is replaced by three.
+
+```{r shot-split-result, echo = FALSE, eval = TRUE, fig.alt = "The calf_county table is now 28 by 10, with separate male, female and total columns in place of the merged one."}
+shot("app-split-result.png")
+```
+
+The same step in a script is `split_column()`:
+
+```{r split-script}
+sess <- mx_session("AIM_Stats_Report_060525.pdf")
+sess |> select_table("calf_county", page = 9, method = "bbox", header_rows = 4)
+sess |> split_column("calf_county",
+                     col  = "Calf.Births.by.County..Gender.born.to.Beef.Bull.County.Female.Total.Male",
+                     into = c("male", "female", "total"))
+```
+
+---
+
+## Review the recorded steps
+
+Every extraction and every cleaning action is recorded on the **Steps** tab. Click a step to see its exact parameters, and remove a step by number if it was a mistake.
+
+```{r shot-steps, echo = FALSE, eval = TRUE, fig.alt = "The Steps tab with two recorded steps, select_table and split_column. The split_column step is selected and its detail panel lists the table, column, new names, separator and keep setting."}
+shot("app-steps.png")
+```
+
+This list is the macro. Nothing else needs to be saved for it to be replayable.
+
+---
+
+## Export
+
+The **Export** tab has two halves.
+
+```{r shot-export, echo = FALSE, eval = TRUE, fig.alt = "The Export tab. On the left, buttons to download a table as CSV or Excel, or all tables as one workbook or a zip of CSVs. On the right, the macro as editable YAML with a name and directory, and buttons to download it or save it to disk."}
+shot("app-export.png")
+```
+
+- **CSV / Excel** (left) downloads the selected table, or all tables at once as one workbook or a zip of CSVs.
+- **Macro YAML** (right) shows the recorded steps as YAML. You can edit the text directly and click **Apply edits** to update the step list, then **Download YAML** or **Save to disk**.
+
+The macro for this walkthrough starts like this (abridged):
+
+```yaml
+macro:
+  name: my_macro
+  source: AIM_Stats_Report_060525.pdf
+  n_steps: 2
+steps:
+- step: select_table
+  label: calf_county
+  page: 9
+  table_index: 1
+  ...
+```
+
+---
+
+## Reuse the macro
+
+Next year's report will have the same layout and a different PDF. There are three ways to run the macro against it.
+
+- **Replay** runs one macro against one PDF. The tables appear in the Tables tab, ready to clean further or export.
+- **Batch** runs one macro across several PDFs and lets you download all the results as an Excel workbook or a zip of CSVs.
+- **Replay** also has a **Diff** panel, which runs the macro on two PDFs and compares them: row counts, added or removed tables, and cell-level changes.
+
+Outside the app, the same macro replays from R:
+
+```{r replay}
+tables <- mx_replay("AIM_Stats_Report_2025.pdf", macro = "my_macro")
+```
+
+See `vignette("macros-and-testing")` for parameterised macros, batch replay and snapshot testing in CI.
+
+---
+
+## Other tabs
+
+- **Items** extracts single values, such as an invoice number or a report date, using an LLM or the local GLiNER2 model. See `vignette("llm-integration")` for provider setup.
+- **Help** is a one-page summary of the workflow and the extraction methods, inside the app.
+
+To go further, `vignette("extraction-methods")` covers `bbox` tuning, multi-page tables and choosing a method.

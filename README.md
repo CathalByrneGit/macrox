@@ -77,6 +77,7 @@ mx_replay("report_2025.pdf", macro = "my_report")
 | Vignette | Topics covered |
 |---|---|
 | [Getting Started](https://cathalbyrnegit.github.io/macrox/doc/macrox.html) | Full script workflow: extract → clean → validate → save → replay |
+| [The Shiny App](https://cathalbyrnegit.github.io/macrox/doc/shiny-app.html) | Point-and-click extraction with screenshots: extract, clean, split columns, export a macro |
 | [Extraction Methods](https://cathalbyrnegit.github.io/macrox/doc/extraction-methods.html) | bbox tuning, lattice/stream, Docling, multi-page tables, method selection guide |
 | [LLM Integration](https://cathalbyrnegit.github.io/macrox/doc/llm-integration.html) | Provider setup, schemas, global config, items, GLiNER2 |
 | [Macros & Testing](https://cathalbyrnegit.github.io/macrox/doc/macros-and-testing.html) | Parameterised macros, batch replay, diff, CI snapshot testing |
