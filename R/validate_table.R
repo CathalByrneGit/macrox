@@ -58,7 +58,7 @@ validate_table <- function(sess, table, rules, strict = FALSE) {
       tryCatch(
         parse(text = r)[[1]],
         error = function(e) cli::cli_abort(
-          "Invalid rule expression: {.code {r}} — {conditionMessage(e)}"
+          "Invalid rule expression: {.code {r}} \u2014 {conditionMessage(e)}"
         )
       )
     })

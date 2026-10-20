@@ -43,7 +43,7 @@ detect_tables <- function(sess, pages = NULL,
 
     cli::cli_inform(c(
       "i" = "Running Docling on {length(pages)} page{?s} in one pass",
-      "i" = "(first call loads models — allow 30-60 s)..."
+      "i" = "(first call loads models \u2014 allow 30-60 s)..."
     ))
 
     raw <- tryCatch(
@@ -80,14 +80,14 @@ detect_tables <- function(sess, pages = NULL,
       }
 
       if (!requireNamespace("tabulapdf", quietly = TRUE)) {
-        cli::cli_warn("tabulapdf not installed — skipping page {pg}.")
+        cli::cli_warn("tabulapdf not installed \u2014 skipping page {pg}.")
         next
       }
       tbls <- tryCatch(
         tabulapdf::extract_tables(sess$path, pages = pg, method = method,
                                    guess = TRUE, output = "matrix"),
         error = function(e) {
-          cli::cli_warn("Page {pg}: extraction failed — {conditionMessage(e)}")
+          cli::cli_warn("Page {pg}: extraction failed \u2014 {conditionMessage(e)}")
           list()
         }
       )

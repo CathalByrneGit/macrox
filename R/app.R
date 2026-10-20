@@ -91,7 +91,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
     shiny::div(class = "section-label", "PDF File"),
     shinyFiles::shinyFilesButton(
       "pdf_select",
-      label    = "Choose PDF…",
+      label    = "Choose PDF\u2026",
       title    = "Select a PDF file",
       multiple = FALSE,
       icon     = shiny::icon("folder-open"),
@@ -235,7 +235,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
                 "Select a macro file and a PDF to replay it against. ",
                 "All extracted tables will appear in the Tables tab."),
               shinyFiles::shinyFilesButton(
-                "replay_macro_file", label = "Choose macro (.yml)…",
+                "replay_macro_file", label = "Choose macro (.yml)\u2026",
                 title = "Select a YAML macro",
                 multiple = FALSE, filetype = list(YAML = c("yml", "yaml")),
                 icon = shiny::icon("code"),
@@ -244,7 +244,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
               shiny::uiOutput("replay_macro_status"),
               shiny::hr(),
               shinyFiles::shinyFilesButton(
-                "replay_pdf_file", label = "Choose PDF…",
+                "replay_pdf_file", label = "Choose PDF\u2026",
                 title = "Select a PDF to replay against",
                 multiple = FALSE, filetype = list(PDF = "pdf"),
                 icon = shiny::icon("file-pdf"),
@@ -269,7 +269,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
         # ── Diff ──────────────────────────────────────────────────────────
         bslib::card(
           class = "mt-3",
-          bslib::card_header(shiny::icon("code-compare"), " Diff — compare macro output across two files"),
+          bslib::card_header(shiny::icon("code-compare"), " Diff \u2014 compare macro output across two files"),
           bslib::card_body(
             shiny::p(class = "text-muted small",
               "Run the same macro against two PDFs and see a side-by-side comparison of row counts, ",
@@ -278,7 +278,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
               width = 1/3,
               shiny::div(
                 shinyFiles::shinyFilesButton(
-                  "diff_macro_file", label = "Macro (.yml)…",
+                  "diff_macro_file", label = "Macro (.yml)\u2026",
                   title = "Select a YAML macro", multiple = FALSE,
                   filetype = list(YAML = c("yml", "yaml")),
                   icon = shiny::icon("code"),
@@ -288,7 +288,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
               ),
               shiny::div(
                 shinyFiles::shinyFilesButton(
-                  "diff_pdf1", label = "Reference PDF (A)…",
+                  "diff_pdf1", label = "Reference PDF (A)\u2026",
                   title = "Select reference PDF", multiple = FALSE,
                   filetype = list(PDF = "pdf"),
                   icon = shiny::icon("file-pdf"),
@@ -298,7 +298,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
               ),
               shiny::div(
                 shinyFiles::shinyFilesButton(
-                  "diff_pdf2", label = "New PDF (B)…",
+                  "diff_pdf2", label = "New PDF (B)\u2026",
                   title = "Select comparison PDF", multiple = FALSE,
                   filetype = list(PDF = "pdf"),
                   icon = shiny::icon("file-pdf"),
@@ -332,7 +332,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
             shiny::p(class = "text-muted small",
               "Replay one macro against multiple PDFs. Results download as a zip of CSVs or an Excel workbook."),
             shinyFiles::shinyFilesButton(
-              "batch_macro_file", label = "Choose macro (.yml)…",
+              "batch_macro_file", label = "Choose macro (.yml)\u2026",
               title = "Select a YAML macro", multiple = FALSE,
               filetype = list(YAML = c("yml", "yaml")),
               icon = shiny::icon("code"),
@@ -341,7 +341,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
             shiny::uiOutput("batch_macro_status"),
             shiny::hr(),
             shinyFiles::shinyFilesButton(
-              "batch_pdf_files", label = "Choose PDFs…",
+              "batch_pdf_files", label = "Choose PDFs\u2026",
               title = "Select PDF files", multiple = TRUE,
               filetype = list(PDF = "pdf"),
               icon = shiny::icon("folder-open"),
@@ -599,12 +599,12 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
         var lbl = document.getElementById('new_item_label');
         var prm = document.getElementById('new_item_prompt');
         if (lbl && lbl.value.trim() && prm && prm.value.trim()) {
-          document.getElementById('item_spinner_text').textContent = 'Extracting item…';
+          document.getElementById('item_spinner_text').textContent = 'Extracting item\u2026';
           shinyjs.show('item_spinner');
         }
       }
       if (e.target.closest && e.target.closest('#do_batch_items')) {
-        document.getElementById('item_spinner_text').textContent = 'Extracting batch…';
+        document.getElementById('item_spinner_text').textContent = 'Extracting batch\u2026';
         shinyjs.show('item_spinner');
       }
     });
@@ -625,7 +625,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
       shiny::div(class = "spinner-border spinner-border-sm text-warning", role = "status",
                  shiny::tags$span(class = "visually-hidden", "Extracting...")),
       shiny::tags$span(
-        "Extracting… ",
+        "Extracting\u2026 ",
         shiny::tags$span(id = "extract_timer_display", "0"),
         "s"
       )
@@ -644,7 +644,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
       class = "d-flex align-items-center gap-2",
       shiny::div(class = "spinner-border spinner-border-sm text-warning", role = "status",
                  shiny::tags$span(class = "visually-hidden", "Processing...")),
-      shiny::tags$span(id = "item_spinner_text", "Extracting item…")
+      shiny::tags$span(id = "item_spinner_text", "Extracting item\u2026")
     )
   )
 
@@ -848,7 +848,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
       # Left: PDF with brush
       bslib::card(
         bslib::card_header(
-          shiny::icon("file-pdf"), " PDF — page ", rv$viewer_page,
+          shiny::icon("file-pdf"), " PDF \u2014 page ", rv$viewer_page,
           shiny::div(
             class = "ms-auto d-flex align-items-center gap-1",
             shiny::actionButton("ep_prev", "<", class = "btn-sm btn-outline-secondary"),
@@ -948,7 +948,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
               shiny::numericInput("docling_table_index", "Table index", value = 1L, min = 1L, width = "40%"),
               shiny::tags$small(class = "text-muted",
                 shiny::icon("robot"), " Requires ",
-                shiny::tags$code("setup_docling()"), " — run once, then restart R. ",
+                shiny::tags$code("setup_docling()"), " \u2014 run once, then restart R. ",
                 "First call on a new page loads ML models (30-60 s); subsequent calls are instant."
               )
             ),
@@ -1108,20 +1108,20 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
       shiny::div(
         class = "d-flex align-items-center gap-2 mt-2",
         shiny::tags$button(
-          "‹ Prev", onclick = "pmPrev()",
+          "\u2039 Prev", onclick = "pmPrev()",
           class = "btn btn-outline-secondary btn-sm"
         ),
         shiny::div(
           class = "d-flex align-items-center gap-1 px-2",
           style = "font-family:monospace; font-size:13px;",
-          "Page ",
+          "Page\u00a0",
           shiny::tags$span(id = "pm_page_num",
                            style = "font-weight:700; min-width:2em; text-align:center;",
                            as.character(start_page)),
-          " of ", as.character(n_pages)
+          "\u00a0of\u00a0", as.character(n_pages)
         ),
         shiny::tags$button(
-          "Next ›", onclick = "pmNext()",
+          "Next \u203a", onclick = "pmNext()",
           class = "btn btn-outline-secondary btn-sm"
         ),
         shiny::tags$small(class = "text-muted ms-3",
@@ -1158,7 +1158,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
     shiny::updateNumericInput(session, "ext_page_box",  value = unname(pg))
     shiny::removeModal()
     shiny::showNotification(
-      paste0("Now on page ", pg, " — draw a box on the PDF and click Extract."),
+      paste0("Now on page ", pg, " \u2014 draw a box on the PDF and click Extract."),
       type = "message"
     )
   })
@@ -1207,7 +1207,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
         area        <- NULL; label_match <- NULL
         if (method == "bbox") {
           shiny::showNotification(
-            "bbox without an area will scan the full page — charts may appear. Use the Box tab for best results.",
+            "bbox without an area will scan the full page \u2014 charts may appear. Use the Box tab for best results.",
             type = "warning", duration = 8
           )
         }
@@ -1249,7 +1249,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
         shiny::updateNumericInput(session, "viewer_page", value = first_page)
         shiny::showNotification(
           paste0("Extracted struct '", label, "': ", nrow(df), " record",
-                 if (nrow(df) == 1L) "" else "s", " × ", ncol(df), " field",
+                 if (nrow(df) == 1L) "" else "s", " \u00d7 ", ncol(df), " field",
                  if (ncol(df) == 1L) "" else "s"),
           type = "message"
         )
@@ -1365,7 +1365,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
     if (!method %in% c("lattice", "stream", "docling")) method <- "lattice"
     rv$scan_results <- NULL
     id <- shiny::showNotification(
-      paste0("Scanning page ", page, " with ", method, "…"),
+      paste0("Scanning page ", page, " with ", method, "\u2026"),
       duration = NULL, type = "message"
     )
     on.exit(shiny::removeNotification(id))
@@ -1390,14 +1390,14 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
       it  <- items[[i]]
       nr  <- nrow(it$df); nc <- ncol(it$df)
       cols <- paste(head(names(it$df), 4L), collapse = ", ")
-      if (nc > 4L) cols <- paste0(cols, "…")
+      if (nc > 4L) cols <- paste0(cols, "\u2026")
       shiny::div(
         class = "d-flex align-items-center justify-content-between border rounded px-2 py-1 mb-1",
         shiny::div(
           shiny::div(class = "small fw-semibold",
-            paste0("Table ", it$index, " — p.", it$page)),
+            paste0("Table ", it$index, " \u2014 p.", it$page)),
           shiny::div(class = "text-muted", style = "font-size:0.75rem",
-            paste0(nr, " × ", nc, "  ", cols))
+            paste0(nr, " \u00d7 ", nc, "  ", cols))
         ),
         shiny::actionButton(
           paste0("scan_btn_", i), "Use",
@@ -1721,7 +1721,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
               paste(parts, collapse = " | ")
             }
             shiny::tags$code(class = "d-block mb-1",
-              paste0("“", v, "” → ", tagged))
+              paste0("\u201c", v, "\u201d \u2192 ", tagged))
           })
           do.call(shiny::tagList, rows)
         })
@@ -1984,7 +1984,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
                 shiny::div(class = "fw-bold", as.character(item$value))
               },
               shiny::tags$small(class = "text-muted",
-                item$cast, " · ",
+                item$cast, " \u00b7 ",
                 if (identical(item$backend, "gliner")) "GLiNER" else item$provider %||% "llm")
             ),
             shiny::div(
@@ -2119,7 +2119,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
         shiny::tags$small(class = "text-muted",
           shiny::icon("robot"),
           " Requires ", shiny::tags$code("setup_gliner()"),
-          " — run once, then restart R. ",
+          " \u2014 run once, then restart R. ",
           shiny::tags$em("All matches"), " returns every occurrence found.")
       ),
       # Area coordinates — LLM only, shown when a page is specified
@@ -2130,7 +2130,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
           style = "background:var(--raised);",
           shiny::div(
             class = "d-flex justify-content-between align-items-center mb-1",
-            shiny::tags$small(class = "fw-semibold", "Area (optional — leave blank for full page)"),
+            shiny::tags$small(class = "fw-semibold", "Area (optional \u2014 leave blank for full page)"),
             if (has_brush)
               shiny::actionButton("item_use_brush", "Use drawn area",
                                   class = "btn-sm btn-outline-warning",
@@ -2320,7 +2320,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
       ),
       shiny::tags$small(class = "text-muted",
         shiny::icon("robot"),
-        " Requires ", shiny::tags$code("setup_gliner()"), " — run once, restart R. ",
+        " Requires ", shiny::tags$code("setup_gliner()"), " \u2014 run once, restart R. ",
         shiny::tags$em("All matches"), " returns every occurrence per field."),
       footer = shiny::tagList(
         shiny::modalButton("Cancel"),
@@ -2489,7 +2489,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
       } else {
         shiny::showNotification(
           paste0("Removed step [", idx, "]: ", removed$step, " / ", lbl,
-                 " (table kept — another extraction step remains)."),
+                 " (table kept \u2014 another extraction step remains)."),
           type = "message"
         )
       }
@@ -2748,11 +2748,11 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
       tables <- mx_replay(rv_replay$pdf_path, steps)
       for (nm in names(tables)) rv$tables[[nm]] <- tables[[nm]]
       c(lines,
-        paste0("✔ ", length(tables), " table(s) loaded into Tables tab."),
+        paste0("\u2714 ", length(tables), " table(s) loaded into Tables tab."),
         paste(paste0("  ", names(tables), ": ",
                      vapply(tables, nrow, integer(1)), " rows"), collapse="
 "))
-    }, error = function(e) c(lines, paste0("✗ Error: ", e$message)))
+    }, error = function(e) c(lines, paste0("\u2717 Error: ", e$message)))
     rv_replay$log <- paste(result, collapse="
 ")
     bslib::nav_select("main_tabs", "Tables", session=session)
@@ -2774,7 +2774,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
           results[[i]] <- tryCatch(
             mx_replay(files[[i]], steps),
             error = function(e) {
-              shiny::showNotification(paste0("Failed: ", basename(files[[i]]), " — ", e$message), type="warning")
+              shiny::showNotification(paste0("Failed: ", basename(files[[i]]), " \u2014 ", e$message), type="warning")
               NULL
             }
           )
@@ -2791,7 +2791,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
     shiny::div(lapply(names(res), function(nm) {
       tbls <- res[[nm]]
       if (is.null(tbls)) shiny::div(class="text-danger", shiny::icon("xmark"), " ", nm, " failed")
-      else shiny::div(class="text-success mb-1", shiny::icon("check"), " ", nm, " — ",
+      else shiny::div(class="text-success mb-1", shiny::icon("check"), " ", nm, " \u2014 ",
              paste(names(tbls), vapply(tbls, nrow, integer(1)), sep="=", collapse=", "))
     }))
   })
@@ -2887,7 +2887,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
         added = shiny::icon("plus"), removed = shiny::icon("minus"), shiny::icon("question"))
       detail <- if (d$status == "changed") {
         n_changes <- length(d$cell_changes)
-        paste0(d$rows1, "×", d$cols1, " → ", d$rows2, "×", d$cols2,
+        paste0(d$rows1, "\u00d7", d$cols1, " \u2192 ", d$rows2, "\u00d7", d$cols2,
                if (n_changes > 0) paste0(", ", n_changes, " cell change(s)") else "")
       } else {
         paste0(d$rows1, " rows")
@@ -2895,7 +2895,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
       shiny::div(class = paste("d-flex align-items-center gap-2 mb-1", status_cls),
         status_icon,
         shiny::tags$b(d$table),
-        shiny::tags$small(d$status, " — ", detail)
+        shiny::tags$small(d$status, " \u2014 ", detail)
       )
     })
     shiny::div(rows)

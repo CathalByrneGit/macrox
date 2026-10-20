@@ -80,7 +80,7 @@ select_table_docling <- function(sess, label, page, table_index = 1L) {
   .load_docling_helpers()
 
   cli::cli_inform(c(
-    "i" = "Running Docling on page {page} (first call loads models — allow 30-60 s)..."
+    "i" = "Running Docling on page {page} (first call loads models \u2014 allow 30-60 s)..."
   ))
 
   result <- tryCatch(
@@ -118,7 +118,7 @@ select_table_docling <- function(sess, label, page, table_index = 1L) {
   ))
 
   cli::cli_inform(c(
-    "v" = "Table {.val {label}} extracted via Docling: {nrow(df)} × {ncol(df)}"
+    "v" = "Table {.val {label}} extracted via Docling: {nrow(df)} \u00d7 {ncol(df)}"
   ))
   invisible(sess)
 }

@@ -391,23 +391,23 @@ test_extraction <- function(file,
 
   if (header_spill)
     msgs <- c(msgs,
-      "Header text detected in data rows — increase header_rows by 1.")
+      "Header text detected in data rows \u2014 increase header_rows by 1.")
 
   if (length(unnamed_cols) > 0L)
     msgs <- c(msgs, paste0(
       "Unnamed columns (", paste(unnamed_cols, collapse = ", "),
-      ") — adjust area coords or increase header_rows."))
+      ") \u2014 adjust area coords or increase header_rows."))
 
   if (length(empty_cols) > 0L)
     msgs <- c(msgs, paste0(
       "Empty columns (", paste(empty_cols, collapse = ", "),
-      ") — crop area more tightly on left/right edges to remove empty columns."))
+      ") \u2014 crop area more tightly on left/right edges to remove empty columns."))
 
   if (length(likely_numeric) > 0L)
     msgs <- c(msgs, paste0(
       "Columns that look numeric but are character (",
       paste(likely_numeric, collapse = ", "),
-      ") — add cast_types step after extraction."))
+      ") \u2014 add cast_types step after extraction."))
 
   paste(msgs, collapse = " | ")
 }

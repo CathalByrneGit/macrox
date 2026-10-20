@@ -165,7 +165,7 @@ print.macrox_diff <- function(x, ...) {
   cat("  Reference:", x$file1, "\n")
   cat("  New:      ", x$file2, "\n\n")
 
-  icons <- c(unchanged = "✔", changed = "~", added = "+", removed = "-")
+  icons <- c(unchanged = "\u2714", changed = "~", added = "+", removed = "-")
 
   for (nm in names(x$tables)) {
     d    <- x$tables[[nm]]
@@ -175,7 +175,7 @@ print.macrox_diff <- function(x, ...) {
     if (d$status == "changed") {
       parts <- character(0)
       if (!is.na(d$rows1) && d$rows1 != d$rows2)
-        parts <- c(parts, paste0("rows: ", d$rows1, "→", d$rows2))
+        parts <- c(parts, paste0("rows: ", d$rows1, "\u2192", d$rows2))
       if (d$col_changed) {
         if (length(d$new_cols)     > 0L) parts <- c(parts, paste0("+cols: ", paste(d$new_cols,     collapse = ",")))
         if (length(d$dropped_cols) > 0L) parts <- c(parts, paste0("-cols: ", paste(d$dropped_cols, collapse = ",")))
@@ -190,7 +190,7 @@ print.macrox_diff <- function(x, ...) {
       if (!is.null(nd)) {
         num_nd <- nd[!is.na(nd$mean_abs_delta), ]
         for (i in seq_len(nrow(num_nd))) {
-          cat(sprintf("    %-20s  Δ mean=%-10.3g  max=%-10.3g  sum=%-10.3g  (%d row%s)\n",
+          cat(sprintf("    %-20s  \u0394 mean=%-10.3g  max=%-10.3g  sum=%-10.3g  (%d row%s)\n",
             num_nd$col[i],
             num_nd$mean_abs_delta[i],
             num_nd$max_abs_delta[i],
@@ -250,7 +250,7 @@ detail.macrox_diff <- function(x, table, ...) {
     ))
   }
   if (d$status %in% c("added", "removed")) {
-    cli::cli_inform("Table {.val {table}} was {d$status} — no cell comparison available.")
+    cli::cli_inform("Table {.val {table}} was {d$status} \u2014 no cell comparison available.")
     return(invisible(
       data.frame(row = integer(0), col = character(0),
                  ref = character(0), new = character(0),

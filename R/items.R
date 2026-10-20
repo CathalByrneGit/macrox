@@ -114,7 +114,7 @@ select_item <- function(sess, label, prompt,
     val_summary <- if (length(cast_value) > 1L) {
       paste0("[", length(cast_value), " matches: ",
              paste(head(as.character(cast_value), 3L), collapse = ", "),
-             if (length(cast_value) > 3L) ", …" else "", "]")
+             if (length(cast_value) > 3L) ", \u2026" else "", "]")
     } else {
       as.character(cast_value)
     }
@@ -307,7 +307,7 @@ select_items_batch <- function(sess, items, page = NULL, cast = NULL,
     val_summary <- if (length(cast_val) > 1L) {
       paste0("[", length(cast_val), " matches: ",
              paste(head(as.character(cast_val), 3L), collapse = ", "),
-             if (length(cast_val) > 3L) ", …" else "", "]")
+             if (length(cast_val) > 3L) ", \u2026" else "", "]")
     } else {
       as.character(cast_val)
     }
@@ -539,7 +539,7 @@ struct_to_df <- function(sess, label, min_confidence = NULL) {
   ))
 
   cli::cli_inform(c(
-    "v" = "Converted {.val {label}} to table: {nrow(df)} row{?s} × {ncol(df)} col{?s}."
+    "v" = "Converted {.val {label}} to table: {nrow(df)} row{?s} \u00d7 {ncol(df)} col{?s}."
   ))
   invisible(sess)
 }
@@ -551,7 +551,7 @@ struct_to_df <- function(sess, label, min_confidence = NULL) {
       .cast_col(raw_value, cast),
       error = function(e) {
         cli::cli_warn(
-          "Cast to {.val {cast}} failed for {.val {label}} — keeping as character."
+          "Cast to {.val {cast}} failed for {.val {label}} \u2014 keeping as character."
         )
         raw_value
       }
