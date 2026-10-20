@@ -182,12 +182,19 @@ new_clean_numbers_block <- function(cols = character(), convert = TRUE, ...) {
 
         list(
           expr = shiny::reactive({
-            blockr.core::bbquote(
-              macrox::clean_numbers_df(.(data), cols = .(cols),
-                                       convert = .(convert)),
-              list(cols = if (length(cols_r()) > 0L) cols_r() else NULL,
-                   convert = isTRUE(conv_r()))
-            )
+            cols <- cols_r()
+            if (length(cols) > 0L) {
+              blockr.core::bbquote(
+                macrox::clean_numbers_df(.(data), cols = .(cols),
+                                         convert = .(convert)),
+                list(cols = cols, convert = isTRUE(conv_r()))
+              )
+            } else {
+              blockr.core::bbquote(
+                macrox::clean_numbers_df(.(data), convert = .(convert)),
+                list(convert = isTRUE(conv_r()))
+              )
+            }
           }),
           state = list(cols = cols_r, convert = conv_r)
         )
@@ -225,7 +232,7 @@ register_macrox_blocks <- function() {
     "new_pdf_table_block",
     name        = "PDF table",
     description = "Read a table from a PDF page",
-    category    = "data",
+    category    = "input",
     icon        = "file-pdf",
     package     = "macrox",
     overwrite   = TRUE
