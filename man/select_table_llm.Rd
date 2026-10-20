@@ -50,6 +50,9 @@ Ignored when \code{chat} is supplied.}
 \code{"openai"}, and \code{"google_gemini"}; other providers require \code{model} to be
 set explicitly.  Ignored when \code{chat} is supplied.}
 
+\item{base_url}{Base URL for \code{"openai_compatible"} providers. Ignored when
+\code{chat} is supplied.}
+
 \item{schema}{Named character vector mapping column names to R types:
 \code{c(Month = "character", Male = "integer", Total = "integer")}.
 Supported types: \code{"character"}, \code{"integer"}, \code{"numeric"}.

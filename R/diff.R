@@ -229,8 +229,8 @@ print.macrox_diff <- function(x, ...) {
 #' for non-numeric columns).
 #'
 #' @param x A `macrox_diff` object returned by [diff_replay()].
-#' @param table Character name of the table to inspect.
-#' @param ... Unused.
+#' @param ... Passed to methods. For `macrox_diff` objects, `table` names the
+#'   table to inspect.
 #' @return A data frame with one row per changed cell.
 #' @export
 detail <- function(x, ...) UseMethod("detail")

@@ -38,6 +38,8 @@
 #' @param model Model name.  `NULL` uses a sensible default for `"anthropic"`,
 #'   `"openai"`, and `"google_gemini"`; other providers require `model` to be
 #'   set explicitly.  Ignored when `chat` is supplied.
+#' @param base_url Base URL for `"openai_compatible"` providers. Ignored when
+#'   `chat` is supplied.
 #' @param schema Named character vector mapping column names to R types:
 #'   `c(Month = "character", Male = "integer", Total = "integer")`.
 #'   Supported types: `"character"`, `"integer"`, `"numeric"`.
