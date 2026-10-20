@@ -399,37 +399,12 @@ clean_numbers <- function(sess, table, cols = NULL,
                            na_strings      = c("-", "\u2014", "n/a", "na", ""),
                            negative_parens = TRUE,
                            convert         = TRUE) {
-  df <- get_table(sess, table)
-
-  if (is.null(cols)) {
-    cols <- names(df)[!vapply(df, is.numeric, logical(1))]
-  } else {
-    missing_cols <- setdiff(cols, names(df))
-    if (length(missing_cols) > 0) {
-      cli::cli_warn(c(
-        "!" = "Some columns not found in {.val {table}} and were skipped.",
-        "i" = "Missing: {.val {missing_cols}}"
-      ))
-      cols <- intersect(cols, names(df))
-    }
-  }
-
-  n_converted <- 0L
-  for (col in cols) {
-    cleaned <- .clean_num_col(df[[col]], currency, na_strings, negative_parens)
-    if (isTRUE(convert)) {
-      num        <- suppressWarnings(as.numeric(cleaned))
-      all_parsed <- !anyNA(num[!is.na(cleaned)])
-      if (all_parsed) {
-        df[[col]] <- num
-        n_converted <- n_converted + 1L
-      } else {
-        df[[col]] <- cleaned
-      }
-    } else {
-      df[[col]] <- cleaned
-    }
-  }
+  df   <- get_table(sess, table)
+  cols <- .clean_numbers_cols(df, cols, paste0("table ", dQuote(table, FALSE)))
+  res  <- .clean_numbers_apply(df, cols, currency, na_strings,
+                               negative_parens, convert)
+  df          <- res$df
+  n_converted <- res$n_converted
 
   set_table(sess, table, df)
   record_step(sess, list(
@@ -449,6 +424,62 @@ clean_numbers <- function(sess, table, cols = NULL,
   invisible(sess)
 }
 
+.clean_numbers_cols <- function(df, cols, where) {
+  if (is.null(cols)) {
+    return(names(df)[!vapply(df, is.numeric, logical(1))])
+  }
+  missing_cols <- setdiff(cols, names(df))
+  if (length(missing_cols) > 0) {
+    cli::cli_warn(c(
+      "!" = "Some columns not found in {where} and were skipped.",
+      "i" = "Missing: {.val {missing_cols}}"
+    ))
+    cols <- intersect(cols, names(df))
+  }
+  cols
+}
+
+.clean_numbers_apply <- function(df, cols, currency, na_strings,
+                                 negative_parens, convert) {
+  n_converted <- 0L
+  for (col in cols) {
+    cleaned <- .clean_num_col(df[[col]], currency, na_strings, negative_parens)
+    if (isTRUE(convert)) {
+      num        <- suppressWarnings(as.numeric(cleaned))
+      all_parsed <- !anyNA(num[!is.na(cleaned)])
+      if (all_parsed) {
+        df[[col]] <- num
+        n_converted <- n_converted + 1L
+      } else {
+        df[[col]] <- cleaned
+      }
+    } else {
+      df[[col]] <- cleaned
+    }
+  }
+  list(df = df, n_converted = n_converted)
+}
+
+#' Clean and parse numeric strings in a data frame
+#'
+#' The data-frame counterpart of [clean_numbers()]: it takes a data frame and
+#' returns a data frame, with no session and no recorded step. Use it when the
+#' table is already in hand, for example inside a script or a pipeline.
+#'
+#' @inheritParams clean_numbers
+#' @param df A data frame.
+#' @return `df` with the selected columns cleaned.
+#' @export
+clean_numbers_df <- function(df, cols = NULL,
+                             currency        = c("\u00a3", "$", "\u20ac", "\u00a5"),
+                             na_strings      = c("-", "\u2014", "n/a", "na", ""),
+                             negative_parens = TRUE,
+                             convert         = TRUE) {
+  cols <- .clean_numbers_cols(df, cols, "the data")
+  .clean_numbers_apply(df, cols, currency, na_strings,
+                       negative_parens, convert)$df
+}
+
 .clean_num_col <- function(x, currency, na_strings, negative_parens) {
   x <- as.character(x)
   x[trimws(tolower(x)) %in% tolower(na_strings)] <- NA
@@ -463,25 +494,19 @@ clean_numbers <- function(sess, table, cols = NULL,
 #  split_column()                                                              #
 # --------------------------------------------------------------------------- #
 
-#' Split one column into several by a separator
+#' Split one column of a data frame into several
 #'
-#' Splits each cell in `col` on `sep` (a regex) and stores the resulting
-#' pieces in new columns named by `into`.  The original column is removed
-#' unless `keep = TRUE`.  Cells with fewer pieces than `length(into)` are
-#' padded with `NA`; cells with more are truncated.
+#' The data-frame counterpart of [split_column()]: it takes a data frame and
+#' returns a data frame, with no session and no recorded step.
 #'
-#' @param sess A `macrox_session` object.
-#' @param table Character label of the target table.
-#' @param col Name of the column to split.
-#' @param into Character vector of names for the new columns.
-#' @param sep Regex separator (default `"\\s+"` — one or more whitespace chars).
-#' @param keep If `TRUE`, keep the original column alongside the new ones.
-#' @return `sess` invisibly (step is recorded).
+#' @inheritParams split_column
+#' @param df A data frame.
+#' @return `df` with `col` replaced (or, with `keep = TRUE`, followed) by the
+#'   new columns named in `into`.
 #' @export
-split_column <- function(sess, table, col, into, sep = "\\s+", keep = FALSE) {
-  df <- get_table(sess, table)
+split_column_df <- function(df, col, into, sep = "\\s+", keep = FALSE) {
   if (!(col %in% names(df)))
-    cli::cli_abort("Column {.val {col}} not found in table {.val {table}}.")
+    cli::cli_abort("Column {.val {col}} not found.")
   if (length(into) < 2L)
     cli::cli_abort("{.arg into} must name at least 2 columns.")
 
@@ -502,6 +527,28 @@ split_column <- function(sess, table, col, into, sep = "\\s+", keep = FALSE) {
   right <- if (pos < ncol(df)) df[, seq(pos + 1L, ncol(df)), drop = FALSE] else NULL
   df_new <- do.call(cbind, Filter(Negate(is.null), list(left, orig, new_cols, right)))
   rownames(df_new) <- NULL
+  df_new
+}
+
+#' Split one column into several by a separator
+#'
+#' Splits each cell in `col` on `sep` (a regex) and stores the resulting
+#' pieces in new columns named by `into`.  The original column is removed
+#' unless `keep = TRUE`.  Cells with fewer pieces than `length(into)` are
+#' padded with `NA`; cells with more are truncated.
+#'
+#' @param sess A `macrox_session` object.
+#' @param table Character label of the target table.
+#' @param col Name of the column to split.
+#' @param into Character vector of names for the new columns.
+#' @param sep Regex separator (default `"\\s+"` — one or more whitespace chars).
+#' @param keep If `TRUE`, keep the original column alongside the new ones.
+#' @return `sess` invisibly (step is recorded).
+#' @export
+split_column <- function(sess, table, col, into, sep = "\\s+", keep = FALSE) {
+  df     <- get_table(sess, table)
+  df_new <- split_column_df(df, col, into, sep, keep)
+  n      <- length(into)
 
   set_table(sess, table, df_new)
   record_step(sess, list(

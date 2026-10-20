@@ -18,7 +18,7 @@ h2 {
 [detect_tables()](#sec:man-detect_tables), [detect_tables_quietly()](#sec:man-detect_tables_quietly), [locate_area()](#sec:man-locate_area)
 
 **Table extraction** — Pull tables out of PDF pages.  
-[select_table()](#sec:man-select_table), [select_table_docling()](#sec:man-select_table_docling), [select_table_llm()](#sec:man-select_table_llm), [stack_pages()](#sec:man-stack_pages), [stack_tables()](#sec:man-stack_tables), [merge_tables()](#sec:man-merge_tables)
+[select_table()](#sec:man-select_table), [select_table_docling()](#sec:man-select_table_docling), [select_table_llm()](#sec:man-select_table_llm), [stack_pages()](#sec:man-stack_pages), [stack_tables()](#sec:man-stack_tables), [merge_tables()](#sec:man-merge_tables), [pdf_table()](#sec:man-pdf_table)
 
 **Metadata extraction** — Extract individual fields and structured records.  
 [select_item()](#sec:man-select_item), [select_items_batch()](#sec:man-select_items_batch), [select_struct()](#sec:man-select_struct), [struct_to_df()](#sec:man-struct_to_df), [show_items()](#sec:man-show_items), [update_item()](#sec:man-update_item), [update_llm_schema()](#sec:man-update_llm_schema), [suggest_schema()](#sec:man-suggest_schema)
@@ -27,7 +27,7 @@ h2 {
 [mx_configure_llm()](#sec:man-mx_configure_llm)
 
 **Cleaning** — Rename, cast, filter, and reshape extracted tables.  
-[rename_columns()](#sec:man-rename_columns), [cast_types()](#sec:man-cast_types), [filter_rows()](#sec:man-filter_rows), [add_column()](#sec:man-add_column), [split_column()](#sec:man-split_column), [fill_down()](#sec:man-fill_down), [clean_numbers()](#sec:man-clean_numbers)
+[rename_columns()](#sec:man-rename_columns), [cast_types()](#sec:man-cast_types), [filter_rows()](#sec:man-filter_rows), [add_column()](#sec:man-add_column), [split_column()](#sec:man-split_column), [split_column_df()](#sec:man-split_column_df), [fill_down()](#sec:man-fill_down), [clean_numbers()](#sec:man-clean_numbers), [clean_numbers_df()](#sec:man-clean_numbers_df)
 
 **Inspection** — Preview and visualise extracted data.  
 [preview()](#sec:man-preview), [preview_all()](#sec:man-preview_all), [view_in_pdf()](#sec:man-view_in_pdf)
@@ -52,6 +52,9 @@ h2 {
 
 **Python backends** — Set up optional ML and NLP engines.  
 [setup_docling()](#sec:man-setup_docling), [close_docling()](#sec:man-close_docling), [setup_gliner()](#sec:man-setup_gliner), [close_gliner()](#sec:man-close_gliner)
+
+**blockr (experimental)** — Blocks for the blockr framework (needs the suggested blockr.core package).  
+[new_pdf_table_block()](#sec:man-new_pdf_table_block), [new_split_column_block()](#sec:man-new_split_column_block), [new_clean_numbers_block()](#sec:man-new_clean_numbers_block), [register_macrox_blocks()](#sec:man-register_macrox_blocks), [mx_blockr_app()](#sec:man-mx_blockr_app)
 
 ## Full manual {-}
 

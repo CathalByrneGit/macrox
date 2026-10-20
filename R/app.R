@@ -1739,24 +1739,7 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
           stk <- rv$undo_stacks[[l]] %||% list()
           rv$undo_stacks[[l]] <- tail(c(stk, list(rv$tables[[l]])), 5L)
           result <- tryCatch({
-            df     <- rv$tables[[l]]
-            n      <- length(into)
-            pieces <- strsplit(as.character(df[[col]]), sep)
-            pieces <- lapply(pieces, function(x) {
-              x        <- x[nchar(trimws(x)) > 0L]
-              length(x) <- n
-              x
-            })
-            new_cols           <- as.data.frame(do.call(rbind, pieces),
-                                                stringsAsFactors = FALSE)
-            names(new_cols)    <- make.names(into, unique = TRUE)
-            rownames(new_cols) <- NULL
-            pos   <- match(col, names(df))
-            left  <- if (pos > 1L) df[, seq_len(pos - 1L), drop = FALSE] else NULL
-            right <- if (pos < ncol(df)) df[, seq(pos + 1L, ncol(df)), drop = FALSE] else NULL
-            df_new <- do.call(cbind, Filter(Negate(is.null), list(left, new_cols, right)))
-            rownames(df_new) <- NULL
-            df_new
+            split_column_df(rv$tables[[l]], col, into, sep)
           }, error = function(e) {
             shiny::showNotification(paste("Split failed:", e$message), type = "error"); NULL
           })
