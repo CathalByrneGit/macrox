@@ -2822,139 +2822,6 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
     }
   )
 
-
-}  # end .mx_app_server
-
-# --------------------------------------------------------------------------- #
-#  Filter expression builder                                                   #
-# --------------------------------------------------------------------------- #
-
-.filter_op_choices <- c(
-  "equals"            = "==",
-  "not equals"        = "!=",
-  "greater than"      = ">",
-  "greater/equal"     = ">=",
-  "less than"         = "<",
-  "less/equal"        = "<=",
-  "contains"          = "grepl",
-  "does not contain"  = "!grepl",
-  "is blank / NA"     = "is.na",
-  "is not blank / NA" = "!is.na"
-)
-
-.build_filter_expr <- function(col, op, val) {
-  col_r <- paste0("`", col, "`")
-  num_v <- suppressWarnings(as.numeric(val))
-  val_r <- if (!is.na(num_v)) as.character(num_v) else paste0("'", val, "'")
-  switch(op,
-    "==" = paste0(col_r, " == ", val_r),
-    "!=" = paste0(col_r, " != ", val_r),
-    ">"  = paste0(col_r, " > ",  val_r),
-    ">=" = paste0(col_r, " >= ", val_r),
-    "<"  = paste0(col_r, " < ",  val_r),
-    "<=" = paste0(col_r, " <= ", val_r),
-    "grepl"  = paste0("grepl(",  val_r, ", ", col_r, ", ignore.case = TRUE)"),
-    "!grepl" = paste0("!grepl(", val_r, ", ", col_r, ", ignore.case = TRUE)"),
-    "is.na"  = paste0("is.na(",  col_r, ")"),
-    "!is.na" = paste0("!is.na(", col_r, ")"),
-    paste0(col_r, " == ", val_r)
-  )
-}
-
-# --------------------------------------------------------------------------- #
-#  Extraction step deduplication helper                                        #
-# --------------------------------------------------------------------------- #
-
-# When the user re-extracts a table with the same label, replace the existing
-# extraction step in-place rather than appending a duplicate.
-# Downstream transform steps (rename, cast, filter etc.) are preserved so they
-# still apply to the refreshed data on next replay.
-.parse_page_range <- function(txt) {
-  if (is.null(txt) || !nzchar(trimws(as.character(txt)))) return(NULL)
-  txt   <- gsub(" ", "", as.character(txt))
-  parts <- strsplit(txt, ",")[[1L]]
-  pages <- integer(0)
-  for (p in parts) {
-    if (grepl("^\\d+-\\d+$", p)) {
-      bounds <- as.integer(strsplit(p, "-")[[1L]])
-      pages  <- c(pages, seq(bounds[[1L]], bounds[[2L]]))
-    } else {
-      v <- suppressWarnings(as.integer(p))
-      if (!is.na(v)) pages <- c(pages, v)
-    }
-  }
-  pages <- sort(unique(pages[pages >= 1L]))
-  if (length(pages) == 0L) NULL else pages
-}
-
-.flatten_scan <- function(res) {
-  items <- list()
-  for (pg_chr in names(res)) {
-    pg   <- as.integer(pg_chr)
-    tbls <- res[[pg_chr]]
-    for (j in seq_along(tbls)) {
-      items[[length(items) + 1L]] <- list(page = pg, index = j, df = tbls[[j]])
-    }
-  }
-  items
-}
-
-.parse_struct_fields <- function(text) {
-  # Parses lines of the form:
-  #   name: description                     → str field
-  #   name [list]: description              → list field
-  #   name [basic|premium]: description     → enum field (choices = [basic|premium])
-  # Returns list(fields = c(name=desc), list_fields = c(...), enum_fields = c(name="[v1|v2]"))
-  lines <- strsplit(trimws(text), "\n")[[1L]]
-  lines <- trimws(lines)
-  lines <- lines[nzchar(lines)]
-
-  fields      <- character(0)
-  list_fields <- character(0)
-  enum_fields <- character(0)
-
-  for (line in lines) {
-    colon <- regexpr(":", line, fixed = TRUE)
-    if (colon < 2L) next
-    raw_name   <- trimws(substr(line, 1L, colon - 1L))
-    field_desc <- trimws(substr(line, colon + 1L, nchar(line)))
-    if (!nzchar(raw_name) || !nzchar(field_desc)) next
-
-    # Detect bracket annotation: "name [list]" or "name [v1|v2]"
-    bracket <- regmatches(raw_name, regexpr("\\[([^\\]]+)\\]", raw_name, perl = TRUE))
-    if (length(bracket) == 1L) {
-      field_name <- trimws(sub("\\s*\\[[^\\]]+\\]", "", raw_name, perl = TRUE))
-      spec <- gsub("\\[|\\]", "", bracket)
-      if (identical(tolower(spec), "list")) {
-        list_fields <- c(list_fields, field_name)
-      } else {
-        enum_fields[[field_name]] <- paste0("[", spec, "]")
-      }
-    } else {
-      field_name <- raw_name
-    }
-    if (!nzchar(field_name)) next
-    fields[[field_name]] <- field_desc
-  }
-  list(fields = fields, list_fields = list_fields, enum_fields = enum_fields)
-}
-
-.replace_or_append_extraction <- function(steps, label, new_step) {
-  extract_types <- c("select_table", "select_table_llm", "select_table_docling",
-                     "select_struct")
-  idx <- which(vapply(steps, function(s)
-    isTRUE(s$step %in% extract_types) && identical(s$label, label),
-    logical(1)))
-
-  if (length(idx) > 0L) {
-    # Replace the FIRST matching step; drop any additional duplicates
-    steps[[idx[[1L]]]] <- new_step
-    if (length(idx) > 1L) steps <- steps[-idx[-1L]]
-  } else {
-    steps <- .module_record(steps, new_step, session = NULL)
-  }
-  steps
-
   # ── Items CSV download ────────────────────────────────────────────────────
   output$dl_items_csv <- shiny::downloadHandler(
     filename = function() paste0("items_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".csv"),
@@ -3088,5 +2955,135 @@ mx_app <- function(viewer = c("browser", "dialog", "pane")) {
     )
   })
 
+}  # end .mx_app_server
 
+# --------------------------------------------------------------------------- #
+#  Filter expression builder                                                   #
+# --------------------------------------------------------------------------- #
+
+.filter_op_choices <- c(
+  "equals"            = "==",
+  "not equals"        = "!=",
+  "greater than"      = ">",
+  "greater/equal"     = ">=",
+  "less than"         = "<",
+  "less/equal"        = "<=",
+  "contains"          = "grepl",
+  "does not contain"  = "!grepl",
+  "is blank / NA"     = "is.na",
+  "is not blank / NA" = "!is.na"
+)
+
+.build_filter_expr <- function(col, op, val) {
+  col_r <- paste0("`", col, "`")
+  num_v <- suppressWarnings(as.numeric(val))
+  val_r <- if (!is.na(num_v)) as.character(num_v) else paste0("'", val, "'")
+  switch(op,
+    "==" = paste0(col_r, " == ", val_r),
+    "!=" = paste0(col_r, " != ", val_r),
+    ">"  = paste0(col_r, " > ",  val_r),
+    ">=" = paste0(col_r, " >= ", val_r),
+    "<"  = paste0(col_r, " < ",  val_r),
+    "<=" = paste0(col_r, " <= ", val_r),
+    "grepl"  = paste0("grepl(",  val_r, ", ", col_r, ", ignore.case = TRUE)"),
+    "!grepl" = paste0("!grepl(", val_r, ", ", col_r, ", ignore.case = TRUE)"),
+    "is.na"  = paste0("is.na(",  col_r, ")"),
+    "!is.na" = paste0("!is.na(", col_r, ")"),
+    paste0(col_r, " == ", val_r)
+  )
+}
+
+# --------------------------------------------------------------------------- #
+#  Extraction step deduplication helper                                        #
+# --------------------------------------------------------------------------- #
+
+# When the user re-extracts a table with the same label, replace the existing
+# extraction step in-place rather than appending a duplicate.
+# Downstream transform steps (rename, cast, filter etc.) are preserved so they
+# still apply to the refreshed data on next replay.
+.parse_page_range <- function(txt) {
+  if (is.null(txt) || !nzchar(trimws(as.character(txt)))) return(NULL)
+  txt   <- gsub(" ", "", as.character(txt))
+  parts <- strsplit(txt, ",")[[1L]]
+  pages <- integer(0)
+  for (p in parts) {
+    if (grepl("^\\d+-\\d+$", p)) {
+      bounds <- as.integer(strsplit(p, "-")[[1L]])
+      pages  <- c(pages, seq(bounds[[1L]], bounds[[2L]]))
+    } else {
+      v <- suppressWarnings(as.integer(p))
+      if (!is.na(v)) pages <- c(pages, v)
+    }
+  }
+  pages <- sort(unique(pages[pages >= 1L]))
+  if (length(pages) == 0L) NULL else pages
+}
+
+.flatten_scan <- function(res) {
+  items <- list()
+  for (pg_chr in names(res)) {
+    pg   <- as.integer(pg_chr)
+    tbls <- res[[pg_chr]]
+    for (j in seq_along(tbls)) {
+      items[[length(items) + 1L]] <- list(page = pg, index = j, df = tbls[[j]])
+    }
+  }
+  items
+}
+
+.parse_struct_fields <- function(text) {
+  # Parses lines of the form:
+  #   name: description                     → str field
+  #   name [list]: description              → list field
+  #   name [basic|premium]: description     → enum field (choices = [basic|premium])
+  # Returns list(fields = c(name=desc), list_fields = c(...), enum_fields = c(name="[v1|v2]"))
+  lines <- strsplit(trimws(text), "\n")[[1L]]
+  lines <- trimws(lines)
+  lines <- lines[nzchar(lines)]
+
+  fields      <- character(0)
+  list_fields <- character(0)
+  enum_fields <- character(0)
+
+  for (line in lines) {
+    colon <- regexpr(":", line, fixed = TRUE)
+    if (colon < 2L) next
+    raw_name   <- trimws(substr(line, 1L, colon - 1L))
+    field_desc <- trimws(substr(line, colon + 1L, nchar(line)))
+    if (!nzchar(raw_name) || !nzchar(field_desc)) next
+
+    # Detect bracket annotation: "name [list]" or "name [v1|v2]"
+    bracket <- regmatches(raw_name, regexpr("\\[([^\\]]+)\\]", raw_name, perl = TRUE))
+    if (length(bracket) == 1L) {
+      field_name <- trimws(sub("\\s*\\[[^\\]]+\\]", "", raw_name, perl = TRUE))
+      spec <- gsub("\\[|\\]", "", bracket)
+      if (identical(tolower(spec), "list")) {
+        list_fields <- c(list_fields, field_name)
+      } else {
+        enum_fields[[field_name]] <- paste0("[", spec, "]")
+      }
+    } else {
+      field_name <- raw_name
+    }
+    if (!nzchar(field_name)) next
+    fields[[field_name]] <- field_desc
+  }
+  list(fields = fields, list_fields = list_fields, enum_fields = enum_fields)
+}
+
+.replace_or_append_extraction <- function(steps, label, new_step) {
+  extract_types <- c("select_table", "select_table_llm", "select_table_docling",
+                     "select_struct")
+  idx <- which(vapply(steps, function(s)
+    isTRUE(s$step %in% extract_types) && identical(s$label, label),
+    logical(1)))
+
+  if (length(idx) > 0L) {
+    # Replace the FIRST matching step; drop any additional duplicates
+    steps[[idx[[1L]]]] <- new_step
+    if (length(idx) > 1L) steps <- steps[-idx[-1L]]
+  } else {
+    steps <- .module_record(steps, new_step, session = NULL)
+  }
+  steps
 }
