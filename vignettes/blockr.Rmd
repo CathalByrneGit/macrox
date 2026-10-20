@@ -1,0 +1,100 @@
+---
+title: "macrox in blockr (experimental)"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{macrox in blockr (experimental)}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE, out.width = "100%")
+shot <- function(file) knitr::include_graphics(file.path("images", file))
+```
+
+[blockr](https://bristolmyerssquibb.github.io/blockr.core/) is a framework for building data workflows from blocks. You connect blocks on a board, and each block adds a step of R code. macrox provides three blocks so a PDF table can be a step on a board, next to blockr's own filtering, plotting and reporting blocks.
+
+This is **experimental**. The blocks follow the `blockr.core` block API, which is still changing, and they have been tested against `blockr.core` 0.1.4. `mx_app()` remains the main interface: it is the only place with the PDF viewer and the draw-a-box area selection, and it is where macros are recorded and replayed. Use the blocks when you want a PDF table inside a larger blockr board.
+
+---
+
+## Set up
+
+The blocks need the suggested `blockr.core` package:
+
+```{r install}
+install.packages("blockr.core")
+```
+
+macrox registers its blocks automatically whenever `blockr.core` is loaded. Without `blockr.core`, every function on this page stops with a message saying what to install, and the rest of macrox is unaffected.
+
+## Try it
+
+`mx_blockr_app()` starts a board wired as **PDF table → Split column → Clean numbers**:
+
+```{r launch}
+library(macrox)
+
+mx_blockr_app("AIM_Stats_Report_060525.pdf", page = 9, header_rows = 4)
+```
+
+```{r shot-board, echo = FALSE, eval = TRUE, fig.alt = "A blockr board with a PDF table block that has read page 9 of a PDF into a 28 by 8 table, followed by a Split column block that has turned the merged column into male, female and total, giving 28 by 10."}
+shot("blockr-board.png")
+```
+
+The three blocks:
+
+| Block | What it does | Wraps |
+|---|---|---|
+| **PDF table** | Reads one table from a PDF page: file, page and number of header rows. | `pdf_table()` |
+| **Split column** | Splits one column into several on a regular expression, for cells where numbers ran together. | `split_column_df()` |
+| **Clean numbers** | Strips separators and currency symbols, maps `n/a` to `NA`, and converts columns that then parse cleanly to numeric. | `clean_numbers_df()` |
+
+Each block waits until it has what it needs. The Split column block, for example, stays idle until you choose a column, and the blocks after it wait in turn. Once you pick the merged column and name the new ones, the table flows downstream: here 28 by 8 becomes 28 by 10, and the last block turns the new columns into numbers.
+
+## The code is yours
+
+Click **Show code** to see the script the board writes:
+
+```{r shot-code, echo = FALSE, eval = TRUE, out.width = "76%", fig.align = "center", fig.alt = "The Generated code dialog showing three steps: pdf_table, split_column_df and clean_numbers_df, each assigned to a named variable."}
+shot("blockr-code.png")
+```
+
+```{r generated}
+pdf <- local(macrox::pdf_table("AIM_Stats_Report_060525.pdf",
+    page = 9L, header_rows = 4L))
+
+split <- local(macrox::split_column_df(pdf,
+    col = "Calf.Births.by.County..Gender.born.to.Beef.Bull.County.Female.Total.Male",
+    into = c("male", "female", "total"), sep = "\\s+", keep = FALSE))
+
+clean <- local(macrox::clean_numbers_df(split, convert = TRUE))
+```
+
+It uses only macrox functions, so it runs without blockr installed. These three functions are the same data-frame building blocks that the rest of macrox uses internally: `split_column()` and `clean_numbers()` call `split_column_df()` and `clean_numbers_df()` after fetching the table from a session.
+
+## Use the blocks on your own board
+
+The constructors work like any other blockr block:
+
+```{r own-board}
+library(blockr.core)
+
+serve(
+  new_board(
+    blocks = c(
+      pdf   = new_pdf_table_block("report.pdf", page = 9, header_rows = 4),
+      clean = new_clean_numbers_block()
+    ),
+    links = list(from = "pdf", to = "clean", input = "data")
+  )
+)
+```
+
+You can also skip the blocks entirely and call `pdf_table()`, `split_column_df()` and `clean_numbers_df()` from blockr's *function block*, which runs any R function as a step.
+
+## Limits
+
+- **No page viewer or drawn box.** The PDF block takes a file path, page number and header rows. To find a page or measure an area, use `mx_app()` and carry the numbers over.
+- **bbox engine only.** `pdf_table()` uses the word-position (`bbox`) engine. The other methods (lattice, stream, LLM, Docling) remain in `select_table()` and the app.
+- **Replay stays in macrox.** A blockr board is saved against one PDF. Recording a macro and replaying it across other PDFs, with batch runs, diffs and snapshot tests, is still done with macrox macros (`vignette("macros-and-testing")`).
