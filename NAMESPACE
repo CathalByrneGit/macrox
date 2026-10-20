@@ -61,7 +61,6 @@ S3method(print, macrox_profile)
 S3method(print, macrox_validation)
 
 importFrom(cli, cli_inform, cli_warn, cli_abort, cli_h2, cli_h3, cli_rule, cli_bullets)
-importFrom(pdftools, pdf_text, pdf_info)
 importFrom(stringdist, stringdist)
 importFrom(yaml, write_yaml, read_yaml, as.yaml)
 importFrom(rlang, `%||%`)
