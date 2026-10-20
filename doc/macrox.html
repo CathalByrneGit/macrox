@@ -395,7 +395,8 @@ reproducible pipeline.</p>
 code. Select a PDF with the filesystem browser, draw a bounding box on
 the page image, configure the extraction method, and hit
 <strong>Extract</strong>. All steps are recorded and can be exported as
-a YAML macro or downloaded as CSV / Excel.</p>
+a YAML macro or downloaded as CSV / Excel. For a walkthrough with
+screenshots, see <code>vignette(&quot;shiny-app&quot;)</code>.</p>
 <p><strong>Tabs:</strong></p>
 <table>
 <colgroup>
@@ -413,12 +414,13 @@ a YAML macro or downloaded as CSV / Excel.</p>
 <td><strong>Extract</strong></td>
 <td>Full PDF viewer, draw-to-select area, method picker (bbox / lattice
 / stream / docling / llm), live preview. <code>←</code> / <code>→</code>
-navigate pages.</td>
+navigate pages. Its <strong>Struct</strong> sub-tab extracts structured
+records (several fields, many rows) via GLiNER2.</td>
 </tr>
 <tr class="even">
 <td><strong>Tables</strong></td>
-<td>One tab per extracted table. Rename, cast types, filter rows (GUI),
-validate rules, column stats.</td>
+<td>One tab per extracted table. Rename, cast types, filter rows, split
+columns, undo, validate rules, column stats.</td>
 </tr>
 <tr class="odd">
 <td><strong>Items</strong></td>
@@ -426,27 +428,22 @@ validate rules, column stats.</td>
 LLM or GLiNER2.</td>
 </tr>
 <tr class="even">
-<td><strong>Struct</strong></td>
-<td>Extract structured records (multiple fields, multiple rows) via
-GLiNER2.</td>
+<td><strong>Steps</strong></td>
+<td>Recorded step badges. Click one to inspect its parameters, or remove
+it.</td>
 </tr>
 <tr class="odd">
-<td><strong>Steps</strong></td>
-<td>Recorded step badges. Remove steps, edit the YAML macro directly
-with syntax highlighting.</td>
-</tr>
-<tr class="even">
 <td><strong>Replay</strong></td>
 <td>Run a saved macro against a new PDF. Results load into Tables.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><strong>Batch</strong></td>
 <td>Run one macro across multiple PDFs. Download as Excel or zip of
 CSVs.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><strong>Export</strong></td>
-<td>Download CSV, Excel, JSON, or the YAML macro.</td>
+<td>Download CSV or Excel, or edit and download the YAML macro.</td>
 </tr>
 </tbody>
 </table>
