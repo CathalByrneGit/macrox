@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<meta name="generator" content="litedown 0.11.8">
+<meta name="generator" content="litedown 0.11.10">
 <title>Help pages</title>
 <link rel="stylesheet" href="extra.css">
 <style type="text/css">
@@ -112,7 +112,7 @@ section.footnotes {
   body:not(.pagesjs) pre:has(.line-numbers):not(:hover) { white-space: pre; }
 }
 </style>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.111/css/prism-xcode.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.116/css/prism-xcode.min.css">
 </head>
 <body>
 <nav><p><a href="index.html">Home</a>
@@ -130,57 +130,60 @@ section.footnotes {
 <li><a href="#sec:man-add_column"><span class="section-number main-number">1</span> Add a derived column to an extracted table</a></li>
 <li><a href="#sec:man-cast_types"><span class="section-number main-number">2</span> Cast column types in an extracted table</a></li>
 <li><a href="#sec:man-clean_numbers"><span class="section-number main-number">3</span> Clean and parse numeric strings in table columns</a></li>
-<li><a href="#sec:man-close_docling"><span class="section-number main-number">4</span> Release the Docling document cache</a></li>
-<li><a href="#sec:man-close_gliner"><span class="section-number main-number">5</span> Unload the GLiNER2 model from memory</a></li>
-<li><a href="#sec:man-detail"><span class="section-number main-number">6</span> Inspect cell-level changes for one table in a diff</a></li>
-<li><a href="#sec:man-detect_tables"><span class="section-number main-number">7</span> Scan a PDF for tables</a></li>
-<li><a href="#sec:man-detect_tables_quietly"><span class="section-number main-number">8</span> Detect tables without console output</a></li>
-<li><a href="#sec:man-diff_replay"><span class="section-number main-number">9</span> Compare macro outputs across two PDF files</a></li>
-<li><a href="#sec:man-expect_table_snapshot"><span class="section-number main-number">10</span> Snapshot-test an extracted table</a></li>
-<li><a href="#sec:man-export_csv"><span class="section-number main-number">11</span> Export all extracted tables to CSV files</a></li>
-<li><a href="#sec:man-export_excel"><span class="section-number main-number">12</span> Export all extracted tables to an Excel workbook</a></li>
-<li><a href="#sec:man-export_json"><span class="section-number main-number">13</span> Export session data as a structured JSON payload</a></li>
-<li><a href="#sec:man-fill_down"><span class="section-number main-number">14</span> Forward-fill blank or NA cells in specified columns</a></li>
-<li><a href="#sec:man-filter_rows"><span class="section-number main-number">15</span> Remove rows matching an expression</a></li>
-<li><a href="#sec:man-load_macro"><span class="section-number main-number">16</span> Load a YAML macro</a></li>
-<li><a href="#sec:man-locate_area"><span class="section-number main-number">17</span> Interactively select a table area</a></li>
-<li><a href="#sec:man-macrox_server"><span class="section-number main-number">18</span> Shiny module server for PDF table extraction</a></li>
-<li><a href="#sec:man-macrox_ui"><span class="section-number main-number">19</span> Shiny module UI for PDF table extraction</a></li>
-<li><a href="#sec:man-merge_tables"><span class="section-number main-number">20</span> Join two extracted tables</a></li>
-<li><a href="#sec:man-mx_app"><span class="section-number main-number">21</span> Launch the macrox standalone app</a></li>
-<li><a href="#sec:man-mx_configure_llm"><span class="section-number main-number">22</span> Configure a session-level default LLM</a></li>
-<li><a href="#sec:man-mx_profile"><span class="section-number main-number">23</span> Profile a PDF for agent consumption</a></li>
-<li><a href="#sec:man-mx_replay"><span class="section-number main-number">24</span> Replay a macro against a new PDF file</a></li>
-<li><a href="#sec:man-mx_replay_batch"><span class="section-number main-number">25</span> Replay a macro across multiple PDF files</a></li>
-<li><a href="#sec:man-mx_session"><span class="section-number main-number">26</span> Open a macrox session</a></li>
-<li><a href="#sec:man-preview"><span class="section-number main-number">27</span> Preview one extracted table</a></li>
-<li><a href="#sec:man-preview_all"><span class="section-number main-number">28</span> Preview all extracted tables with numeric totals</a></li>
-<li><a href="#sec:man-remove_step"><span class="section-number main-number">29</span> Remove a recorded step by index</a></li>
-<li><a href="#sec:man-rename_columns"><span class="section-number main-number">30</span> Rename columns in an extracted table</a></li>
-<li><a href="#sec:man-save_macro"><span class="section-number main-number">31</span> Save the session's recorded steps as a YAML macro</a></li>
-<li><a href="#sec:man-select_item"><span class="section-number main-number">32</span> Extract a single metadata field from a PDF</a></li>
-<li><a href="#sec:man-select_items_batch"><span class="section-number main-number">33</span> Extract multiple metadata fields in one GLiNER model pass</a></li>
-<li><a href="#sec:man-select_struct"><span class="section-number main-number">34</span> Extract structured records from a PDF page using GLiNER2</a></li>
-<li><a href="#sec:man-select_table"><span class="section-number main-number">35</span> Extract a table from the PDF and record the step</a></li>
-<li><a href="#sec:man-select_table_docling"><span class="section-number main-number">36</span> Extract a table using Docling</a></li>
-<li><a href="#sec:man-select_table_llm"><span class="section-number main-number">37</span> Extract a table using an LLM</a></li>
-<li><a href="#sec:man-setup_docling"><span class="section-number main-number">38</span> Install Docling into a Python environment</a></li>
-<li><a href="#sec:man-setup_gliner"><span class="section-number main-number">39</span> Install GLiNER2 in the macrox Python environment</a></li>
-<li><a href="#sec:man-show_items"><span class="section-number main-number">40</span> Show all extracted items</a></li>
-<li><a href="#sec:man-show_steps"><span class="section-number main-number">41</span> Show recorded steps</a></li>
-<li><a href="#sec:man-show_validations"><span class="section-number main-number">42</span> Show validation results for all tables</a></li>
-<li><a href="#sec:man-split_column"><span class="section-number main-number">43</span> Split one column into several by a separator</a></li>
-<li><a href="#sec:man-stack_pages"><span class="section-number main-number">44</span> Extract and stack the same table across multiple PDF pages</a></li>
-<li><a href="#sec:man-stack_tables"><span class="section-number main-number">45</span> Row-bind multiple extracted tables into one</a></li>
-<li><a href="#sec:man-struct_to_df"><span class="section-number main-number">46</span> Convert raw struct extraction to a data frame</a></li>
-<li><a href="#sec:man-suggest_schema"><span class="section-number main-number">47</span> Suggest column types for an extracted table</a></li>
-<li><a href="#sec:man-test_extraction"><span class="section-number main-number">48</span> Test extraction parameters and return a structured evaluation report</a></li>
-<li><a href="#sec:man-test_macro"><span class="section-number main-number">49</span> Snapshot-test a macro against a stored reference</a></li>
-<li><a href="#sec:man-update_item"><span class="section-number main-number">50</span> Update the prompt for a recorded select_item step and re-extract</a></li>
-<li><a href="#sec:man-update_llm_schema"><span class="section-number main-number">51</span> Update the schema for a recorded LLM extraction step and re-extract</a></li>
-<li><a href="#sec:man-validate_macro"><span class="section-number main-number">52</span> Validate a macro against a PDF without extracting data</a></li>
-<li><a href="#sec:man-validate_table"><span class="section-number main-number">53</span> Validate an extracted table against a set of rules</a></li>
-<li><a href="#sec:man-view_in_pdf"><span class="section-number main-number">54</span> View a recorded step's location in the PDF</a></li>
+<li><a href="#sec:man-clean_numbers_df"><span class="section-number main-number">4</span> Clean and parse numeric strings in a data frame</a></li>
+<li><a href="#sec:man-close_docling"><span class="section-number main-number">5</span> Release the Docling document cache</a></li>
+<li><a href="#sec:man-close_gliner"><span class="section-number main-number">6</span> Unload the GLiNER2 model from memory</a></li>
+<li><a href="#sec:man-detail"><span class="section-number main-number">7</span> Inspect cell-level changes for one table in a diff</a></li>
+<li><a href="#sec:man-detect_tables"><span class="section-number main-number">8</span> Scan a PDF for tables</a></li>
+<li><a href="#sec:man-detect_tables_quietly"><span class="section-number main-number">9</span> Detect tables without console output</a></li>
+<li><a href="#sec:man-diff_replay"><span class="section-number main-number">10</span> Compare macro outputs across two PDF files</a></li>
+<li><a href="#sec:man-expect_table_snapshot"><span class="section-number main-number">11</span> Snapshot-test an extracted table</a></li>
+<li><a href="#sec:man-export_csv"><span class="section-number main-number">12</span> Export all extracted tables to CSV files</a></li>
+<li><a href="#sec:man-export_excel"><span class="section-number main-number">13</span> Export all extracted tables to an Excel workbook</a></li>
+<li><a href="#sec:man-export_json"><span class="section-number main-number">14</span> Export session data as a structured JSON payload</a></li>
+<li><a href="#sec:man-fill_down"><span class="section-number main-number">15</span> Forward-fill blank or NA cells in specified columns</a></li>
+<li><a href="#sec:man-filter_rows"><span class="section-number main-number">16</span> Remove rows matching an expression</a></li>
+<li><a href="#sec:man-load_macro"><span class="section-number main-number">17</span> Load a YAML macro</a></li>
+<li><a href="#sec:man-locate_area"><span class="section-number main-number">18</span> Interactively select a table area</a></li>
+<li><a href="#sec:man-macrox_server"><span class="section-number main-number">19</span> Shiny module server for PDF table extraction</a></li>
+<li><a href="#sec:man-macrox_ui"><span class="section-number main-number">20</span> Shiny module UI for PDF table extraction</a></li>
+<li><a href="#sec:man-merge_tables"><span class="section-number main-number">21</span> Join two extracted tables</a></li>
+<li><a href="#sec:man-mx_app"><span class="section-number main-number">22</span> Launch the macrox standalone app</a></li>
+<li><a href="#sec:man-mx_configure_llm"><span class="section-number main-number">23</span> Configure a session-level default LLM</a></li>
+<li><a href="#sec:man-mx_profile"><span class="section-number main-number">24</span> Profile a PDF for agent consumption</a></li>
+<li><a href="#sec:man-mx_replay"><span class="section-number main-number">25</span> Replay a macro against a new PDF file</a></li>
+<li><a href="#sec:man-mx_replay_batch"><span class="section-number main-number">26</span> Replay a macro across multiple PDF files</a></li>
+<li><a href="#sec:man-mx_session"><span class="section-number main-number">27</span> Open a macrox session</a></li>
+<li><a href="#sec:man-pdf_table"><span class="section-number main-number">28</span> Extract a table from a PDF page as a data frame</a></li>
+<li><a href="#sec:man-preview"><span class="section-number main-number">29</span> Preview one extracted table</a></li>
+<li><a href="#sec:man-preview_all"><span class="section-number main-number">30</span> Preview all extracted tables with numeric totals</a></li>
+<li><a href="#sec:man-remove_step"><span class="section-number main-number">31</span> Remove a recorded step by index</a></li>
+<li><a href="#sec:man-rename_columns"><span class="section-number main-number">32</span> Rename columns in an extracted table</a></li>
+<li><a href="#sec:man-save_macro"><span class="section-number main-number">33</span> Save the session's recorded steps as a YAML macro</a></li>
+<li><a href="#sec:man-select_item"><span class="section-number main-number">34</span> Extract a single metadata field from a PDF</a></li>
+<li><a href="#sec:man-select_items_batch"><span class="section-number main-number">35</span> Extract multiple metadata fields in one GLiNER model pass</a></li>
+<li><a href="#sec:man-select_struct"><span class="section-number main-number">36</span> Extract structured records from a PDF page using GLiNER2</a></li>
+<li><a href="#sec:man-select_table"><span class="section-number main-number">37</span> Extract a table from the PDF and record the step</a></li>
+<li><a href="#sec:man-select_table_docling"><span class="section-number main-number">38</span> Extract a table using Docling</a></li>
+<li><a href="#sec:man-select_table_llm"><span class="section-number main-number">39</span> Extract a table using an LLM</a></li>
+<li><a href="#sec:man-setup_docling"><span class="section-number main-number">40</span> Install Docling into a Python environment</a></li>
+<li><a href="#sec:man-setup_gliner"><span class="section-number main-number">41</span> Install GLiNER2 in the macrox Python environment</a></li>
+<li><a href="#sec:man-show_items"><span class="section-number main-number">42</span> Show all extracted items</a></li>
+<li><a href="#sec:man-show_steps"><span class="section-number main-number">43</span> Show recorded steps</a></li>
+<li><a href="#sec:man-show_validations"><span class="section-number main-number">44</span> Show validation results for all tables</a></li>
+<li><a href="#sec:man-split_column"><span class="section-number main-number">45</span> Split one column into several by a separator</a></li>
+<li><a href="#sec:man-split_column_df"><span class="section-number main-number">46</span> Split one column of a data frame into several</a></li>
+<li><a href="#sec:man-stack_pages"><span class="section-number main-number">47</span> Extract and stack the same table across multiple PDF pages</a></li>
+<li><a href="#sec:man-stack_tables"><span class="section-number main-number">48</span> Row-bind multiple extracted tables into one</a></li>
+<li><a href="#sec:man-struct_to_df"><span class="section-number main-number">49</span> Convert raw struct extraction to a data frame</a></li>
+<li><a href="#sec:man-suggest_schema"><span class="section-number main-number">50</span> Suggest column types for an extracted table</a></li>
+<li><a href="#sec:man-test_extraction"><span class="section-number main-number">51</span> Test extraction parameters and return a structured evaluation report</a></li>
+<li><a href="#sec:man-test_macro"><span class="section-number main-number">52</span> Snapshot-test a macro against a stored reference</a></li>
+<li><a href="#sec:man-update_item"><span class="section-number main-number">53</span> Update the prompt for a recorded select_item step and re-extract</a></li>
+<li><a href="#sec:man-update_llm_schema"><span class="section-number main-number">54</span> Update the schema for a recorded LLM extraction step and re-extract</a></li>
+<li><a href="#sec:man-validate_macro"><span class="section-number main-number">55</span> Validate a macro against a PDF without extracting data</a></li>
+<li><a href="#sec:man-validate_table"><span class="section-number main-number">56</span> Validate an extracted table against a set of rules</a></li>
+<li><a href="#sec:man-view_in_pdf"><span class="section-number main-number">57</span> View a recorded step's location in the PDF</a></li>
 </ul>
 </div>
 <style type="text/css">
@@ -195,13 +198,13 @@ h2 {
 <p><strong>Detection</strong> — Scan a PDF for table locations.<br />
 <a href="#sec:man-detect_tables">detect_tables()</a>, <a href="#sec:man-detect_tables_quietly">detect_tables_quietly()</a>, <a href="#sec:man-locate_area">locate_area()</a></p>
 <p><strong>Table extraction</strong> — Pull tables out of PDF pages.<br />
-<a href="#sec:man-select_table">select_table()</a>, <a href="#sec:man-select_table_docling">select_table_docling()</a>, <a href="#sec:man-select_table_llm">select_table_llm()</a>, <a href="#sec:man-stack_pages">stack_pages()</a>, <a href="#sec:man-stack_tables">stack_tables()</a>, <a href="#sec:man-merge_tables">merge_tables()</a></p>
+<a href="#sec:man-select_table">select_table()</a>, <a href="#sec:man-select_table_docling">select_table_docling()</a>, <a href="#sec:man-select_table_llm">select_table_llm()</a>, <a href="#sec:man-stack_pages">stack_pages()</a>, <a href="#sec:man-stack_tables">stack_tables()</a>, <a href="#sec:man-merge_tables">merge_tables()</a>, <a href="#sec:man-pdf_table">pdf_table()</a></p>
 <p><strong>Metadata extraction</strong> — Extract individual fields and structured records.<br />
 <a href="#sec:man-select_item">select_item()</a>, <a href="#sec:man-select_items_batch">select_items_batch()</a>, <a href="#sec:man-select_struct">select_struct()</a>, <a href="#sec:man-struct_to_df">struct_to_df()</a>, <a href="#sec:man-show_items">show_items()</a>, <a href="#sec:man-update_item">update_item()</a>, <a href="#sec:man-update_llm_schema">update_llm_schema()</a>, <a href="#sec:man-suggest_schema">suggest_schema()</a></p>
 <p><strong>LLM configuration</strong> — Configure the LLM provider at session or global level.<br />
 <a href="#sec:man-mx_configure_llm">mx_configure_llm()</a></p>
 <p><strong>Cleaning</strong> — Rename, cast, filter, and reshape extracted tables.<br />
-<a href="#sec:man-rename_columns">rename_columns()</a>, <a href="#sec:man-cast_types">cast_types()</a>, <a href="#sec:man-filter_rows">filter_rows()</a>, <a href="#sec:man-add_column">add_column()</a>, <a href="#sec:man-split_column">split_column()</a>, <a href="#sec:man-fill_down">fill_down()</a>, <a href="#sec:man-clean_numbers">clean_numbers()</a></p>
+<a href="#sec:man-rename_columns">rename_columns()</a>, <a href="#sec:man-cast_types">cast_types()</a>, <a href="#sec:man-filter_rows">filter_rows()</a>, <a href="#sec:man-add_column">add_column()</a>, <a href="#sec:man-split_column">split_column()</a>, <a href="#sec:man-split_column_df">split_column_df()</a>, <a href="#sec:man-fill_down">fill_down()</a>, <a href="#sec:man-clean_numbers">clean_numbers()</a>, <a href="#sec:man-clean_numbers_df">clean_numbers_df()</a></p>
 <p><strong>Inspection</strong> — Preview and visualise extracted data.<br />
 <a href="#sec:man-preview">preview()</a>, <a href="#sec:man-preview_all">preview_all()</a>, <a href="#sec:man-view_in_pdf">view_in_pdf()</a></p>
 <p><strong>Macros</strong> — Save, load, and replay extraction workflows.<br />
@@ -227,6 +230,7 @@ h2 {
 <b>-- <kbd>C</kbd> --</b>
 <a href="#sec:man-cast_types"><code>cast_types()</code></a>
 <a href="#sec:man-clean_numbers"><code>clean_numbers()</code></a>
+<a href="#sec:man-clean_numbers_df"><code>clean_numbers_df()</code></a>
 <a href="#sec:man-close_docling"><code>close_docling()</code></a>
 <a href="#sec:man-close_gliner"><code>close_gliner()</code></a>
 </p>
@@ -268,6 +272,7 @@ h2 {
 </p>
 <p>
 <b>-- <kbd>P</kbd> --</b>
+<a href="#sec:man-pdf_table"><code>pdf_table()</code></a>
 <a href="#sec:man-preview"><code>preview()</code></a>
 <a href="#sec:man-preview_all"><code>preview_all()</code></a>
 </p>
@@ -291,6 +296,7 @@ h2 {
 <a href="#sec:man-show_steps"><code>show_steps()</code></a>
 <a href="#sec:man-show_validations"><code>show_validations()</code></a>
 <a href="#sec:man-split_column"><code>split_column()</code></a>
+<a href="#sec:man-split_column_df"><code>split_column_df()</code></a>
 <a href="#sec:man-stack_pages"><code>stack_pages()</code></a>
 <a href="#sec:man-stack_tables"><code>stack_tables()</code></a>
 <a href="#sec:man-struct_to_df"><code>struct_to_df()</code></a>
@@ -419,34 +425,82 @@ non-NA values parse successfully.</p>
 <h3 id="sec:value_3" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (step is recorded).
 </p>
-<h2 id="sec:man-close_docling"><span class="section-number main-number">4</span> Release the Docling document cache</h2>
+<h2 id="sec:man-clean_numbers_df"><span class="section-number main-number">4</span> Clean and parse numeric strings in a data frame</h2>
 <h3 id="sec:description_4" class="unnumbered unlisted">Description</h3>
+<p>The data-frame counterpart of <code><a href="#sec:man-clean-numbers">clean_numbers()</a></code>: it takes a data frame and
+returns a data frame, with no session and no recorded step. Use it when the
+table is already in hand, for example inside a script or a pipeline.
+</p>
+<h3 id="sec:usage_4" class="unnumbered unlisted">Usage</h3>
+<pre><code class="language-r">clean_numbers_df(
+  df,
+  cols = NULL,
+  currency = c("£", "$", "€", "¥"),
+  na_strings = c("-", "—", "n/a", "na", ""),
+  negative_parens = TRUE,
+  convert = TRUE
+)</code></pre>
+<h3 id="sec:arguments_4" class="unnumbered unlisted">Arguments</h3>
+<table role = "presentation">
+<tr><td><code>df</code></td>
+<td>
+<p>A data frame.</p>
+</td></tr>
+<tr><td><code>cols</code></td>
+<td>
+<p>Character vector of column names to process. <code>NULL</code> (default)
+targets all non-numeric columns.</p>
+</td></tr>
+<tr><td><code>currency</code></td>
+<td>
+<p>Character vector of currency symbols to strip.</p>
+</td></tr>
+<tr><td><code>na_strings</code></td>
+<td>
+<p>Strings that should become <code>NA</code> (case-insensitive after
+whitespace trimming).</p>
+</td></tr>
+<tr><td><code>negative_parens</code></td>
+<td>
+<p>If <code>TRUE</code> (default), converts <code>(123)</code> to <code>-123</code>.</p>
+</td></tr>
+<tr><td><code>convert</code></td>
+<td>
+<p>If <code>TRUE</code> (default), coerces a column to <code>numeric</code> when all
+non-NA values parse successfully.</p>
+</td></tr>
+</table>
+<h3 id="sec:value_4" class="unnumbered unlisted">Value</h3>
+<p><code>df</code> with the selected columns cleaned.
+</p>
+<h2 id="sec:man-close_docling"><span class="section-number main-number">5</span> Release the Docling document cache</h2>
+<h3 id="sec:description_5" class="unnumbered unlisted">Description</h3>
 <p>Frees the in-memory cache of converted PDF documents. Call this when
 you are done extracting tables to reduce memory usage.
 </p>
-<h3 id="sec:usage_4" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_5" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">close_docling()</code></pre>
-<h3 id="sec:value_4" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_5" class="unnumbered unlisted">Value</h3>
 <p>Invisible <code>NULL</code>.
 </p>
-<h2 id="sec:man-close_gliner"><span class="section-number main-number">5</span> Unload the GLiNER2 model from memory</h2>
-<h3 id="sec:description_5" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-close_gliner"><span class="section-number main-number">6</span> Unload the GLiNER2 model from memory</h2>
+<h3 id="sec:description_6" class="unnumbered unlisted">Description</h3>
 <p>Unload the GLiNER2 model from memory
 </p>
-<h3 id="sec:usage_5" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_6" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">close_gliner()</code></pre>
-<h3 id="sec:value_5" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_6" class="unnumbered unlisted">Value</h3>
 <p><code>NULL</code> invisibly.
 </p>
-<h2 id="sec:man-detail"><span class="section-number main-number">6</span> Inspect cell-level changes for one table in a diff</h2>
-<h3 id="sec:description_6" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-detail"><span class="section-number main-number">7</span> Inspect cell-level changes for one table in a diff</h2>
+<h3 id="sec:description_7" class="unnumbered unlisted">Description</h3>
 <p>Returns a data frame of every cell that changed between the two replays, with
 columns <code>row</code>, <code>col</code>, <code>ref</code>, <code>new</code>, and <code>delta</code> (numeric difference, or <code>NA</code>
 for non-numeric columns).
 </p>
-<h3 id="sec:usage_6" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_7" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">detail(x, ...)</code></pre>
-<h3 id="sec:arguments_4" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_5" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>x</code></td>
 <td>
@@ -458,15 +512,15 @@ for non-numeric columns).
 table to inspect.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_6" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_7" class="unnumbered unlisted">Value</h3>
 <p>A data frame with one row per changed cell.
 </p>
-<h2 id="sec:man-detect_tables"><span class="section-number main-number">7</span> Scan a PDF for tables</h2>
-<h3 id="sec:description_7" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-detect_tables"><span class="section-number main-number">8</span> Scan a PDF for tables</h2>
+<h3 id="sec:description_8" class="unnumbered unlisted">Description</h3>
 <p>Scans the specified pages of the PDF for tables and prints a summary.
 This function is NOT recorded in the macro — it is for exploration only.
 </p>
-<h3 id="sec:usage_7" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_8" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">detect_tables(
   sess,
   pages = NULL,
@@ -474,7 +528,7 @@ This function is NOT recorded in the macro — it is for exploration only.
   min_rows = 1L,
   max_header_chars = 40L
 )</code></pre>
-<h3 id="sec:arguments_5" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_6" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -510,15 +564,15 @@ Docling's layout model distinguishes charts from tables natively.)</p>
 converted in a single pass and the results are cached so that subsequent
 <code><a href="#sec:man-select-table-docling">select_table_docling()</a></code> calls on those pages run instantly.
 </p>
-<h3 id="sec:value_7" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_8" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (not recorded).
 </p>
-<h2 id="sec:man-detect_tables_quietly"><span class="section-number main-number">8</span> Detect tables without console output</h2>
-<h3 id="sec:description_8" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-detect_tables_quietly"><span class="section-number main-number">9</span> Detect tables without console output</h2>
+<h3 id="sec:description_9" class="unnumbered unlisted">Description</h3>
 <p>Like <code><a href="#sec:man-detect-tables">detect_tables()</a></code> but returns a named list silently. Intended for
 agent/programmatic use.
 </p>
-<h3 id="sec:usage_8" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_9" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">detect_tables_quietly(
   path,
   pages = NULL,
@@ -526,7 +580,7 @@ agent/programmatic use.
   min_rows = 1L,
   max_header_chars = 40L
 )</code></pre>
-<h3 id="sec:arguments_6" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_7" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>path</code></td>
 <td>
@@ -551,17 +605,17 @@ agent/programmatic use.
 (default <code>40</code>). Ignored when <code>method = "docling"</code>.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_8" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_9" class="unnumbered unlisted">Value</h3>
 <p>Named list: page number (character) → list of data frames.
 </p>
-<h2 id="sec:man-diff_replay"><span class="section-number main-number">9</span> Compare macro outputs across two PDF files</h2>
-<h3 id="sec:description_9" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-diff_replay"><span class="section-number main-number">10</span> Compare macro outputs across two PDF files</h2>
+<h3 id="sec:description_10" class="unnumbered unlisted">Description</h3>
 <p>Replays the same macro against two files and returns a structured diff
 showing added, removed, and changed tables. For changed tables the diff
 includes per-column numeric delta statistics. Use <code><a href="#sec:man-detail">detail()</a></code> on the result
 to inspect which cells changed.
 </p>
-<h3 id="sec:usage_9" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_10" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">diff_replay(
   file1,
   file2,
@@ -570,7 +624,7 @@ to inspect which cells changed.
   params = list(),
   params2 = NULL
 )</code></pre>
-<h3 id="sec:arguments_7" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_8" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>file1</code></td>
 <td>
@@ -600,19 +654,19 @@ second file.</p>
 <code>params</code> when <code>NULL</code>.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_9" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_10" class="unnumbered unlisted">Value</h3>
 <p>A <code>macrox_diff</code> object. Print gives a summary; <code><a href="#sec:man-detail">detail()</a></code> drills
 into a single table.
 </p>
-<h2 id="sec:man-expect_table_snapshot"><span class="section-number main-number">10</span> Snapshot-test an extracted table</h2>
-<h3 id="sec:description_10" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-expect_table_snapshot"><span class="section-number main-number">11</span> Snapshot-test an extracted table</h2>
+<h3 id="sec:description_11" class="unnumbered unlisted">Description</h3>
 <p>Wraps <code><a href="https://rdrr.io/cran/testthat/man/expect_snapshot.html">testthat::expect_snapshot()</a></code> to lock in the printed representation of
 a table stored in a session. On first run the snapshot is written to
 <code>tests/testthat/_snaps/</code>; subsequent runs compare against that baseline.
 </p>
-<h3 id="sec:usage_10" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_11" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">expect_table_snapshot(sess, label = NULL, variant = NULL)</code></pre>
-<h3 id="sec:arguments_8" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_9" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -632,16 +686,16 @@ is already a data frame.</p>
 <h3 id="sec:details_2" class="unnumbered unlisted">Details</h3>
 <p>Must be called inside a <code>testthat</code> test (i.e., within <code>test_that()</code>).
 </p>
-<h3 id="sec:value_10" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_11" class="unnumbered unlisted">Value</h3>
 <p>The result of <code>expect_snapshot()</code>, invisibly.
 </p>
-<h2 id="sec:man-export_csv"><span class="section-number main-number">11</span> Export all extracted tables to CSV files</h2>
-<h3 id="sec:description_11" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-export_csv"><span class="section-number main-number">12</span> Export all extracted tables to CSV files</h2>
+<h3 id="sec:description_12" class="unnumbered unlisted">Description</h3>
 <p>Writes one <code>.csv</code> per table into <code>dir</code>. Existing files are overwritten.
 </p>
-<h3 id="sec:usage_11" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_12" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">export_csv(sess, dir = ".", tables = NULL)</code></pre>
-<h3 id="sec:arguments_9" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_10" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -656,17 +710,17 @@ is already a data frame.</p>
 <p>Character vector of table labels to export. Default: all tables.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_11" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_12" class="unnumbered unlisted">Value</h3>
 <p>Named character vector of output file paths, invisibly.
 </p>
-<h2 id="sec:man-export_excel"><span class="section-number main-number">12</span> Export all extracted tables to an Excel workbook</h2>
-<h3 id="sec:description_12" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-export_excel"><span class="section-number main-number">13</span> Export all extracted tables to an Excel workbook</h2>
+<h3 id="sec:description_13" class="unnumbered unlisted">Description</h3>
 <p>Writes one worksheet per table. Requires the <code>writexl</code> or <code>openxlsx</code>
 package.
 </p>
-<h3 id="sec:usage_12" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_13" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">export_excel(sess, path = "macrox_tables.xlsx", tables = NULL)</code></pre>
-<h3 id="sec:arguments_10" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_11" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -681,18 +735,18 @@ package.
 <p>Character vector of table labels to include. Default: all.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_12" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_13" class="unnumbered unlisted">Value</h3>
 <p><code>path</code> invisibly.
 </p>
-<h2 id="sec:man-export_json"><span class="section-number main-number">13</span> Export session data as a structured JSON payload</h2>
-<h3 id="sec:description_13" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-export_json"><span class="section-number main-number">14</span> Export session data as a structured JSON payload</h2>
+<h3 id="sec:description_14" class="unnumbered unlisted">Description</h3>
 <p>Combines extracted items (document metadata) and tables into a single
 self-describing JSON document. Suitable for API ingestion, database loading,
 and RAG pipelines.
 </p>
-<h3 id="sec:usage_13" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_14" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">export_json(sess, path = NULL, pretty = TRUE, include_steps = FALSE)</code></pre>
-<h3 id="sec:arguments_11" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_12" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -713,18 +767,18 @@ string invisibly without writing.</p>
 <code>FALSE</code>).</p>
 </td></tr>
 </table>
-<h3 id="sec:value_13" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_14" class="unnumbered unlisted">Value</h3>
 <p>The JSON string, invisibly.
 </p>
-<h2 id="sec:man-fill_down"><span class="section-number main-number">14</span> Forward-fill blank or NA cells in specified columns</h2>
-<h3 id="sec:description_14" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-fill_down"><span class="section-number main-number">15</span> Forward-fill blank or NA cells in specified columns</h2>
+<h3 id="sec:description_15" class="unnumbered unlisted">Description</h3>
 <p>Fills each blank or <code>NA</code> cell downward from the last non-blank value.
 Useful when merged header cells in government PDFs leave empty values in
 rows below the merged cell boundary.
 </p>
-<h3 id="sec:usage_14" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_15" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">fill_down(sess, table, cols = NULL)</code></pre>
-<h3 id="sec:arguments_12" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_13" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -740,16 +794,16 @@ rows below the merged cell boundary.
 all columns.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_14" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_15" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (step is recorded).
 </p>
-<h2 id="sec:man-filter_rows"><span class="section-number main-number">15</span> Remove rows matching an expression</h2>
-<h3 id="sec:description_15" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-filter_rows"><span class="section-number main-number">16</span> Remove rows matching an expression</h2>
+<h3 id="sec:description_16" class="unnumbered unlisted">Description</h3>
 <p>Remove rows matching an expression
 </p>
-<h3 id="sec:usage_15" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_16" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">filter_rows(sess, table, exclude_where)</code></pre>
-<h3 id="sec:arguments_13" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_14" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -765,16 +819,16 @@ all columns.</p>
 frame columns. Rows where the expression is <code>TRUE</code> are removed.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_15" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_16" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (step is recorded).
 </p>
-<h2 id="sec:man-load_macro"><span class="section-number main-number">16</span> Load a YAML macro</h2>
-<h3 id="sec:description_16" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-load_macro"><span class="section-number main-number">17</span> Load a YAML macro</h2>
+<h3 id="sec:description_17" class="unnumbered unlisted">Description</h3>
 <p>Load a YAML macro
 </p>
-<h3 id="sec:usage_16" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_17" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">load_macro(name, path = ".")</code></pre>
-<h3 id="sec:arguments_14" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_15" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>name</code></td>
 <td>
@@ -785,19 +839,19 @@ frame columns. Rows where the expression is <code>TRUE</code> are removed.</p>
 <p>Directory to look in when <code>name</code> has no extension (default <code>.</code>).</p>
 </td></tr>
 </table>
-<h3 id="sec:value_16" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_17" class="unnumbered unlisted">Value</h3>
 <p>The list of step definitions. If the macro declares parameters, a
 <code>params</code> attribute is attached — inspect with <code>attr(steps, "params")</code>.
 </p>
-<h2 id="sec:man-locate_area"><span class="section-number main-number">17</span> Interactively select a table area</h2>
-<h3 id="sec:description_17" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-locate_area"><span class="section-number main-number">18</span> Interactively select a table area</h2>
+<h3 id="sec:description_18" class="unnumbered unlisted">Description</h3>
 <p>Opens a click-and-drag gadget (via <code>tabulapdf::locate_areas</code>) to capture
 bounding box coordinates. Returns a named <code>c(top, left, bottom, right)</code>
 vector suitable for passing directly to <code><a href="#sec:man-select-table">select_table()</a></code>.
 </p>
-<h3 id="sec:usage_17" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_18" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">locate_area(sess, page = 1)</code></pre>
-<h3 id="sec:arguments_15" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_16" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -808,35 +862,35 @@ vector suitable for passing directly to <code><a href="#sec:man-select-table">se
 <p>Page number to display (default 1).</p>
 </td></tr>
 </table>
-<h3 id="sec:value_17" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_18" class="unnumbered unlisted">Value</h3>
 <p>Named numeric vector <code>c(top, left, bottom, right)</code>, invisibly.
 </p>
-<h2 id="sec:man-macrox_server"><span class="section-number main-number">18</span> Shiny module server for PDF table extraction</h2>
-<h3 id="sec:description_18" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-macrox_server"><span class="section-number main-number">19</span> Shiny module server for PDF table extraction</h2>
+<h3 id="sec:description_19" class="unnumbered unlisted">Description</h3>
 <p>Shiny module server for PDF table extraction
 </p>
-<h3 id="sec:usage_18" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_19" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">macrox_server(id)</code></pre>
-<h3 id="sec:arguments_16" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_17" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>id</code></td>
 <td>
 <p>Module namespace ID (must match <code><a href="#sec:man-macrox-ui">macrox_ui()</a></code>).</p>
 </td></tr>
 </table>
-<h3 id="sec:value_18" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_19" class="unnumbered unlisted">Value</h3>
 <p>A list with two reactives: <code>tables</code> (named list of data frames) and
 <code>steps</code> (list of step definitions).
 </p>
-<h2 id="sec:man-macrox_ui"><span class="section-number main-number">19</span> Shiny module UI for PDF table extraction</h2>
-<h3 id="sec:description_19" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-macrox_ui"><span class="section-number main-number">20</span> Shiny module UI for PDF table extraction</h2>
+<h3 id="sec:description_20" class="unnumbered unlisted">Description</h3>
 <p>Provides a split-pane interface: PDF viewer on the left, live extracted
 table on the right. Transforms (rename, type-cast, filter) open in modal
 dialogs so both panes remain visible.
 </p>
-<h3 id="sec:usage_19" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_20" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">macrox_ui(id, title = "PDF · Table Extractor", height = "600px")</code></pre>
-<h3 id="sec:arguments_17" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_18" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>id</code></td>
 <td>
@@ -851,14 +905,14 @@ dialogs so both panes remain visible.
 <p>Height of the PDF image pane (default <code>"600px"</code>).</p>
 </td></tr>
 </table>
-<h3 id="sec:value_19" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_20" class="unnumbered unlisted">Value</h3>
 <p>A <code>bslib</code> card UI element.
 </p>
-<h2 id="sec:man-merge_tables"><span class="section-number main-number">20</span> Join two extracted tables</h2>
-<h3 id="sec:description_20" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-merge_tables"><span class="section-number main-number">21</span> Join two extracted tables</h2>
+<h3 id="sec:description_21" class="unnumbered unlisted">Description</h3>
 <p>Wraps <code>base::merge()</code> and records the step so it replays automatically.
 </p>
-<h3 id="sec:usage_20" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_21" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">merge_tables(
   sess,
   label,
@@ -869,7 +923,7 @@ dialogs so both panes remain visible.
   all.x = FALSE,
   all.y = FALSE
 )</code></pre>
-<h3 id="sec:arguments_18" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_19" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -904,18 +958,18 @@ dialogs so both panes remain visible.
 <p>Right join when <code>TRUE</code>.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_20" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_21" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (step is recorded).
 </p>
-<h2 id="sec:man-mx_app"><span class="section-number main-number">21</span> Launch the macrox standalone app</h2>
-<h3 id="sec:description_21" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-mx_app"><span class="section-number main-number">22</span> Launch the macrox standalone app</h2>
+<h3 id="sec:description_22" class="unnumbered unlisted">Description</h3>
 <p>Opens a full Shiny application for interactive PDF table extraction,
 cleaning, and export. The app is self-contained — no existing session
 or macro is required.
 </p>
-<h3 id="sec:usage_21" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_22" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">mx_app(viewer = c("browser", "dialog", "pane"))</code></pre>
-<h3 id="sec:arguments_19" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_20" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>viewer</code></td>
 <td>
@@ -933,18 +987,18 @@ or macro is required.
 </li></ul>
 </td></tr>
 </table>
-<h3 id="sec:value_21" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_22" class="unnumbered unlisted">Value</h3>
 <p>Called for its side-effect. Returns invisibly when the app is closed.
 </p>
-<h2 id="sec:man-mx_configure_llm"><span class="section-number main-number">22</span> Configure a session-level default LLM</h2>
-<h3 id="sec:description_22" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-mx_configure_llm"><span class="section-number main-number">23</span> Configure a session-level default LLM</h2>
+<h3 id="sec:description_23" class="unnumbered unlisted">Description</h3>
 <p>Sets a single LLM configuration for the session so that
 <code><a href="#sec:man-select-table-llm">select_table_llm</a>()</code> and <code><a href="#sec:man-select-item">select_item</a>()</code> can be
 called without specifying <code>provider</code>, <code>model</code>, or <code>chat</code> on
 every call.  The configured chat object is cloned for each extraction so its
 conversation history is never shared between calls.
 </p>
-<h3 id="sec:usage_22" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_23" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">mx_configure_llm(
   sess,
   chat = NULL,
@@ -953,7 +1007,7 @@ conversation history is never shared between calls.
   base_url = NULL,
   system = NULL
 )</code></pre>
-<h3 id="sec:arguments_20" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_21" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -988,7 +1042,7 @@ provider.  Ignored when <code>chat</code> is supplied.</p>
 when <code>chat</code> is supplied.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_22" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_23" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly.
 </p>
 <h3 id="sec:examples_1" class="unnumbered unlisted">Examples</h3>
@@ -1009,14 +1063,14 @@ chat &lt;- ellmer::chat_anthropic(
 )
 sess |&gt; mx_configure_llm(chat = chat)
 </code></pre>
-<h2 id="sec:man-mx_profile"><span class="section-number main-number">23</span> Profile a PDF for agent consumption</h2>
-<h3 id="sec:description_23" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-mx_profile"><span class="section-number main-number">24</span> Profile a PDF for agent consumption</h2>
+<h3 id="sec:description_24" class="unnumbered unlisted">Description</h3>
 <p>Returns a structured machine-readable description of the PDF's tables and
 surrounding text context. Pass the result to an LLM to generate a macro.
 </p>
-<h3 id="sec:usage_23" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_24" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">mx_profile(path, pages = NULL, method = "lattice", context_lines = 3)</code></pre>
-<h3 id="sec:arguments_21" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_22" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>path</code></td>
 <td>
@@ -1037,16 +1091,16 @@ at 60).</p>
 row to include as context (default 3).</p>
 </td></tr>
 </table>
-<h3 id="sec:value_23" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_24" class="unnumbered unlisted">Value</h3>
 <p>A <code>macrox_profile</code> list.
 </p>
-<h2 id="sec:man-mx_replay"><span class="section-number main-number">24</span> Replay a macro against a new PDF file</h2>
-<h3 id="sec:description_24" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-mx_replay"><span class="section-number main-number">25</span> Replay a macro against a new PDF file</h2>
+<h3 id="sec:description_25" class="unnumbered unlisted">Description</h3>
 <p>Replay a macro against a new PDF file
 </p>
-<h3 id="sec:usage_24" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_25" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">mx_replay(file, macro, macro_path = ".", params = list())</code></pre>
-<h3 id="sec:arguments_22" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_23" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>file</code></td>
 <td>
@@ -1068,14 +1122,14 @@ by <code><a href="#sec:man-load-macro">load_macro()</a></code>.</p>
 fields is replaced with the corresponding value.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_24" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_25" class="unnumbered unlisted">Value</h3>
 <p>Named list of extracted data frames.
 </p>
-<h2 id="sec:man-mx_replay_batch"><span class="section-number main-number">25</span> Replay a macro across multiple PDF files</h2>
-<h3 id="sec:description_25" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-mx_replay_batch"><span class="section-number main-number">26</span> Replay a macro across multiple PDF files</h2>
+<h3 id="sec:description_26" class="unnumbered unlisted">Description</h3>
 <p>Replay a macro across multiple PDF files
 </p>
-<h3 id="sec:usage_25" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_26" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">mx_replay_batch(
   files,
   macro,
@@ -1084,7 +1138,7 @@ fields is replaced with the corresponding value.</p>
   .progress = TRUE,
   .parallel = FALSE
 )</code></pre>
-<h3 id="sec:arguments_23" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_24" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>files</code></td>
 <td>
@@ -1115,17 +1169,17 @@ Requires <code>purrr &gt;= 1.1.0</code> and <code>mirai</code>. Set up workers f
 <code>mirai::daemons(n)</code>. Defaults to <code>FALSE</code> (sequential).</p>
 </td></tr>
 </table>
-<h3 id="sec:value_25" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_26" class="unnumbered unlisted">Value</h3>
 <p>Named list (file basenames) of table lists. Files that fail are NULL.
 </p>
-<h2 id="sec:man-mx_session"><span class="section-number main-number">26</span> Open a macrox session</h2>
-<h3 id="sec:description_26" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-mx_session"><span class="section-number main-number">27</span> Open a macrox session</h2>
+<h3 id="sec:description_27" class="unnumbered unlisted">Description</h3>
 <p>Creates a session object that holds the PDF path, extracted tables, and a
 running log of every recorded step.
 </p>
-<h3 id="sec:usage_26" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_27" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">mx_session(path = NULL)</code></pre>
-<h3 id="sec:arguments_24" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_25" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>path</code></td>
 <td>
@@ -1135,16 +1189,63 @@ WEBP). Image files are automatically converted to PDF; only
 session.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_26" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_27" class="unnumbered unlisted">Value</h3>
 <p>An invisible <code>macrox_session</code> environment.
 </p>
-<h2 id="sec:man-preview"><span class="section-number main-number">27</span> Preview one extracted table</h2>
-<h3 id="sec:description_27" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-pdf_table"><span class="section-number main-number">28</span> Extract a table from a PDF page as a data frame</h2>
+<h3 id="sec:description_28" class="unnumbered unlisted">Description</h3>
+<p>Reads one table from one page of a PDF with the word-position (<code>bbox</code>)
+engine and returns it as a data frame. It needs no session and records no
+step, which makes it convenient in scripts and pipelines.
+</p>
+<h3 id="sec:usage_28" class="unnumbered unlisted">Usage</h3>
+<pre><code class="language-r">pdf_table(
+  path,
+  page,
+  area = NULL,
+  header_rows = 1L,
+  row_tol = NULL,
+  col_gap = NULL
+)</code></pre>
+<h3 id="sec:arguments_26" class="unnumbered unlisted">Arguments</h3>
+<table role = "presentation">
+<tr><td><code>path</code></td>
+<td>
+<p>Path to a PDF file.</p>
+</td></tr>
+<tr><td><code>page</code></td>
+<td>
+<p>Page number.</p>
+</td></tr>
+<tr><td><code>area</code></td>
+<td>
+<p>Optional named numeric vector <code>c(top, left, bottom, right)</code> in
+PDF points. <code>NULL</code> (the default) scans the whole page.</p>
+</td></tr>
+<tr><td><code>header_rows</code></td>
+<td>
+<p>Number of header rows. Several rows are joined into a
+single column name.</p>
+</td></tr>
+<tr><td><code>row_tol</code>, <code>col_gap</code></td>
+<td>
+<p>Optional tuning for row clustering and column gap
+detection. <code>NULL</code> (the default) detects them automatically.</p>
+</td></tr>
+</table>
+<h3 id="sec:value_28" class="unnumbered unlisted">Value</h3>
+<p>A data frame.
+</p>
+<h3 id="sec:examples_2" class="unnumbered unlisted">Examples</h3>
+<pre><code class="language-r fade">pdf_table(&quot;report.pdf&quot;, page = 9, header_rows = 4)
+</code></pre>
+<h2 id="sec:man-preview"><span class="section-number main-number">29</span> Preview one extracted table</h2>
+<h3 id="sec:description_29" class="unnumbered unlisted">Description</h3>
 <p>Preview one extracted table
 </p>
-<h3 id="sec:usage_27" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_29" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">preview(sess, table, n = 6)</code></pre>
-<h3 id="sec:arguments_25" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_27" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -1159,16 +1260,16 @@ session.</p>
 <p>Number of rows to show (default 6).</p>
 </td></tr>
 </table>
-<h3 id="sec:value_27" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_29" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly. # not recorded
 </p>
-<h2 id="sec:man-preview_all"><span class="section-number main-number">28</span> Preview all extracted tables with numeric totals</h2>
-<h3 id="sec:description_28" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-preview_all"><span class="section-number main-number">30</span> Preview all extracted tables with numeric totals</h2>
+<h3 id="sec:description_30" class="unnumbered unlisted">Description</h3>
 <p>Preview all extracted tables with numeric totals
 </p>
-<h3 id="sec:usage_28" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_30" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">preview_all(sess, n = 6)</code></pre>
-<h3 id="sec:arguments_26" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_28" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -1179,16 +1280,16 @@ session.</p>
 <p>Number of rows to show per table (default 6).</p>
 </td></tr>
 </table>
-<h3 id="sec:value_28" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_30" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly. # not recorded
 </p>
-<h2 id="sec:man-remove_step"><span class="section-number main-number">29</span> Remove a recorded step by index</h2>
-<h3 id="sec:description_29" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-remove_step"><span class="section-number main-number">31</span> Remove a recorded step by index</h2>
+<h3 id="sec:description_31" class="unnumbered unlisted">Description</h3>
 <p>Remove a recorded step by index
 </p>
-<h3 id="sec:usage_29" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_31" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">remove_step(sess, index)</code></pre>
-<h3 id="sec:arguments_27" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_29" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -1199,16 +1300,16 @@ session.</p>
 <p>Integer index of the step to remove (see <code><a href="#sec:man-show-steps">show_steps()</a></code>).</p>
 </td></tr>
 </table>
-<h3 id="sec:value_29" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_31" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly.
 </p>
-<h2 id="sec:man-rename_columns"><span class="section-number main-number">30</span> Rename columns in an extracted table</h2>
-<h3 id="sec:description_30" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-rename_columns"><span class="section-number main-number">32</span> Rename columns in an extracted table</h2>
+<h3 id="sec:description_32" class="unnumbered unlisted">Description</h3>
 <p>Rename columns in an extracted table
 </p>
-<h3 id="sec:usage_30" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_32" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">rename_columns(sess, table, mapping)</code></pre>
-<h3 id="sec:arguments_28" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_30" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -1223,16 +1324,16 @@ session.</p>
 <p>Named character vector: <code>c(OldName = "new_name", ...)</code>.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_30" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_32" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (step is recorded).
 </p>
-<h2 id="sec:man-save_macro"><span class="section-number main-number">31</span> Save the session's recorded steps as a YAML macro</h2>
-<h3 id="sec:description_31" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-save_macro"><span class="section-number main-number">33</span> Save the session's recorded steps as a YAML macro</h2>
+<h3 id="sec:description_33" class="unnumbered unlisted">Description</h3>
 <p>Save the session's recorded steps as a YAML macro
 </p>
-<h3 id="sec:usage_31" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_33" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">save_macro(sess, name, path = ".", overwrite = FALSE, params = NULL)</code></pre>
-<h3 id="sec:arguments_29" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_31" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -1260,16 +1361,16 @@ Declared parameters can be referenced as <code>$name</code> in any step field
 <code>mx_replay(..., params = list(year = 2025L))</code>.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_31" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_33" class="unnumbered unlisted">Value</h3>
 <p>The output file path, invisibly.
 </p>
-<h2 id="sec:man-select_item"><span class="section-number main-number">32</span> Extract a single metadata field from a PDF</h2>
-<h3 id="sec:description_32" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-select_item"><span class="section-number main-number">34</span> Extract a single metadata field from a PDF</h2>
+<h3 id="sec:description_34" class="unnumbered unlisted">Description</h3>
 <p>Extracts a single structured value from a PDF using either an LLM or a
 local GLiNER2 model.  Results are stored in <code>sess$items[[label]]</code> and
 recorded as a step.
 </p>
-<h3 id="sec:usage_32" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_34" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">select_item(
   sess,
   label,
@@ -1286,7 +1387,7 @@ recorded as a step.
   gliner_model = "fastino/gliner2-base-v1",
   all_matches = FALSE
 )</code></pre>
-<h3 id="sec:arguments_30" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_32" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -1362,10 +1463,10 @@ return every occurrence of the entity found in the text as a character
 vector instead of just the first match.  Default <code>FALSE</code>.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_32" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_34" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (step is recorded).
 </p>
-<h3 id="sec:examples_2" class="unnumbered unlisted">Examples</h3>
+<h3 id="sec:examples_3" class="unnumbered unlisted">Examples</h3>
 <pre><code class="language-r fade"># LLM backend (default)
 sess |&gt; select_item(&quot;invoice_number&quot;,
   prompt = &quot;Extract the invoice ID or reference number.&quot;)
@@ -1383,14 +1484,14 @@ sess |&gt; select_item(&quot;total_amount&quot;,
   cast    = &quot;numeric&quot;,
   backend = &quot;gliner&quot;)
 </code></pre>
-<h2 id="sec:man-select_items_batch"><span class="section-number main-number">33</span> Extract multiple metadata fields in one GLiNER model pass</h2>
-<h3 id="sec:description_33" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-select_items_batch"><span class="section-number main-number">35</span> Extract multiple metadata fields in one GLiNER model pass</h2>
+<h3 id="sec:description_35" class="unnumbered unlisted">Description</h3>
 <p>Runs a single GLiNER2 inference call to extract several named fields from a
 PDF, which is significantly faster than calling <code><a href="#sec:man-select-item">select_item()</a></code> once per
 field. Each field is recorded as a separate <code>select_item</code> step so macros
 replay with the standard <code>select_item</code> mechanism.
 </p>
-<h3 id="sec:usage_33" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_35" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">select_items_batch(
   sess,
   items,
@@ -1399,7 +1500,7 @@ replay with the standard <code>select_item</code> mechanism.
   gliner_model = "fastino/gliner2-base-v1",
   all_matches = FALSE
 )</code></pre>
-<h3 id="sec:arguments_31" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_33" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -1440,18 +1541,18 @@ Default <code>FALSE</code>.</p>
 are present in the text; <code>select_items_batch</code> surfaces the first match per
 field (the same behaviour as <code><a href="#sec:man-select-item">select_item()</a></code>).
 </p>
-<h3 id="sec:value_33" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_35" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (one <code>select_item</code> step recorded per field).
 </p>
-<h2 id="sec:man-select_struct"><span class="section-number main-number">34</span> Extract structured records from a PDF page using GLiNER2</h2>
-<h3 id="sec:description_34" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-select_struct"><span class="section-number main-number">36</span> Extract structured records from a PDF page using GLiNER2</h2>
+<h3 id="sec:description_36" class="unnumbered unlisted">Description</h3>
 <p>Uses GLiNER2's <code>extract_json</code> to extract a structured entity schema
 (multiple fields, optional list fields, multiple records) from a PDF page.
 Results are stored as a data frame in <code>sess$tables[[label]]</code>, identical to
 tabulapdf / LLM table extraction — downstream steps and exports work
 unchanged.
 </p>
-<h3 id="sec:usage_34" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_36" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">select_struct(
   sess,
   label,
@@ -1462,7 +1563,7 @@ unchanged.
   page = 1L,
   gliner_model = "fastino/gliner2-base-v1"
 )</code></pre>
-<h3 id="sec:arguments_32" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_34" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -1505,16 +1606,16 @@ pages use a single <code>batch_extract_json</code> call. Default <code>1L</code>
 Default <code>"fastino/gliner2-base-v1"</code>.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_34" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_36" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (step recorded).
 </p>
-<h2 id="sec:man-select_table"><span class="section-number main-number">35</span> Extract a table from the PDF and record the step</h2>
-<h3 id="sec:description_35" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-select_table"><span class="section-number main-number">37</span> Extract a table from the PDF and record the step</h2>
+<h3 id="sec:description_37" class="unnumbered unlisted">Description</h3>
 <p>Three selection modes: by page + index, by bounding box (<code>area</code>), or by
 fuzzy caption match (<code>label_match</code>). These can be mixed across different
 tables in the same session.
 </p>
-<h3 id="sec:usage_35" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_37" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">select_table(
   sess,
   label,
@@ -1529,7 +1630,7 @@ tables in the same session.
   row_tol = NULL,
   col_gap = NULL
 )</code></pre>
-<h3 id="sec:arguments_33" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_35" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -1600,18 +1701,18 @@ that signals a new column. Default <code>NULL</code> auto-computes from median w
 width.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_35" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_37" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (step is recorded).
 </p>
-<h2 id="sec:man-select_table_docling"><span class="section-number main-number">36</span> Extract a table using Docling</h2>
-<h3 id="sec:description_36" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-select_table_docling"><span class="section-number main-number">38</span> Extract a table using Docling</h2>
+<h3 id="sec:description_38" class="unnumbered unlisted">Description</h3>
 <p>Converts the PDF page using Docling's ML layout pipeline and returns a
 clean data frame. Works fully offline after the initial one-time model
 download; handles scanned PDFs and complex layouts where <code>bbox</code> fails.
 </p>
-<h3 id="sec:usage_36" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_38" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">select_table_docling(sess, label, page, table_index = 1L)</code></pre>
-<h3 id="sec:arguments_34" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_36" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -1637,17 +1738,17 @@ the result in the Python session, so repeated calls for different tables
 on the same page do not re-run the conversion pipeline. Call
 <code><a href="#sec:man-close-docling">close_docling()</a></code> to release the cache when done.
 </p>
-<h3 id="sec:value_36" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_38" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (step is recorded).
 </p>
-<h2 id="sec:man-select_table_llm"><span class="section-number main-number">37</span> Extract a table using an LLM</h2>
-<h3 id="sec:description_37" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-select_table_llm"><span class="section-number main-number">39</span> Extract a table using an LLM</h2>
+<h3 id="sec:description_39" class="unnumbered unlisted">Description</h3>
 <p>Renders the PDF page (optionally cropped to <code>area</code>), sends it to an LLM
 with a structured schema, and returns a clean data frame.  Good for
 multi-level headers, tables embedded in mixed-content pages, and any
 situation where positional extraction fails.
 </p>
-<h3 id="sec:usage_37" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_39" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">select_table_llm(
   sess,
   label,
@@ -1664,7 +1765,7 @@ situation where positional extraction fails.
   mode = c("structured", "page"),
   table_index = 1L
 )</code></pre>
-<h3 id="sec:arguments_35" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_37" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -1762,17 +1863,17 @@ the page, which one to return (default 1).</p>
 key for the chosen provider set as an environment variable
 (<code>ANTHROPIC_API_KEY</code>, <code>OPENAI_API_KEY</code>, <code>GEMINI_API_KEY</code>).
 </p>
-<h3 id="sec:value_37" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_39" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (step is recorded).
 </p>
-<h2 id="sec:man-setup_docling"><span class="section-number main-number">38</span> Install Docling into a Python environment</h2>
-<h3 id="sec:description_38" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-setup_docling"><span class="section-number main-number">40</span> Install Docling into a Python environment</h2>
+<h3 id="sec:description_40" class="unnumbered unlisted">Description</h3>
 <p>Creates (or reuses) a Python environment and installs the <code>docling</code> package.
 Run once and restart R before calling <code><a href="#sec:man-select-table-docling">select_table_docling()</a></code>.
 </p>
-<h3 id="sec:usage_38" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_40" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">setup_docling(envname = "r-macrox", pip_options = character(0))</code></pre>
-<h3 id="sec:arguments_36" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_38" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>envname</code></td>
 <td>
@@ -1788,21 +1889,21 @@ Run once and restart R before calling <code><a href="#sec:man-select-table-docli
 <p>On the first extraction call Docling downloads its ML models (~2-3 GB) and
 caches them locally. Subsequent calls are fully offline.
 </p>
-<h3 id="sec:value_38" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_40" class="unnumbered unlisted">Value</h3>
 <p>Invisible <code>NULL</code>.
 </p>
-<h2 id="sec:man-setup_gliner"><span class="section-number main-number">39</span> Install GLiNER2 in the macrox Python environment</h2>
-<h3 id="sec:description_39" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-setup_gliner"><span class="section-number main-number">41</span> Install GLiNER2 in the macrox Python environment</h2>
+<h3 id="sec:description_41" class="unnumbered unlisted">Description</h3>
 <p>Installs the <code>gliner2</code> Python package and pre-loads the requested model so
 it is ready for <code><a href="#sec:man-select-item">select_item()</a></code> calls with <code>backend = "gliner"</code>.
 </p>
-<h3 id="sec:usage_39" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_41" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">setup_gliner(
   model = "fastino/gliner2-base-v1",
   envname = "r-macrox",
   pip_options = character(0)
 )</code></pre>
-<h3 id="sec:arguments_37" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_39" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>model</code></td>
 <td>
@@ -1819,48 +1920,15 @@ is <code>"fastino/gliner2-large-v1"</code>.</p>
 <p>Additional pip install options (character vector).</p>
 </td></tr>
 </table>
-<h3 id="sec:value_39" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_41" class="unnumbered unlisted">Value</h3>
 <p><code>NULL</code> invisibly.
 </p>
-<h2 id="sec:man-show_items"><span class="section-number main-number">40</span> Show all extracted items</h2>
-<h3 id="sec:description_40" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-show_items"><span class="section-number main-number">42</span> Show all extracted items</h2>
+<h3 id="sec:description_42" class="unnumbered unlisted">Description</h3>
 <p>Show all extracted items
 </p>
-<h3 id="sec:usage_40" class="unnumbered unlisted">Usage</h3>
-<pre><code class="language-r">show_items(sess)</code></pre>
-<h3 id="sec:arguments_38" class="unnumbered unlisted">Arguments</h3>
-<table role = "presentation">
-<tr><td><code>sess</code></td>
-<td>
-<p>A <code>macrox_session</code> object.</p>
-</td></tr>
-</table>
-<h3 id="sec:value_40" class="unnumbered unlisted">Value</h3>
-<p><code>sess</code> invisibly. # not recorded
-</p>
-<h2 id="sec:man-show_steps"><span class="section-number main-number">41</span> Show recorded steps</h2>
-<h3 id="sec:description_41" class="unnumbered unlisted">Description</h3>
-<p>Prints a numbered list of all steps in the session, with flagged steps
-highlighted.
-</p>
-<h3 id="sec:usage_41" class="unnumbered unlisted">Usage</h3>
-<pre><code class="language-r">show_steps(sess)</code></pre>
-<h3 id="sec:arguments_39" class="unnumbered unlisted">Arguments</h3>
-<table role = "presentation">
-<tr><td><code>sess</code></td>
-<td>
-<p>A <code>macrox_session</code> object.</p>
-</td></tr>
-</table>
-<h3 id="sec:value_41" class="unnumbered unlisted">Value</h3>
-<p><code>sess</code> invisibly.
-</p>
-<h2 id="sec:man-show_validations"><span class="section-number main-number">42</span> Show validation results for all tables</h2>
-<h3 id="sec:description_42" class="unnumbered unlisted">Description</h3>
-<p>Prints a summary of every <code>validate_table()</code> result stored in the session.
-</p>
 <h3 id="sec:usage_42" class="unnumbered unlisted">Usage</h3>
-<pre><code class="language-r">show_validations(sess)</code></pre>
+<pre><code class="language-r">show_items(sess)</code></pre>
 <h3 id="sec:arguments_40" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
@@ -1871,16 +1939,49 @@ highlighted.
 <h3 id="sec:value_42" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly. # not recorded
 </p>
-<h2 id="sec:man-split_column"><span class="section-number main-number">43</span> Split one column into several by a separator</h2>
+<h2 id="sec:man-show_steps"><span class="section-number main-number">43</span> Show recorded steps</h2>
 <h3 id="sec:description_43" class="unnumbered unlisted">Description</h3>
+<p>Prints a numbered list of all steps in the session, with flagged steps
+highlighted.
+</p>
+<h3 id="sec:usage_43" class="unnumbered unlisted">Usage</h3>
+<pre><code class="language-r">show_steps(sess)</code></pre>
+<h3 id="sec:arguments_41" class="unnumbered unlisted">Arguments</h3>
+<table role = "presentation">
+<tr><td><code>sess</code></td>
+<td>
+<p>A <code>macrox_session</code> object.</p>
+</td></tr>
+</table>
+<h3 id="sec:value_43" class="unnumbered unlisted">Value</h3>
+<p><code>sess</code> invisibly.
+</p>
+<h2 id="sec:man-show_validations"><span class="section-number main-number">44</span> Show validation results for all tables</h2>
+<h3 id="sec:description_44" class="unnumbered unlisted">Description</h3>
+<p>Prints a summary of every <code>validate_table()</code> result stored in the session.
+</p>
+<h3 id="sec:usage_44" class="unnumbered unlisted">Usage</h3>
+<pre><code class="language-r">show_validations(sess)</code></pre>
+<h3 id="sec:arguments_42" class="unnumbered unlisted">Arguments</h3>
+<table role = "presentation">
+<tr><td><code>sess</code></td>
+<td>
+<p>A <code>macrox_session</code> object.</p>
+</td></tr>
+</table>
+<h3 id="sec:value_44" class="unnumbered unlisted">Value</h3>
+<p><code>sess</code> invisibly. # not recorded
+</p>
+<h2 id="sec:man-split_column"><span class="section-number main-number">45</span> Split one column into several by a separator</h2>
+<h3 id="sec:description_45" class="unnumbered unlisted">Description</h3>
 <p>Splits each cell in <code>col</code> on <code>sep</code> (a regex) and stores the resulting
 pieces in new columns named by <code>into</code>.  The original column is removed
 unless <code>keep = TRUE</code>.  Cells with fewer pieces than <code>length(into)</code> are
 padded with <code>NA</code>; cells with more are truncated.
 </p>
-<h3 id="sec:usage_43" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_45" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">split_column(sess, table, col, into, sep = "\\s+", keep = FALSE)</code></pre>
-<h3 id="sec:arguments_41" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_43" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -1907,15 +2008,49 @@ padded with <code>NA</code>; cells with more are truncated.
 <p>If <code>TRUE</code>, keep the original column alongside the new ones.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_43" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_45" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (step is recorded).
 </p>
-<h2 id="sec:man-stack_pages"><span class="section-number main-number">44</span> Extract and stack the same table across multiple PDF pages</h2>
-<h3 id="sec:description_44" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-split_column_df"><span class="section-number main-number">46</span> Split one column of a data frame into several</h2>
+<h3 id="sec:description_46" class="unnumbered unlisted">Description</h3>
+<p>The data-frame counterpart of <code><a href="#sec:man-split-column">split_column()</a></code>: it takes a data frame and
+returns a data frame, with no session and no recorded step.
+</p>
+<h3 id="sec:usage_46" class="unnumbered unlisted">Usage</h3>
+<pre><code class="language-r">split_column_df(df, col, into, sep = "\\s+", keep = FALSE)</code></pre>
+<h3 id="sec:arguments_44" class="unnumbered unlisted">Arguments</h3>
+<table role = "presentation">
+<tr><td><code>df</code></td>
+<td>
+<p>A data frame.</p>
+</td></tr>
+<tr><td><code>col</code></td>
+<td>
+<p>Name of the column to split.</p>
+</td></tr>
+<tr><td><code>into</code></td>
+<td>
+<p>Character vector of names for the new columns.</p>
+</td></tr>
+<tr><td><code>sep</code></td>
+<td>
+<p>Regex separator (default <code>"\\s+"</code> — one or more whitespace chars).</p>
+</td></tr>
+<tr><td><code>keep</code></td>
+<td>
+<p>If <code>TRUE</code>, keep the original column alongside the new ones.</p>
+</td></tr>
+</table>
+<h3 id="sec:value_46" class="unnumbered unlisted">Value</h3>
+<p><code>df</code> with <code>col</code> replaced (or, with <code>keep = TRUE</code>, followed) by the
+new columns named in <code>into</code>.
+</p>
+<h2 id="sec:man-stack_pages"><span class="section-number main-number">47</span> Extract and stack the same table across multiple PDF pages</h2>
+<h3 id="sec:description_47" class="unnumbered unlisted">Description</h3>
 <p>Extracts a table from each page in <code>pages</code> and row-binds them into a single
 data frame.  Supports all extraction engines including <code>"llm"</code>.
 </p>
-<h3 id="sec:usage_44" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_47" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">stack_pages(
   sess,
   label,
@@ -1936,7 +2071,7 @@ data frame.  Supports all extraction engines including <code>"llm"</code>.
   row_tol = NULL,
   col_gap = NULL
 )</code></pre>
-<h3 id="sec:arguments_42" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_45" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -2034,17 +2169,17 @@ as column names on each page and dropped from the data.  Set
 no repeated headers to consume; <code>header_match</code> is ignored.  Supply <code>schema</code>
 for best accuracy and consistent column names across pages.
 </p>
-<h3 id="sec:value_44" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_47" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (step is recorded).
 </p>
-<h2 id="sec:man-stack_tables"><span class="section-number main-number">45</span> Row-bind multiple extracted tables into one</h2>
-<h3 id="sec:description_45" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-stack_tables"><span class="section-number main-number">48</span> Row-bind multiple extracted tables into one</h2>
+<h3 id="sec:description_48" class="unnumbered unlisted">Description</h3>
 <p>Useful after batch replay to combine monthly or regional tables that share
 the same schema.
 </p>
-<h3 id="sec:usage_45" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_48" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">stack_tables(sess, label, tables, .fill = FALSE)</code></pre>
-<h3 id="sec:arguments_43" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_46" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -2064,18 +2199,18 @@ the same schema.
 (default <code>FALSE</code>).</p>
 </td></tr>
 </table>
-<h3 id="sec:value_45" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_48" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (step is recorded).
 </p>
-<h2 id="sec:man-struct_to_df"><span class="section-number main-number">46</span> Convert raw struct extraction to a data frame</h2>
-<h3 id="sec:description_46" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-struct_to_df"><span class="section-number main-number">49</span> Convert raw struct extraction to a data frame</h2>
+<h3 id="sec:description_49" class="unnumbered unlisted">Description</h3>
 <p>Takes the raw GLiNER2 records stored by <code><a href="#sec:man-select-struct">select_struct()</a></code> (which include
 per-field confidence scores) and converts them to a data frame stored in
 <code>sess$tables[[label]]</code>. Optionally filters out low-confidence records.
 </p>
-<h3 id="sec:usage_46" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_49" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">struct_to_df(sess, label, min_confidence = NULL)</code></pre>
-<h3 id="sec:arguments_44" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_47" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -2091,18 +2226,18 @@ per-field confidence scores) and converts them to a data frame stored in
 confidence is below this threshold are dropped. <code>NULL</code> (default) keeps all.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_46" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_49" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (step recorded).
 </p>
-<h2 id="sec:man-suggest_schema"><span class="section-number main-number">47</span> Suggest column types for an extracted table</h2>
-<h3 id="sec:description_47" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-suggest_schema"><span class="section-number main-number">50</span> Suggest column types for an extracted table</h2>
+<h3 id="sec:description_50" class="unnumbered unlisted">Description</h3>
 <p>Inspects values in each column and returns a named character vector of type
 specs compatible with <code><a href="#sec:man-cast-types">cast_types()</a></code>. Useful as a starting point before
 calling <code>cast_types()</code> or providing a schema to <code>select_table_llm()</code>.
 </p>
-<h3 id="sec:usage_47" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_50" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">suggest_schema(sess, label)</code></pre>
-<h3 id="sec:arguments_45" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_48" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -2113,17 +2248,17 @@ calling <code>cast_types()</code> or providing a schema to <code>select_table_ll
 <p>Character label of the table to inspect.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_47" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_50" class="unnumbered unlisted">Value</h3>
 <p>Named character vector of type specs (invisibly).
 </p>
-<h2 id="sec:man-test_extraction"><span class="section-number main-number">48</span> Test extraction parameters and return a structured evaluation report</h2>
-<h3 id="sec:description_48" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-test_extraction"><span class="section-number main-number">51</span> Test extraction parameters and return a structured evaluation report</h2>
+<h3 id="sec:description_51" class="unnumbered unlisted">Description</h3>
 <p>The R-Core Judge for the MCP agent loop. Runs a single extraction pass with
 the given parameters and returns a structured report indicating whether the
 result is clean or needs adjustment. The MCP <code>test_parameters</code> tool calls
 this in a loop until <code>status == "success"</code>.
 </p>
-<h3 id="sec:usage_48" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_51" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">test_extraction(
   file,
   page,
@@ -2136,7 +2271,7 @@ this in a loop until <code>status == "success"</code>.
   preview_rows = 3L,
   ...
 )</code></pre>
-<h3 id="sec:arguments_46" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_49" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>file</code></td>
 <td>
@@ -2187,7 +2322,7 @@ for the full page.</p>
 <h3 id="sec:details_8" class="unnumbered unlisted">Details</h3>
 <p>Returns a list that serialises cleanly to JSON via <code>jsonlite::toJSON()</code>.
 </p>
-<h3 id="sec:value_48" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_51" class="unnumbered unlisted">Value</h3>
 <p>A list with:
 </p>
 <dl>
@@ -2205,14 +2340,14 @@ is not <code>"success"</code>.</p>
 JSON serialisation.</p>
 </dd>
 </dl>
-<h2 id="sec:man-test_macro"><span class="section-number main-number">49</span> Snapshot-test a macro against a stored reference</h2>
-<h3 id="sec:description_49" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-test_macro"><span class="section-number main-number">52</span> Snapshot-test a macro against a stored reference</h2>
+<h3 id="sec:description_52" class="unnumbered unlisted">Description</h3>
 <p>Replays a macro (or accepts a pre-replayed table list) and compares the
 output against a stored YAML snapshot. On the first call the snapshot is
 written; subsequent calls compare against it. Designed for use inside
 <code>testthat::test_that()</code> blocks but also works standalone.
 </p>
-<h3 id="sec:usage_49" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_52" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">test_macro(
   file = NULL,
   macro = NULL,
@@ -2224,7 +2359,7 @@ written; subsequent calls compare against it. Designed for use inside
   update = identical(Sys.getenv("TESTTHAT_SNAPSHOT_UPDATE"), "true"),
   n_head = 5L
 )</code></pre>
-<h3 id="sec:arguments_47" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_50" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>file</code></td>
 <td>
@@ -2286,14 +2421,14 @@ The snapshot is written to <code>snapshot_dir</code>.
 <code>test_macro()</code> compares against the committed snapshot and fails on drift.
 </p>
 </li></ol>
-<h3 id="sec:value_49" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_52" class="unnumbered unlisted">Value</h3>
 <p>The replayed table list, invisibly.
 </p>
-<h2 id="sec:man-update_item"><span class="section-number main-number">50</span> Update the prompt for a recorded select_item step and re-extract</h2>
-<h3 id="sec:description_50" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-update_item"><span class="section-number main-number">53</span> Update the prompt for a recorded select_item step and re-extract</h2>
+<h3 id="sec:description_53" class="unnumbered unlisted">Description</h3>
 <p>Update the prompt for a recorded select_item step and re-extract
 </p>
-<h3 id="sec:usage_50" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_53" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">update_item(
   sess,
   label,
@@ -2302,7 +2437,7 @@ The snapshot is written to <code>snapshot_dir</code>.
   chat = NULL,
   re_extract = TRUE
 )</code></pre>
-<h3 id="sec:arguments_48" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_51" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -2331,16 +2466,16 @@ recorded for the step.</p>
 <p>Re-run the LLM call immediately (default <code>TRUE</code>).</p>
 </td></tr>
 </table>
-<h3 id="sec:value_50" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_53" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly.
 </p>
-<h2 id="sec:man-update_llm_schema"><span class="section-number main-number">51</span> Update the schema for a recorded LLM extraction step and re-extract</h2>
-<h3 id="sec:description_51" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-update_llm_schema"><span class="section-number main-number">54</span> Update the schema for a recorded LLM extraction step and re-extract</h2>
+<h3 id="sec:description_54" class="unnumbered unlisted">Description</h3>
 <p>Finds the most recent <code>select_table_llm</code> step for <code>label</code>, replaces its
 schema, and re-runs the extraction against the same page/area.  Useful
 when the auto-detected columns need renaming or the types need adjustment.
 </p>
-<h3 id="sec:usage_51" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_54" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">update_llm_schema(
   sess,
   label,
@@ -2349,7 +2484,7 @@ when the auto-detected columns need renaming or the types need adjustment.
   chat = NULL,
   re_extract = TRUE
 )</code></pre>
-<h3 id="sec:arguments_49" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_52" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -2378,17 +2513,17 @@ recorded for the step.</p>
 <p>Re-run the LLM call immediately (default <code>TRUE</code>).</p>
 </td></tr>
 </table>
-<h3 id="sec:value_51" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_54" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly.
 </p>
-<h2 id="sec:man-validate_macro"><span class="section-number main-number">52</span> Validate a macro against a PDF without extracting data</h2>
-<h3 id="sec:description_52" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-validate_macro"><span class="section-number main-number">55</span> Validate a macro against a PDF without extracting data</h2>
+<h3 id="sec:description_55" class="unnumbered unlisted">Description</h3>
 <p>Runs a pre-flight check on every step. Agents should call this after
 generating a macro and fix any errors before the human runs <code><a href="#sec:man-mx-replay">mx_replay()</a></code>.
 </p>
-<h3 id="sec:usage_52" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_55" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">validate_macro(file, macro)</code></pre>
-<h3 id="sec:arguments_50" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_53" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>file</code></td>
 <td>
@@ -2399,20 +2534,20 @@ generating a macro and fix any errors before the human runs <code><a href="#sec:
 <p>Either a step list or a path to a <code>.yml</code> file.</p>
 </td></tr>
 </table>
-<h3 id="sec:value_52" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_55" class="unnumbered unlisted">Value</h3>
 <p>A <code>macrox_validation</code> list with <code>$valid</code>, <code>$steps</code> (data frame),
 and <code>$errors</code> (character vector).
 </p>
-<h2 id="sec:man-validate_table"><span class="section-number main-number">53</span> Validate an extracted table against a set of rules</h2>
-<h3 id="sec:description_53" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-validate_table"><span class="section-number main-number">56</span> Validate an extracted table against a set of rules</h2>
+<h3 id="sec:description_56" class="unnumbered unlisted">Description</h3>
 <p>Uses the <code>validate</code> package DSL. Rules are named character strings
 containing R expressions evaluated against the data frame. Both row-level
 predicates (<code>total_count &gt; 0</code>) and table-level aggregates (<code>nrow(.) == 12</code>)
 are supported.
 </p>
-<h3 id="sec:usage_53" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_56" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">validate_table(sess, table, rules, strict = FALSE)</code></pre>
-<h3 id="sec:arguments_51" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_54" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -2439,26 +2574,26 @@ Names become the rule identifiers shown in reports. Alternatively, a
 On replay, failures produce warnings by default; set <code>strict = TRUE</code> to
 abort.
 </p>
-<h3 id="sec:value_53" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_56" class="unnumbered unlisted">Value</h3>
 <p><code>sess</code> invisibly (step is recorded).
 </p>
-<h3 id="sec:examples_3" class="unnumbered unlisted">Examples</h3>
+<h3 id="sec:examples_4" class="unnumbered unlisted">Examples</h3>
 <pre><code class="language-r fade">sess |&gt; validate_table(&quot;calf_monthly&quot;, rules = c(
   no_na_month    = &quot;!anyNA(month)&quot;,
   positive_males = &quot;all(male_count &gt; 0, na.rm = TRUE)&quot;,
   twelve_rows    = &quot;nrow(.) == 12&quot;
 ))
 </code></pre>
-<h2 id="sec:man-view_in_pdf"><span class="section-number main-number">54</span> View a recorded step's location in the PDF</h2>
-<h3 id="sec:description_54" class="unnumbered unlisted">Description</h3>
+<h2 id="sec:man-view_in_pdf"><span class="section-number main-number">57</span> View a recorded step's location in the PDF</h2>
+<h3 id="sec:description_57" class="unnumbered unlisted">Description</h3>
 <p>Renders the PDF page for a <code>select_table</code> or <code>select_table_llm</code> step and
 opens it in the RStudio Viewer or system browser. If the step used a
 bounding box, the selected area is highlighted in blue. Requires <code>magick</code>
 for annotations (Suggests).
 </p>
-<h3 id="sec:usage_54" class="unnumbered unlisted">Usage</h3>
+<h3 id="sec:usage_57" class="unnumbered unlisted">Usage</h3>
 <pre><code class="language-r">view_in_pdf(sess, step = NULL, dpi = 150)</code></pre>
-<h3 id="sec:arguments_52" class="unnumbered unlisted">Arguments</h3>
+<h3 id="sec:arguments_55" class="unnumbered unlisted">Arguments</h3>
 <table role = "presentation">
 <tr><td><code>sess</code></td>
 <td>
@@ -2474,21 +2609,21 @@ page location (<code>select_table</code> or <code>select_table_llm</code>).</p>
 <p>Render resolution (default 150).</p>
 </td></tr>
 </table>
-<h3 id="sec:value_54" class="unnumbered unlisted">Value</h3>
+<h3 id="sec:value_57" class="unnumbered unlisted">Value</h3>
 <p>The bounding box area (named numeric vector or NULL), invisibly.
 </p>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.111/css/manual.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.116/css/manual.min.css">
 </div>
 <footer><div class="flex-col">
 <p>Developed by First Last</p>
-<p>Site built with <a href="https://github.com/yihui/litedown">litedown</a> v0.11.8</p>
+<p>Site built with <a href="https://github.com/yihui/litedown">litedown</a> v0.11.10</p>
 </div></footer>
-<script src="https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.111/js/sidenotes.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.111/js/appendix.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.111/js/toc-highlight.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.111/js/copy-button.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.111/js/heading-anchor.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.111/js/pages.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.116/js/sidenotes.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.116/js/appendix.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.116/js/toc-highlight.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.116/js/copy-button.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.116/js/heading-anchor.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@xiee/utils@1.14.116/js/pages.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
 </body>
